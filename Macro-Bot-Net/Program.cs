@@ -99,6 +99,8 @@ namespace Develeon64.MacroBot {
 		}
 
 		private Task Log (LogMessage logMessage) {
+			if (logMessage.Message == null) return Task.CompletedTask;
+
 			Modules module = logMessage.Source switch {
 				"Gateway" => Modules.Gateway,
 				"Discord" => Modules.Discord,
