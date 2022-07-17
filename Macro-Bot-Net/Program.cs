@@ -45,7 +45,7 @@ namespace Develeon64.MacroBot {
 			// If not debug, load globally
 			if (IsDebug())
 			{
-				await commandHandler.GetInteractionService().RegisterCommandsToGuildAsync(554766479414001684, true);
+				await commandHandler.GetInteractionService().RegisterCommandsToGuildAsync(963548230300348416, true);
 			}
 			else
 			{
