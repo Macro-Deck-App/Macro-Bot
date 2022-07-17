@@ -63,9 +63,9 @@ namespace Develeon64.MacroBot {
 
 		private async Task MessageReceived (SocketMessage message) {
 			SocketGuildUser member = message.Author as SocketGuildUser;
-			if (member.IsBot || member.Roles.Contains(member.Guild.GetRole(785987618865152021)))
+			if (member.IsBot || member.Roles.Contains(member.Guild.GetRole(963570325939945565)))
 				return;
-			ulong[] imageChannels = { 997625543639978156, 997625569065840861 };
+			ulong[] imageChannels = { 998289359260368937, 998289378868736070 };
 
 			if (message.MentionedEveryone) {
 				await message.DeleteAsync();
@@ -131,11 +131,11 @@ namespace Develeon64.MacroBot {
 			embed.AddField("__Joined__", $"<t:{member.JoinedAt?.ToUnixTimeSeconds()}:R>", true);
 			embed.AddField("__Created__", $"<t:{member.CreatedAt.ToUnixTimeSeconds()}:R>", true);
 
-			await (member.Guild.GetChannel(997563868186427493) as SocketTextChannel).SendMessageAsync(embed: embed.Build());
+			await (member.Guild.GetChannel(963557777584832522) as SocketTextChannel).SendMessageAsync(embed: embed.Build());
 		}
 
 		private async Task<int> UpdateMemberCount () {
-			SocketGuild guild = _client.GetGuild(785979409114726460);
+			SocketGuild guild = _client.GetGuild(963548230300348416);
 			int memberCount = 0;
 			List<string> memberNames = new();
 			foreach (SocketGuildUser member in guild.Users) {
@@ -145,7 +145,7 @@ namespace Develeon64.MacroBot {
 				}
 			}
 
-			SocketGuildChannel channel = guild.GetChannel(997563868186427493);
+			SocketGuildChannel channel = guild.GetChannel(963557777584832522);
 			string channelName = String.Empty;
 			string[] nameParts = channel.Name.Split("_");
 			for (int i = 0; i < nameParts.Length - 1; i++)
