@@ -5,5 +5,6 @@
 		Gateway,
 		Discord,
 		Bot,
+		Config,
 	}
 }
