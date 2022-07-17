@@ -11,6 +11,8 @@ namespace Develeon64.MacroBot {
 		private static InteractionCommandHandler commandHandler;
 		private static DiscordSocketClient _client;
 
+		public static ConfigManager globalConfig = new ConfigManager("global");
+
 		public static Task Main (string[] args) => new Program().MainAsync(args);
 
 		public async Task MainAsync (string[] args) {
@@ -33,6 +35,8 @@ namespace Develeon64.MacroBot {
 
 			await _client.LoginAsync(TokenType.Bot, Token.DiscordToken);
 			await _client.StartAsync();
+
+			globalConfig.getObject("foo");
 
 			await Task.Delay(-1);
 		}
@@ -63,6 +67,8 @@ namespace Develeon64.MacroBot {
 
 		private async Task MessageReceived (SocketMessage message) {
 			SocketGuildUser member = message.Author as SocketGuildUser;
+
+			if (member == null) return;
 			if (member.IsBot || member.Roles.Contains(member.Guild.GetRole(963570325939945565)))
 				return;
 			ulong[] imageChannels = { 998289359260368937, 998289378868736070 };
