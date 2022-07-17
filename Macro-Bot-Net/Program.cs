@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using Develeon64.MacroBot.Logging;
 using Develeon64.MacroBot.Services;
 using Discord.Interactions;
+using Newtonsoft.Json.Linq;
 
 namespace Develeon64.MacroBot {
 	public class Program {
@@ -33,10 +34,8 @@ namespace Develeon64.MacroBot {
 			commandHandler = new InteractionCommandHandler(_client, new InteractionService(_client.Rest));
 			await commandHandler.InitializeAsync();
 
-			await _client.LoginAsync(TokenType.Bot, Token.DiscordToken);
+			await _client.LoginAsync(TokenType.Bot, globalConfig.getObject("token").ToString());
 			await _client.StartAsync();
-
-			globalConfig.getObject("foo");
 
 			await Task.Delay(-1);
 		}
@@ -49,7 +48,7 @@ namespace Develeon64.MacroBot {
 			// If not debug, load globally
 			if (IsDebug())
 			{
-				await commandHandler.GetInteractionService().RegisterCommandsToGuildAsync(963548230300348416, true);
+				await commandHandler.GetInteractionService().RegisterCommandsToGuildAsync(globalConfig.getObject("testGuildID").ToObject<ulong>(), true);
 			}
 			else
 			{
@@ -69,9 +68,9 @@ namespace Develeon64.MacroBot {
 			SocketGuildUser member = message.Author as SocketGuildUser;
 
 			if (member == null) return;
-			if (member.IsBot || member.Roles.Contains(member.Guild.GetRole(963570325939945565)))
+			if (member.IsBot || member.Roles.Contains(member.Guild.GetRole(globalConfig.getObject("roles").ToObject<JObject>()["moderatorRoleID"].ToObject<ulong>())))
 				return;
-			ulong[] imageChannels = { 998289359260368937, 998289378868736070 };
+			ulong[] imageChannels = globalConfig.getObject("channels").ToObject<JObject>()["imageOnlyChannels"].ToObject<ulong[]>();
 
 			if (message.MentionedEveryone) {
 				await message.DeleteAsync();
@@ -137,11 +136,11 @@ namespace Develeon64.MacroBot {
 			embed.AddField("__Joined__", $"<t:{member.JoinedAt?.ToUnixTimeSeconds()}:R>", true);
 			embed.AddField("__Created__", $"<t:{member.CreatedAt.ToUnixTimeSeconds()}:R>", true);
 
-			await (member.Guild.GetChannel(963557777584832522) as SocketTextChannel).SendMessageAsync(embed: embed.Build());
+			await (member.Guild.GetChannel(globalConfig.getObject("channels").ToObject<JObject>()["memberScreeningChannelID"].ToObject<ulong>()) as SocketTextChannel).SendMessageAsync(embed: embed.Build());
 		}
 
 		private async Task<int> UpdateMemberCount () {
-			SocketGuild guild = _client.GetGuild(963548230300348416);
+			SocketGuild guild = _client.GetGuild(globalConfig.getObject("testGuildID").ToObject<ulong>());
 			int memberCount = 0;
 			List<string> memberNames = new();
 			foreach (SocketGuildUser member in guild.Users) {
@@ -151,7 +150,7 @@ namespace Develeon64.MacroBot {
 				}
 			}
 
-			SocketGuildChannel channel = guild.GetChannel(963557777584832522);
+			SocketGuildChannel channel = guild.GetChannel(globalConfig.getObject("channels").ToObject<JObject>()["memberScreeningChannelID"].ToObject<ulong>());
 			string channelName = String.Empty;
 			string[] nameParts = channel.Name.Split("_");
 			for (int i = 0; i < nameParts.Length - 1; i++)
