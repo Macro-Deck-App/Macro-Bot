@@ -24,8 +24,7 @@ namespace Develeon64.MacroBot.Commands {
 
 			SocketTextChannel channel = this.Context.Guild.GetTextChannel(998293017557487697);
 			await channel.SendMessageAsync(embed: embed.Build(), components: buttons.Build());
-			await this.RespondAsync("Message successfully sent");
-			//await this.RespondAsync($"Message successfully sent to <#{channel.Id}>", ephemeral: true);
+			await this.RespondAsync($"Message successfully sent to <#{channel.Id}>", ephemeral: true);
 		}
 	}
 }
