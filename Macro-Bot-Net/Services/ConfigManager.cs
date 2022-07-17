@@ -11,37 +11,86 @@ namespace Develeon64.MacroBot.Services
 {
     public class ConfigManager
     {
+        private static string dirPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + "/config";
         private string configName;
+        private string filePath;
 
         public ConfigManager(string configName)
         {
-            this.configName = configName;
+            this.configName = configName.ToLower();
+            this.filePath = dirPath + "/" + configName + ".json";
+
+            setupStructure();
         }
 
-        public JObject getObject(string objectIndex)
+        public JToken getObject(string objectIndex)
         {
             JObject config = readFile();
-
+            if (config != null)
+            {
+                return config[objectIndex];
+            }
             return null;
         }
-        public JObject setObject(string objectIndex, JObject obj)
+        public void setObject(string objectIndex, JToken obj)
         {
-            return null;
+            JObject config = readFile();
+            if (config != null)
+            {
+                config[objectIndex] = obj;
+
+                writeFile(config);
+            }
+        }
+        public void removeObject(string objectIndex)
+        {
+            JObject config = readFile();
+            if (config != null)
+            {
+                config.Remove(objectIndex);
+
+                writeFile(config);
+            }
         }
 
         private JObject readFile()
         {
             try
             {
-                //String fileContent = File.ReadAllText();
-                Logger.Info(Modules.Config, Process.GetCurrentProcess().MainModule.FileName);
+                setupStructure();
 
-            } catch (Exception ex)
+                String fileContent = File.ReadAllText(filePath);
+                JObject config = JObject.Parse(fileContent);
+
+                return config;
+
+            }
+            catch (Exception ex)
             {
                 Logger.Critical(Modules.Config, "Failed to read config file \"" + configName + ".json" + "\"\n" + ex.Message);
             }
 
             return null;
+        }
+        private void writeFile(JObject config)
+        {
+            try
+            {
+                File.WriteAllText(filePath ,config.ToString());
+
+            } catch (Exception ex)
+            {
+                Logger.Critical(Modules.Config, "Failed to save config file \"" + configName + ".json" + "\"\n" + ex.Message);
+            }
+        }
+
+        private void setupStructure()
+        {
+            Directory.CreateDirectory(dirPath);
+            if (!File.Exists(filePath))
+            {
+                File.AppendAllText(filePath, "{}");
+            }
         }
     }
 }
