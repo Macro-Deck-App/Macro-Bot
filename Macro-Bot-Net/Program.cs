@@ -3,9 +3,12 @@ using Discord;
 using Discord.Net;
 using Discord.WebSocket;
 using Develeon64.MacroBot.Logging;
+using Develeon64.MacroBot.Services;
+using Discord.Interactions;
 
 namespace Develeon64.MacroBot {
 	public class Program {
+		private static InteractionCommandHandler commandHandler;
 		private static DiscordSocketClient _client;
 
 		public static Task Main (string[] args) => new Program().MainAsync(args);
@@ -25,15 +28,29 @@ namespace Develeon64.MacroBot {
 			_client.UserJoined += this.UserJoined;
 			_client.UserLeft += this.UserLeft;
 
+			commandHandler = new InteractionCommandHandler(_client, new InteractionService(_client.Rest));
+			await commandHandler.InitializeAsync();
+
 			await _client.LoginAsync(TokenType.Bot, Token.DiscordToken);
 			await _client.StartAsync();
 
 			await Task.Delay(-1);
 		}
 
-		private Task Ready () {
-			this.UpdateMemberCount();
-			return Task.CompletedTask;
+		private async Task Ready () {
+			await this.UpdateMemberCount();
+
+			// Load Slash Commands
+			// If debug, only load to test guild (Faster)
+			// If not debug, load globally
+			if (IsDebug())
+			{
+				await commandHandler.GetInteractionService().RegisterCommandsToGuildAsync(554766479414001684, true);
+			}
+			else
+			{
+				await commandHandler.GetInteractionService().RegisterCommandsGloballyAsync(true);
+			}
 		}
 
 		private async Task UserJoined (SocketGuildUser member) {
@@ -136,6 +153,15 @@ namespace Develeon64.MacroBot {
 			await channel.ModifyAsync((GuildChannelProperties properties) => { properties.Name = $"{channelName}_{memberCount}"; });
 			Logger.Info(Modules.Bot, $"Users on the server: {memberCount}");
 			return memberCount;
+		}
+
+		static bool IsDebug()
+		{
+			#if DEBUG
+				return true;
+			#else
+                return false;
+			#endif
 		}
 	}
 }
