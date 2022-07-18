@@ -19,42 +19,30 @@ namespace Develeon64.MacroBot.Commands
         [SlashCommand("create","Create a new tag")]
         public async Task Create([Summary(description: "Name of the tag")] string name)
         {
-            bool validPermission = false;
+            SocketGuildUser guildUser = Context.Guild.GetUser(Context.User.Id);
+            String permisisonGroup = "PermissionManageTags";
+            if (!checkPermissions(permisisonGroup, guildUser)) {
+                EmbedBuilder errorEmbed = new()
+                {
+                    Title = "Invalid Permissions",
+                    Description = "You do not have the needed permissions to run this command!"
+                };
 
-            var roles = ((SocketGuildUser)Context.User).Roles;
-            JArray permissionRoles = config.getObject("PermissionManageTags").ToObject<JArray>();
+                String permissionList = "";
+                foreach (JValue permissionID in config.getObject(permisisonGroup).ToObject<JArray>()) permissionList += $"\n<@&{permissionID.ToString()}>";
+                errorEmbed.AddField("Required Roles", $"At least one of those roles is required:{permissionList}");
 
-            foreach (JValue roleID in permissionRoles)
-            {
-                
+                await RespondAsync(embed: errorEmbed.Build(),ephemeral: true);
+                return;
             }
 
-            if (validPermission)
-            {
-                ModalBuilder modal = new ModalBuilder()
+            ModalBuilder modal = new ModalBuilder()
                 .WithTitle("Create Tag")
                 .WithCustomId("create_tag_modal")
                 .AddTextInput("Tag Name", "tag_name", TextInputStyle.Short, "Enter tag name", required: true)
                 .AddTextInput("Tag Content", "tag_content", TextInputStyle.Paragraph, "Enter tag content here", required: true);
 
-                await RespondWithModalAsync(modal.Build());
-            } else
-            {
-                EmbedBuilder embed = new EmbedBuilder()
-                {
-                    Title = "Cannot create tag",
-                    Description = "You do not meet the permission requirements to run this command!"
-                };
-                string requiredFieldContent = "You need to have at least one of this roles:";
-                foreach (string roleID in permissionRoles)
-                {
-                    requiredFieldContent += $"\n<@&{roleID}>";
-                }
-
-                embed.AddField("Required Roles", requiredFieldContent);
-
-                await RespondAsync(embed: embed.Build());
-            }
+            await RespondWithModalAsync(modal.Build());
         }
 
         [SlashCommand("delete", "Delete an existing tag")]
@@ -73,6 +61,29 @@ namespace Develeon64.MacroBot.Commands
         public async Task View()
         {
             await RespondAsync("WIP");
+        }
+
+        private static Boolean checkPermissions(string permissionGroup,SocketGuildUser user)
+        {
+            JArray manageTagsPermissions = config.getObject(permissionGroup).ToObject<JArray>();
+            List<SocketRole> userRoles = user.Roles.ToList<SocketRole>();
+            
+            foreach (JValue permission in manageTagsPermissions)
+            {
+                if (userRoles.Find(x => x.Id.ToString() == permission.ToString()) != null)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        [ModalInteraction("create_tag_modal")]
+        public async Task HandleCreateModal(Modal modal)
+        {
+            Console.WriteLine(modal);
+            
+            await RespondAsync("test");
         }
     }
 }
