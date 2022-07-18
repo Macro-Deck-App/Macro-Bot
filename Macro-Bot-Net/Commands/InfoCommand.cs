@@ -24,6 +24,7 @@ namespace Develeon64.MacroBot.Commands
             embed.AddField("Version",$"`{Assembly.GetExecutingAssembly().GetName().Version}`",true);
             embed.AddField("API Latency", $"`{Context.Client.Latency} ms`", true);
             embed.AddField("Written by", "<@298215920709664768>\n<@367398650076463118>",true);
+            embed.WithFooter(Context.Guild.Name, Context.Guild.IconUrl);
 
             await RespondAsync(embed: embed.Build());
         } 
