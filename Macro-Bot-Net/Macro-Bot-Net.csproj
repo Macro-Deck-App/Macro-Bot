@@ -20,6 +20,12 @@
 
   <ItemGroup>
     <PackageReference Include="Discord.Net" Version="3.7.2" />
+    <PackageReference Include="sqlite-net" Version="1.6.292" />
+    <PackageReference Include="SQLiteNetExtensions.Async" Version="2.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Config\" />
   </ItemGroup>
 
 </Project>

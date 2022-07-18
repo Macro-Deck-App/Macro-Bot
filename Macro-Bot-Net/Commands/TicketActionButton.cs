@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Newtonsoft.Json.Linq;
 
 namespace Develeon64.MacroBot.Commands {
 	public class TicketAction : InteractionModuleBase<SocketInteractionContext> {
@@ -12,11 +13,11 @@ namespace Develeon64.MacroBot.Commands {
 
 		[ComponentInteraction("ticket_action|more_help")]
 		public async Task MoreHelp () {
-			await this.Context.Guild.GetTextChannel(998324026390884472).SendMessageAsync($"{this.Context.User.Mention} ({this.Context.User.Username}) needs the help of a <@&998322788563689574> in <#{this.Context.Channel.Id}>!");
+			await this.Context.Guild.GetTextChannel(Program.globalConfig.getObject("channels").ToObject<JObject>()["supportTeamChannelID"].ToObject<ulong>()).SendMessageAsync($"{this.Context.User.Mention} ({this.Context.User.Username}) needs the help of a <@&{Program.globalConfig.getObject("roles").ToObject<JObject>()["supportRoleID"].ToObject<ulong>()}> in <#{this.Context.Channel.Id}>!");
 
 			ActionRowComponent oldRow = (this.Context.Interaction as SocketMessageComponent).Message.Components.ElementAt(0);
 			ActionRowBuilder row = new();
-			foreach (ButtonComponent button in row.Components) {
+			foreach (ButtonComponent button in oldRow.Components) {
 				ButtonBuilder builder = button.ToBuilder();
 				if (button.CustomId.Contains("more_help"))
 					builder.WithDisabled(true);
@@ -26,7 +27,7 @@ namespace Develeon64.MacroBot.Commands {
 			await (this.Context.Interaction as SocketMessageComponent).Message.ModifyAsync((message) => {
 				message.Components = new ComponentBuilder().AddRow(row).Build();
 			});
-			await this.RespondAsync("The staff has been contacted.", ephemeral: true);
+			await this.RespondAsync($"The <@&{Program.globalConfig.getObject("roles").ToObject<JObject>()["supportRoleID"].ToObject<ulong>()}-Team has been contacted.");
 		}
 	}
 }
