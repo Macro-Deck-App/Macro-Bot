@@ -16,7 +16,7 @@ namespace Develeon64.MacroBot.Commands {
 
 		[ComponentInteraction("ticket_action|more_help")]
 		public async Task MoreHelp () {
-			await this.Context.Guild.GetTextChannel(Program.globalConfig.getObject("channels").ToObject<JObject>()["supportTeamChannelID"].ToObject<ulong>()).SendMessageAsync($"{this.Context.User.Mention} ({this.Context.User.Username}) needs the help of a <@&{Program.globalConfig.getObject("roles").ToObject<JObject>()["supportRoleID"].ToObject<ulong>()}> in <#{this.Context.Channel.Id}>!");
+			await this.Context.Guild.GetTextChannel(ConfigManager.GlobalConfig.Channels.SupportTeamChannelId).SendMessageAsync($"{this.Context.User.Mention} ({this.Context.User.Username}) needs the help of a <@&{ConfigManager.GlobalConfig.Roles.SupportRoleId}> in <#{this.Context.Channel.Id}>!");
 
 			ActionRowComponent oldRow = (this.Context.Interaction as SocketMessageComponent).Message.Components.ElementAt(0);
 			ActionRowBuilder row = new();
@@ -30,7 +30,7 @@ namespace Develeon64.MacroBot.Commands {
 			await (this.Context.Interaction as SocketMessageComponent).Message.ModifyAsync((message) => {
 				message.Components = new ComponentBuilder().AddRow(row).Build();
 			});
-			await this.RespondAsync($"The <@&{Program.globalConfig.getObject("roles").ToObject<JObject>()["supportRoleID"].ToObject<ulong>()}-Team has been contacted.");
+			await this.RespondAsync($"The <@&{ConfigManager.GlobalConfig.Roles.SupportRoleId}-Team has been contacted.");
 		}
 	}
 }

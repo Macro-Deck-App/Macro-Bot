@@ -12,14 +12,14 @@ namespace Develeon64.MacroBot.Commands {
 		public async Task CreateNoConnectTicket () {
 			if (!await DatabaseManager.TicketExists(this.Context.User.Id)) {
 				RestTextChannel channel = await this.Context.Guild.CreateTextChannelAsync($"ticket-{this.Context.User.Username}", (c) => {
-					c.CategoryId = Program.globalConfig.getObject("channels").ToObject<JObject>()["ticketCategoryID"].ToObject<ulong>();
+					c.CategoryId = ConfigManager.GlobalConfig.Channels.TicketCategoryId;
 					List<Overwrite> overwrites = this.Context.Guild.GetCategoryChannel((ulong)c.CategoryId.Value).PermissionOverwrites.ToList();
 					overwrites.Add(new Overwrite(this.Context.User.Id, PermissionTarget.User, new OverwritePermissions(viewChannel: PermValue.Allow)));
 					c.PermissionOverwrites = overwrites;
 				});
 				DiscordEmbedBuilder embed = new() {
 					Title = "Connection issues",
-					Description = $"We are sorry, that you have problems connecting your device to the server!\nPlease make sure you read the <#{Program.globalConfig.getObject("channels").ToObject<JObject>()["faqChannelID"].ToObject<ulong>()}>.",
+					Description = $"We are sorry, that you have problems connecting your device to the server!\nPlease make sure you read the <#{ConfigManager.GlobalConfig.Channels.FaqChannelId}>.",
 				};
 				embed.AddField("Step 1", "Do step 1", true);
 				embed.AddField("Step 2", "Do step 2", true);
