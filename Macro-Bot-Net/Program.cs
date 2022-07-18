@@ -19,7 +19,7 @@ namespace Develeon64.MacroBot {
 			System.Timers.Timer timer = new() {
 				AutoReset = true,
 				Enabled = true,
-				Interval = 1 * 60 * 60 * 1000,
+				Interval = (int)new TimeSpan(1, 0, 0, 0, 0).TotalMilliseconds,
 			};
 			timer.Elapsed += this.Timer_Elapsed;
 
@@ -27,7 +27,7 @@ namespace Develeon64.MacroBot {
 
 			DiscordSocketConfig config = new() {
 				AlwaysDownloadUsers = true,
-				MaxWaitBetweenGuildAvailablesBeforeReady = 15 * 1000,
+				MaxWaitBetweenGuildAvailablesBeforeReady = (int)new TimeSpan(0, 0, 15).TotalMilliseconds,
 				MessageCacheSize = 100,
 				GatewayIntents = GatewayIntents.All,
 			};
