@@ -6,6 +6,8 @@ using Develeon64.MacroBot.Logging;
 using Develeon64.MacroBot.Services;
 using Discord.Interactions;
 using Newtonsoft.Json.Linq;
+using Develeon64.MacroBot.Models;
+using System.Timers;
 
 namespace Develeon64.MacroBot {
 	public class Program {
@@ -17,6 +19,15 @@ namespace Develeon64.MacroBot {
 		public static Task Main (string[] args) => new Program().MainAsync(args);
 
 		public async Task MainAsync (string[] args) {
+			System.Timers.Timer timer = new() {
+				AutoReset = true,
+				Enabled = true,
+				Interval = 1 * 60 * 60 * 1000,
+			};
+			timer.Elapsed += this.Timer_Elapsed;
+
+			await DatabaseManager.Initialize("DB\\Database.db3");
+
 			DiscordSocketConfig config = new() {
 				AlwaysDownloadUsers = true,
 				MaxWaitBetweenGuildAvailablesBeforeReady = 15 * 1000,
@@ -38,6 +49,29 @@ namespace Develeon64.MacroBot {
 			await _client.StartAsync();
 
 			await Task.Delay(-1);
+		}
+
+		private async void Timer_Elapsed (object? sender, ElapsedEventArgs e) {
+			DateTime now = DateTime.Now.ToUniversalTime();
+			if (now.Hour == 5) {
+				foreach (Ticket ticket in await DatabaseManager.GetTickets()) {
+					try {
+						int days = (int)now.Subtract(ticket.Modified).TotalDays;
+						if (days > 30) {
+							await DatabaseManager.DeleteTicket(ticket.Channel);
+							var user = await _client.GetUserAsync(ticket.Author);
+							await (await _client.GetChannelAsync(ticket.Channel) as SocketTextChannel).DeleteAsync();
+							await user.SendMessageAsync($"Your ticket on the Macro-Deck Support-Server was automatically closed, because of 30 days of inactivity.\nIf you still need help, please open a new ticket.");
+						}
+						else if (days > 28) {
+							SocketUser user = await _client.GetUserAsync(ticket.Author) as SocketUser;
+							//await user.SendMessageAsync($"Hey there,\njust as a reminder: you have an open ticket on the Macro-Deck Support-Server, but haven't replied for within some days.\nIf you still need help, please reactivate the ticket by replying in <#{ticket.Channel}>, otherwise your ticket will be closed in ***{(30 - days) + 1} days***.");
+							await ((await _client.GetChannelAsync(ticket.Channel)) as SocketTextChannel).SendMessageAsync($"Hey {user?.Mention},\nyour open ticket will be closed in ***{(30 - days) + 1} days*** due to inactivity.\nIs your problem fixed, or do you still need help?");
+						}
+					}
+					catch (Exception ex) { }
+				}
+			}
 		}
 
 		private async Task Ready () {
@@ -65,12 +99,9 @@ namespace Develeon64.MacroBot {
 		}
 
 		private async Task MessageReceived (SocketMessage message) {
-			SocketGuildUser member = message.Author as SocketGuildUser;
-
-			if (member == null) return;
-			if (member.IsBot || member.Roles.Contains(member.Guild.GetRole(globalConfig.getObject("roles").ToObject<JObject>()["moderatorRoleID"].ToObject<ulong>())))
+			if (message.Author is not SocketGuildUser member || member.IsBot || member.Roles.Contains(member.Guild.GetRole(globalConfig.getObject("roles").ToObject<JObject>()["moderatorRoleID"].ToObject<ulong>())))
 				return;
-			ulong[] imageChannels = globalConfig.getObject("channels").ToObject<JObject>()["imageOnlyChannels"].ToObject<ulong[]>();
+			ulong[] imageChannels = globalConfig.getObject("channels").ToObject<JObject>()["imageChannels"].ToObject<ulong[]>();
 
 			if (message.MentionedEveryone) {
 				await message.DeleteAsync();
@@ -95,7 +126,10 @@ namespace Develeon64.MacroBot {
 				catch (HttpException) {
 					Logger.Info(Modules.Bot, $"Message without image from {message.Author.Username}#{message.Author.Discriminator} in {message.Channel.Name} was deleted! DM with their text was not sent.");
 				}
+
 			}
+			if (message.Channel.Name.StartsWith("ticket-"))
+				await DatabaseManager.UpdateTicket(member.Id);
 		}
 
 		private Task Log (LogMessage logMessage) {
@@ -162,12 +196,11 @@ namespace Develeon64.MacroBot {
 			return memberCount;
 		}
 
-		static bool IsDebug()
-		{
+		static bool IsDebug () {
 			#if DEBUG
 				return true;
 			#else
-                return false;
+				return false;
 			#endif
 		}
 	}

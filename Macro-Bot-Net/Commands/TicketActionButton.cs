@@ -1,13 +1,16 @@
-﻿using Discord;
+﻿using Develeon64.MacroBot.Services;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Newtonsoft.Json.Linq;
 
 namespace Develeon64.MacroBot.Commands {
-	public class TicketAction : InteractionModuleBase<SocketInteractionContext> {
+	public class TicketActionButton : InteractionModuleBase<SocketInteractionContext> {
 		[ComponentInteraction("ticket_action|close_ticket")]
 		public async Task CloseTicket () {
 			await (this.Context.Channel as SocketTextChannel).DeleteAsync();
+			await DatabaseManager.DeleteTicket(this.Context.Channel.Id);
+
 			await this.RespondAsync("Your ticket is now closed.", ephemeral: true);
 		}
 
