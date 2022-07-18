@@ -106,7 +106,7 @@ namespace Develeon64.MacroBot {
 		private async Task MessageReceived (SocketMessage message) {
 			if (message.Author is not SocketGuildUser member || member.IsBot || member.Roles.Contains(member.Guild.GetRole(globalConfig.getObject("roles").ToObject<JObject>()["moderatorRoleID"].ToObject<ulong>())))
 				return;
-			ulong[] imageChannels = globalConfig.getObject("channels").ToObject<JObject>()["imageChannels"].ToObject<ulong[]>();
+			ulong[] imageChannels = globalConfig.getObject("channels").ToObject<JObject>()["imageOnlyChannels"].ToObject<ulong[]>();
 
 			if (message.MentionedEveryone) {
 				await message.DeleteAsync();

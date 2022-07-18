@@ -27,4 +27,6 @@
     <Folder Include="Config\" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties config_4global_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+
 </Project>
