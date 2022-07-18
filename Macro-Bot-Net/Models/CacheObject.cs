@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Develeon64.MacroBot.Models {
+﻿namespace Develeon64.MacroBot.Models {
 	public class CacheObject<T> {
 		private T data;
 		private DateTime time;

@@ -5,7 +5,6 @@ using Discord.WebSocket;
 using Develeon64.MacroBot.Logging;
 using Develeon64.MacroBot.Services;
 using Discord.Interactions;
-using Newtonsoft.Json.Linq;
 using Develeon64.MacroBot.Models;
 using System.Timers;
 

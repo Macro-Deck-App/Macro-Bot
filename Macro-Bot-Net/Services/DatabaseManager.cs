@@ -1,10 +1,5 @@
 ﻿using Develeon64.MacroBot.Models;
-using System;
-using System.Collections.Generic;
 using System.Data.SQLite;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Develeon64.MacroBot.Services {
 	public static class DatabaseManager {

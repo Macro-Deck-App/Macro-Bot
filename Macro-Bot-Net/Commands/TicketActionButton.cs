@@ -2,7 +2,6 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Newtonsoft.Json.Linq;
 
 namespace Develeon64.MacroBot.Commands {
 	public class TicketActionButton : InteractionModuleBase<SocketInteractionContext> {

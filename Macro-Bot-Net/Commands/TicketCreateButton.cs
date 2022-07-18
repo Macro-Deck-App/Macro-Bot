@@ -1,10 +1,8 @@
-﻿using Develeon64.MacroBot.Models;
-using Develeon64.MacroBot.Services;
+﻿using Develeon64.MacroBot.Services;
 using Develeon64.MacroBot.Utils;
 using Discord;
 using Discord.Interactions;
 using Discord.Rest;
-using Newtonsoft.Json.Linq;
 
 namespace Develeon64.MacroBot.Commands {
 	public class TicketCreateButton : InteractionModuleBase<SocketInteractionContext> {

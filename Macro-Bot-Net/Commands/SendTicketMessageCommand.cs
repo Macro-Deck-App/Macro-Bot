@@ -2,11 +2,6 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Develeon64.MacroBot.Commands {
 	public class SendTicketMessageCommand : InteractionModuleBase<SocketInteractionContext> {
