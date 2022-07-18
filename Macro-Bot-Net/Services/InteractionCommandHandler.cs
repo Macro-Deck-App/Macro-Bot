@@ -28,10 +28,18 @@ namespace Develeon64.MacroBot.Services
             // Bind InteractionCreated
             _client.InteractionCreated += HandleInteraction;
 
+            _client.ModalSubmitted += ModalSubmitted;
+
             // Handle execution results
             _commands.SlashCommandExecuted += SlashCommandExecuted;
             _commands.ContextCommandExecuted += ContextCommandExecuted;
             _commands.ComponentCommandExecuted += ComponentCommandExecuted;
+        }
+
+        private Task ModalSubmitted(SocketModal arg)
+        {
+            Console.WriteLine(arg);
+            return Task.CompletedTask;
         }
 
         private Task ComponentCommandExecuted(ComponentCommandInfo arg1, IInteractionContext arg2, Discord.Interactions.IResult arg3)
@@ -56,6 +64,7 @@ namespace Develeon64.MacroBot.Services
                 // Build Command Context and run it
                 SocketInteractionContext ctx = new SocketInteractionContext(_client, arg);
                 var test = await _commands.ExecuteCommandAsync(ctx, null);
+                Console.WriteLine(test);
             }
             catch (Exception ex)
             {
