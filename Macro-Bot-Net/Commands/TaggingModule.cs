@@ -26,7 +26,7 @@ namespace Develeon64.MacroBot.Commands
 
             foreach (JValue roleID in permissionRoles)
             {
-                if (roles.Contains()) ;
+                
             }
 
             if (validPermission)
