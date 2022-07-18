@@ -75,11 +75,13 @@ namespace Develeon64.MacroBot.Services {
 			await DatabaseManager.CreateTicket(author, channel, message, DateTimeOffset.Now);
 		}
 
-		public static async Task DeleteTicket (ulong channel) {
+		public static async Task DeleteTicket (ulong id, IdType type) {
+			if (type is not IdType.Channel and not IdType.User) return;
+
 			try {
 				await DatabaseManager.database.OpenAsync();
 				using (SQLiteCommand command = database.CreateCommand()) {
-					command.CommandText = $"DELETE FROM 'Tickets' WHERE 'Tickets'.'Channel' == {channel};";
+					command.CommandText = $"DELETE FROM 'Tickets' WHERE 'Tickets'.'{(type is IdType.User ? "Author" : "Channel")}' == {id};";
 					await command.ExecuteNonQueryAsync();
 				}
 			}
@@ -131,5 +133,19 @@ namespace Develeon64.MacroBot.Services {
 
 			return tickets;
 		}
+
+		public static async Task<Ticket> GetTicket (ulong author) {
+			foreach (Ticket ticket in await DatabaseManager.GetTickets()) {
+				if (ticket.Author == author) return ticket;
+			}
+			return null;
+		}
+	}
+
+	public enum IdType {
+		User,
+		Channel,
+		Guild,
+		Message,
 	}
 }

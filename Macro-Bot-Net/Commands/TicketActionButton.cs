@@ -9,7 +9,7 @@ namespace Develeon64.MacroBot.Commands {
 		[ComponentInteraction("ticket_action|close_ticket")]
 		public async Task CloseTicket () {
 			await (this.Context.Channel as SocketTextChannel).DeleteAsync();
-			await DatabaseManager.DeleteTicket(this.Context.Channel.Id);
+			await DatabaseManager.DeleteTicket(this.Context.Channel.Id, IdType.Channel);
 
 			await this.RespondAsync("Your ticket is now closed.", ephemeral: true);
 		}

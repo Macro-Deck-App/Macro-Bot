@@ -5,7 +5,6 @@ using Discord;
 using Discord.Interactions;
 using Discord.Rest;
 using Newtonsoft.Json.Linq;
-using System.Data.SQLite;
 
 namespace Develeon64.MacroBot.Commands {
 	public class TicketCreateButton : InteractionModuleBase<SocketInteractionContext> {

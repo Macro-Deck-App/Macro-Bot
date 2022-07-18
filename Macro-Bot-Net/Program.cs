@@ -41,6 +41,7 @@ namespace Develeon64.MacroBot {
 			_client.MessageReceived += this.MessageReceived;
 			_client.UserJoined += this.UserJoined;
 			_client.UserLeft += this.UserLeft;
+			_client.ChannelDestroyed += this.ChannelDestroyed;
 
 			commandHandler = new InteractionCommandHandler(_client, new InteractionService(_client.Rest));
 			await commandHandler.InitializeAsync();
@@ -51,6 +52,7 @@ namespace Develeon64.MacroBot {
 			await Task.Delay(-1);
 		}
 
+
 		private async void Timer_Elapsed (object? sender, ElapsedEventArgs e) {
 			DateTime now = DateTime.Now.ToUniversalTime();
 			if (now.Hour == 5) {
@@ -58,7 +60,7 @@ namespace Develeon64.MacroBot {
 					try {
 						int days = (int)now.Subtract(ticket.Modified).TotalDays;
 						if (days > 30) {
-							await DatabaseManager.DeleteTicket(ticket.Channel);
+							await DatabaseManager.DeleteTicket(ticket.Channel, IdType.Channel);
 							var user = await _client.GetUserAsync(ticket.Author);
 							await (await _client.GetChannelAsync(ticket.Channel) as SocketTextChannel).DeleteAsync();
 							await user.SendMessageAsync($"Your ticket on the Macro-Deck Support-Server was automatically closed, because of 30 days of inactivity.\nIf you still need help, please open a new ticket.");
@@ -96,6 +98,9 @@ namespace Develeon64.MacroBot {
 
 		private async Task UserLeft (SocketGuild guild, SocketUser user) {
 			await this.MemberMovement(user as SocketGuildUser, false);
+
+			await (await _client.GetChannelAsync((await DatabaseManager.GetTicket(user.Id)).Channel) as SocketTextChannel).DeleteAsync();
+			await DatabaseManager.DeleteTicket(user.Id, IdType.User);
 		}
 
 		private async Task MessageReceived (SocketMessage message) {
@@ -130,6 +135,12 @@ namespace Develeon64.MacroBot {
 			}
 			if (message.Channel.Name.StartsWith("ticket-"))
 				await DatabaseManager.UpdateTicket(member.Id);
+		}
+
+		private async Task ChannelDestroyed (SocketChannel channel) {
+			if (channel is SocketTextChannel textChannel && textChannel.Name.StartsWith("ticket-")) {
+				await DatabaseManager.DeleteTicket(channel.Id, IdType.Channel);
+			}
 		}
 
 		private Task Log (LogMessage logMessage) {
