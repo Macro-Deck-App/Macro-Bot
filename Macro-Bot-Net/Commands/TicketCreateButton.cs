@@ -4,6 +4,7 @@ using Develeon64.MacroBot.Utils;
 using Discord;
 using Discord.Interactions;
 using Discord.Rest;
+using Discord.WebSocket;
 using Newtonsoft.Json.Linq;
 
 namespace Develeon64.MacroBot.Commands {
@@ -40,6 +41,39 @@ namespace Develeon64.MacroBot.Commands {
 				await DatabaseManager.CreateTicket(this.Context.User.Id, channel.Id, message.Id);
 
 				await this.RespondAsync("Your ticket is created.", ephemeral: true);
+			}
+			else {
+				await this.RespondAsync("There is already an open Ticket! Please use your ticket to get support.", ephemeral: true);
+			}
+		}
+
+		[ComponentInteraction("ticket_create|reason")]
+		public async Task CreateTicket () {
+			if (!await DatabaseManager.TicketExists(this.Context.User.Id)) {
+				switch ((this.Context.Interaction as SocketMessageComponent).Data.Values.ElementAt(0)) {
+					case "no_connect":
+						await this.CreateNoConnectTicket();
+						break;
+					case "plugin_problems":
+						ModalBuilder modal = new("Plugin-Problem", "ticket_create|plugin_problem");
+						List<IMessageComponent> components = new();
+						SelectMenuBuilder menu = new() {
+							CustomId = "ticket_create|plugin_problem|plugin_name",
+							Placeholder = "Please select the Plugin",
+						};
+						menu.AddOption("Twitch-Plugin", "twitch");
+						menu.AddOption("Spotify-Plugin", "spotify");
+						menu.AddOption("OBS-Plugin", "obs");
+						menu.AddOption("Windows Utils-Plugin", "utils");
+						components.Add(menu.Build());
+						modal.AddComponents(components, 0);
+						await this.RespondWithModalAsync(modal.Build());
+						break;
+					case "wrong_expectation":
+					case "setup_assistance":
+					default:
+						break;
+				}
 			}
 			else {
 				await this.RespondAsync("There is already an open Ticket! Please use your ticket to get support.", ephemeral: true);

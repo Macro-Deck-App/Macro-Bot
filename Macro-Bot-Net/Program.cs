@@ -84,7 +84,7 @@ namespace Develeon64.MacroBot {
 			// If not debug, load globally
 			if (IsDebug())
 			{
-				await commandHandler.GetInteractionService().RegisterCommandsToGuildAsync(globalConfig.getObject("testGuildID").ToObject<ulong>(), true);
+				//await commandHandler.GetInteractionService().RegisterCommandsToGuildAsync(globalConfig.getObject("testGuildID").ToObject<ulong>(), true);
 			}
 			else
 			{
