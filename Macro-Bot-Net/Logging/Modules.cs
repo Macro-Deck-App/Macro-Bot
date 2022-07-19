@@ -6,5 +6,6 @@
 		Discord,
 		Bot,
 		Config,
+		Tags,
 	}
 }
