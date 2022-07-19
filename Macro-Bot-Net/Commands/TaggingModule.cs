@@ -18,6 +18,9 @@ namespace Develeon64.MacroBot.Commands.Tagging
     {
 
         public static List<UserTagAssignable> createTagAssignments = new();
+        public static List<UserTagAssignable> deleteTagAssignments = new();
+        public static List<UserTagAssignable> editTagAssignments = new();
+
         [SlashCommand("create", "Create a new tag")]
         public async Task Create([Summary(description: "Name of the tag")] string name)
         {
@@ -43,10 +46,57 @@ namespace Develeon64.MacroBot.Commands.Tagging
             await RespondWithModalAsync<TagCreateModal>("tag_create_modal");
         }
 
-        [SlashCommand("delete", "Delete an existing tag")]
-        public async Task Delete()
+        [AutocompleteCommand("tag", "delete")]
+        public async Task AutoCompleteDelete()
         {
-            await RespondAsync("WIP");
+            string userInput = (Context.Interaction as SocketAutocompleteInteraction).Data.Current.Value.ToString();
+
+            List<AutocompleteResult> resultList = new();
+            foreach (Tag tag in await DatabaseManager.GetTagsForGuild(Context.Guild.Id))
+            {
+                resultList.Add(new AutocompleteResult(tag.Name, tag.Name));
+            }
+            IEnumerable<AutocompleteResult> results = resultList.AsEnumerable().Where(x => x.Name.StartsWith(userInput, StringComparison.InvariantCultureIgnoreCase));
+
+            await (Context.Interaction as SocketAutocompleteInteraction).RespondAsync(results.Take(25));
+        }
+        [SlashCommand("delete", "Delete an existing tag")]
+        public async Task Delete([Summary("tag"), Autocomplete] string tagName)
+        {
+            Tag tag = await DatabaseManager.GetTag(tagName, Context.Guild.Id);
+
+            if (tag == null)
+            {
+                EmbedBuilder embedBuilder = new EmbedBuilder()
+                {
+                    Title = "Tag not found",
+                    Description = $"The tag `{tagName}` could not be found in the database!"
+                };
+                embedBuilder.WithColor(new Color(255, 50, 50));
+                await RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                return;
+            }
+
+            UserTagAssignable? assignable = deleteTagAssignments.Find(x => x.guildId == Context.Guild.Id && x.userId == Context.User.Id);
+            if (assignable != null)
+            {
+                deleteTagAssignments.Remove(assignable);
+            }
+            deleteTagAssignments.Add(new UserTagAssignable(Context.Guild.Id, Context.User.Id, tagName));
+
+
+            EmbedBuilder embed = new EmbedBuilder()
+            {
+                Title = "Confirm Tag Deletion",
+                Description = $"Do you really want to delete following tag?\n\n**{tag.Name}**\n{tag.Content}",
+            };
+            embed.WithColor(new Color(255, 50, 50));
+
+            ComponentBuilder componentBuilder = new ComponentBuilder()
+                .WithButton("Delete Tag", "tag-delete-confirm", ButtonStyle.Success)
+                .WithButton("Cancel Deletion", "tag-delete-cancel", ButtonStyle.Danger);
+
+            await RespondAsync(embed: embed.Build(), components: componentBuilder.Build());
         }
 
         [SlashCommand("edit", "Delete an existing tag")]
@@ -55,7 +105,6 @@ namespace Develeon64.MacroBot.Commands.Tagging
             await RespondAsync("WIP");
         }
 
-        private static List<Tag> tagList = new();
         [AutocompleteCommand("tag", "view")]
         public async Task AutoCompleteView()
         {
@@ -83,7 +132,7 @@ namespace Develeon64.MacroBot.Commands.Tagging
                     Description = $"The tag `{tagName}` could not be found in the database!"
                 };
                 embedBuilder.WithColor(new Color(255, 50, 50));
-                await RespondAsync(embed: embedBuilder.Build());
+                await RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
                 return;
             }
 
@@ -163,6 +212,41 @@ namespace Develeon64.MacroBot.Commands.Tagging
                 Logger.Warning(Modules.Tags, $"Could not find Tag name information for user {Context.User.Username} ({Context.User.Id}) in guild {Context.Guild.Name} ({Context.Guild.Id})!");
                 await RespondAsync("An internal error occured while getting Tag Name information, please try again.", ephemeral: true);
             }
+        }
+
+        [ComponentInteraction("tag-delete-confirm")]
+        public async Task TagDeleteConfirm()
+        {
+            UserTagAssignable? assignable = TaggingCommandsModule.deleteTagAssignments.Find(x => x.guildId == Context.Guild.Id && x.userId == Context.User.Id);
+            if (assignable != null)
+            {
+                await DatabaseManager.DeleteTag(assignable.tagName);
+
+                await (Context.Interaction as SocketMessageComponent).Message.ModifyAsync(msg => msg.Components = new ComponentBuilder().Build());
+                await RespondAsync($"Tag `{assignable.tagName}` successfully deleted");
+
+                TaggingCommandsModule.deleteTagAssignments.Remove(assignable);
+            } else
+            {
+                Logger.Warning(Modules.Tags, $"Could not find Tag name information for user {Context.User.Username} ({Context.User.Id}) in guild {Context.Guild.Name} ({Context.Guild.Id})!");
+                await RespondAsync("An internal error occured while getting Tag Name information, please try again.", ephemeral: true);
+            }
+        }
+
+        [ComponentInteraction("tag-delete-cancel")]
+        public async Task TagDeleteCancel()
+        {
+            UserTagAssignable? assignable = TaggingCommandsModule.deleteTagAssignments.Find(x => x.guildId == Context.Guild.Id && x.userId == Context.User.Id);
+            if (assignable != null)
+            {
+                TaggingCommandsModule.deleteTagAssignments.Remove(assignable);
+            }
+            else {
+                Logger.Warning(Modules.Tags, $"Could not find Tag name information for user {Context.User.Username} ({Context.User.Id}) in guild {Context.Guild.Name} ({Context.Guild.Id})!");
+            }
+
+            await (Context.Interaction as SocketMessageComponent).Message.ModifyAsync(msg => msg.Components = new ComponentBuilder().Build());
+            await RespondAsync($"Tag deletion cancelled!");
         }
     }
 
