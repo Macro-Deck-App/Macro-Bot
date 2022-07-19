@@ -1,4 +1,5 @@
 ﻿using Develeon64.MacroBot.Logging;
+using Develeon64.MacroBot.Models;
 using Develeon64.MacroBot.Services;
 using Discord;
 using Discord.Interactions;
@@ -38,11 +39,6 @@ namespace Develeon64.MacroBot.Commands.Tagging
             createTagAssignments.Add(new UserTagAssignable(Context.Guild.Id, Context.User.Id, name));
 
             // Send Modal Prompt
-            ModalBuilder modal = new ModalBuilder()
-                .WithTitle("Create Tag")
-                .WithCustomId("create_tag_modal")
-                .AddTextInput("Tag Name", "tag_name", TextInputStyle.Short, "Enter tag name", required: true)
-                .AddTextInput("Tag Content", "tag_content", TextInputStyle.Paragraph, "Enter tag content here", required: true);
 
             await RespondWithModalAsync<TagCreateModal>("tag_create_modal");
         }
@@ -59,14 +55,57 @@ namespace Develeon64.MacroBot.Commands.Tagging
             await RespondAsync("WIP");
         }
 
-        [SlashCommand("view", "View a tag")]
-        public async Task View()
+        private static List<Tag> tagList = new();
+        [AutocompleteCommand("tag", "view")]
+        public async Task AutoCompleteView()
         {
+            string userInput = (Context.Interaction as SocketAutocompleteInteraction).Data.Current.Value.ToString();
+
+            List<AutocompleteResult> resultList = new();
+            foreach (Tag tag in await DatabaseManager.GetTagsForGuild(Context.Guild.Id))
+            {
+                resultList.Add(new AutocompleteResult(tag.Name, tag.Name));
+            }
+            IEnumerable<AutocompleteResult> results = resultList.AsEnumerable().Where(x => x.Name.StartsWith(userInput, StringComparison.InvariantCultureIgnoreCase));
+            
+            await (Context.Interaction as SocketAutocompleteInteraction).RespondAsync(results.Take(25));
+        }
+        [SlashCommand("view", "View a tag")]
+        public async Task View([Summary("tag"), Autocomplete] string tagName)
+        {
+            Tag tag = await DatabaseManager.GetTag(tagName, Context.Guild.Id);
+            
+            if (tag == null)
+            {
+                EmbedBuilder embedBuilder = new EmbedBuilder()
+                {
+                    Title = "Tag not found",
+                    Description = $"The tag `{tagName}` could not be found in the database!"
+                };
+                embedBuilder.WithColor(new Color(255, 50, 50));
+                await RespondAsync(embed: embedBuilder.Build());
+                return;
+            }
+
+
             EmbedBuilder embed = new EmbedBuilder()
             {
-                Title = ""
+                Title = tagName,
+                Description = tag.Content,
             };
+            SocketGuildUser author = Context.Guild.GetUser(tag.Author);
+            if (author != null)
+            {
+                embed.WithFooter($"Tag written by {author.DisplayName}",author.GetAvatarUrl());
+            } else
+            {
+                embed.WithFooter($"Tag written by ${tag.Author}");
+            }
+
+            await RespondAsync(embed: embed.Build());
         }
+
+
 
         private static Boolean checkPermissions(ulong[] permissions, SocketGuildUser user)
         {
@@ -106,6 +145,8 @@ namespace Develeon64.MacroBot.Commands.Tagging
             UserTagAssignable? assignable = TaggingCommandsModule.createTagAssignments.Find(x => x.guildId == Context.Guild.Id && x.userId == Context.User.Id);
             if (assignable != null)
             {
+                await DatabaseManager.CreateTag(assignable.tagName, modal.TagContent, assignable.userId, assignable.guildId);
+
                 EmbedBuilder embedBuilder = new EmbedBuilder()
                 {
                     Title = "Tag Created",
