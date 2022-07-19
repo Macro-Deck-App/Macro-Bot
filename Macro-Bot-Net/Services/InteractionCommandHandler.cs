@@ -51,6 +51,7 @@ namespace Develeon64.MacroBot.Services
                 // Build Command Context and run it
                 SocketInteractionContext ctx = new SocketInteractionContext(_client, arg);
                 var test = await _commands.ExecuteCommandAsync(ctx, null);
+                //Console.WriteLine(test);
             }
             catch (Exception ex)
             {

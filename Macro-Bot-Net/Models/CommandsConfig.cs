@@ -8,7 +8,6 @@ namespace Develeon64.MacroBot.Models {
 	public class TaggingConfig
     {
 		public ulong[] PermissionManageTags { get; set; }
-		public JObject tags { get; set; }
 
 	}
 }
