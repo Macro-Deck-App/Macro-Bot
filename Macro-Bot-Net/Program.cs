@@ -5,21 +5,29 @@ using Discord.WebSocket;
 using Develeon64.MacroBot.Logging;
 using Develeon64.MacroBot.Services;
 using Discord.Interactions;
-using Newtonsoft.Json.Linq;
+using Develeon64.MacroBot.Models;
+using System.Timers;
 
 namespace Develeon64.MacroBot {
 	public class Program {
 		private static InteractionCommandHandler commandHandler;
 		private static DiscordSocketClient _client;
 
-		public static ConfigManager globalConfig = new ConfigManager("global");
-
 		public static Task Main (string[] args) => new Program().MainAsync(args);
 
 		public async Task MainAsync (string[] args) {
+			System.Timers.Timer timer = new() {
+				AutoReset = true,
+				Enabled = true,
+				Interval = (int)new TimeSpan(1, 0, 0, 0, 0).TotalMilliseconds,
+			};
+			timer.Elapsed += this.Timer_Elapsed;
+
+			await DatabaseManager.Initialize("DB\\Database.db3");
+
 			DiscordSocketConfig config = new() {
 				AlwaysDownloadUsers = true,
-				MaxWaitBetweenGuildAvailablesBeforeReady = 15 * 1000,
+				MaxWaitBetweenGuildAvailablesBeforeReady = (int)new TimeSpan(0, 0, 15).TotalMilliseconds,
 				MessageCacheSize = 100,
 				GatewayIntents = GatewayIntents.All,
 			};
@@ -30,14 +38,39 @@ namespace Develeon64.MacroBot {
 			_client.MessageReceived += this.MessageReceived;
 			_client.UserJoined += this.UserJoined;
 			_client.UserLeft += this.UserLeft;
+			_client.ChannelDestroyed += this.ChannelDestroyed;
 
 			commandHandler = new InteractionCommandHandler(_client, new InteractionService(_client.Rest));
 			await commandHandler.InitializeAsync();
 
-			await _client.LoginAsync(TokenType.Bot, globalConfig.getObject("token").ToString());
+			await _client.LoginAsync(TokenType.Bot, ConfigManager.GlobalConfig.Token);
 			await _client.StartAsync();
 
 			await Task.Delay(-1);
+		}
+
+
+		private async void Timer_Elapsed (object? sender, ElapsedEventArgs e) {
+			DateTime now = DateTime.Now.ToUniversalTime();
+			if (now.Hour == 5) {
+				foreach (Ticket ticket in await DatabaseManager.GetTickets()) {
+					try {
+						int days = (int)now.Subtract(ticket.Modified).TotalDays;
+						if (days > 30) {
+							await DatabaseManager.DeleteTicket(ticket.Channel, IdType.Channel);
+							var user = await _client.GetUserAsync(ticket.Author);
+							await (await _client.GetChannelAsync(ticket.Channel) as SocketTextChannel).DeleteAsync();
+							await user.SendMessageAsync($"Your ticket on the Macro-Deck Support-Server was automatically closed, because of 30 days of inactivity.\nIf you still need help, please open a new ticket.");
+						}
+						else if (days > 28) {
+							SocketUser user = await _client.GetUserAsync(ticket.Author) as SocketUser;
+							//await user.SendMessageAsync($"Hey there,\njust as a reminder: you have an open ticket on the Macro-Deck Support-Server, but haven't replied for within some days.\nIf you still need help, please reactivate the ticket by replying in <#{ticket.Channel}>, otherwise your ticket will be closed in ***{(30 - days) + 1} days***.");
+							await ((await _client.GetChannelAsync(ticket.Channel)) as SocketTextChannel).SendMessageAsync($"Hey {user?.Mention},\nyour open ticket will be closed in ***{(30 - days) + 1} days*** due to inactivity.\nIs your problem fixed, or do you still need help?");
+						}
+					}
+					catch (Exception ex) { }
+				}
+			}
 		}
 
 		private async Task Ready () {
@@ -48,7 +81,7 @@ namespace Develeon64.MacroBot {
 			// If not debug, load globally
 			if (IsDebug())
 			{
-				await commandHandler.GetInteractionService().RegisterCommandsToGuildAsync(globalConfig.getObject("testGuildID").ToObject<ulong>(), true);
+				await commandHandler.GetInteractionService().RegisterCommandsToGuildAsync(ConfigManager.GlobalConfig.TestGuildId, true);
 			}
 			else
 			{
@@ -62,15 +95,15 @@ namespace Develeon64.MacroBot {
 
 		private async Task UserLeft (SocketGuild guild, SocketUser user) {
 			await this.MemberMovement(user as SocketGuildUser, false);
+
+			await (await _client.GetChannelAsync((await DatabaseManager.GetTicket(user.Id)).Channel) as SocketTextChannel).DeleteAsync();
+			await DatabaseManager.DeleteTicket(user.Id, IdType.User);
 		}
 
 		private async Task MessageReceived (SocketMessage message) {
-			SocketGuildUser member = message.Author as SocketGuildUser;
-
-			if (member == null) return;
-			if (member.IsBot || member.Roles.Contains(member.Guild.GetRole(globalConfig.getObject("roles").ToObject<JObject>()["moderatorRoleID"].ToObject<ulong>())))
+			if (message.Author is not SocketGuildUser member || member.IsBot || member.Roles.Contains(member.Guild.GetRole(ConfigManager.GlobalConfig.Roles.ModeratorRoleId)))
 				return;
-			ulong[] imageChannels = globalConfig.getObject("channels").ToObject<JObject>()["imageOnlyChannels"].ToObject<ulong[]>();
+			ulong[] imageChannels = ConfigManager.GlobalConfig.Channels.ImageOnlyChannels;
 
 			if (message.MentionedEveryone) {
 				await message.DeleteAsync();
@@ -95,6 +128,15 @@ namespace Develeon64.MacroBot {
 				catch (HttpException) {
 					Logger.Info(Modules.Bot, $"Message without image from {message.Author.Username}#{message.Author.Discriminator} in {message.Channel.Name} was deleted! DM with their text was not sent.");
 				}
+
+			}
+			if (message.Channel.Name.StartsWith("ticket-"))
+				await DatabaseManager.UpdateTicket(member.Id);
+		}
+
+		private async Task ChannelDestroyed (SocketChannel channel) {
+			if (channel is SocketTextChannel textChannel && textChannel.Name.StartsWith("ticket-")) {
+				await DatabaseManager.DeleteTicket(channel.Id, IdType.Channel);
 			}
 		}
 
@@ -138,11 +180,11 @@ namespace Develeon64.MacroBot {
 			embed.AddField("__Joined__", $"<t:{member.JoinedAt?.ToUnixTimeSeconds()}:R>", true);
 			embed.AddField("__Created__", $"<t:{member.CreatedAt.ToUnixTimeSeconds()}:R>", true);
 
-			await (member.Guild.GetChannel(globalConfig.getObject("channels").ToObject<JObject>()["memberScreeningChannelID"].ToObject<ulong>()) as SocketTextChannel).SendMessageAsync(embed: embed.Build());
+			await (member.Guild.GetChannel(ConfigManager.GlobalConfig.Channels.MemberScreeningChannelId) as SocketTextChannel).SendMessageAsync(embed: embed.Build());
 		}
 
 		private async Task<int> UpdateMemberCount () {
-			SocketGuild guild = _client.GetGuild(globalConfig.getObject("testGuildID").ToObject<ulong>());
+			SocketGuild guild = _client.GetGuild(ConfigManager.GlobalConfig.TestGuildId);
 			int memberCount = 0;
 			List<string> memberNames = new();
 			foreach (SocketGuildUser member in guild.Users) {
@@ -152,7 +194,7 @@ namespace Develeon64.MacroBot {
 				}
 			}
 
-			SocketGuildChannel channel = guild.GetChannel(globalConfig.getObject("channels").ToObject<JObject>()["memberScreeningChannelID"].ToObject<ulong>());
+			SocketGuildChannel channel = guild.GetChannel(ConfigManager.GlobalConfig.Channels.MemberScreeningChannelId);
 			string channelName = String.Empty;
 			string[] nameParts = channel.Name.Split("_");
 			for (int i = 0; i < nameParts.Length - 1; i++)
@@ -162,12 +204,11 @@ namespace Develeon64.MacroBot {
 			return memberCount;
 		}
 
-		static bool IsDebug()
-		{
+		static bool IsDebug () {
 			#if DEBUG
 				return true;
 			#else
-                return false;
+				return false;
 			#endif
 		}
 	}

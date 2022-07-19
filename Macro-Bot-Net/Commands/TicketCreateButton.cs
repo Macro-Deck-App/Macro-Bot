@@ -1,32 +1,23 @@
-﻿using Develeon64.MacroBot.Models;
+﻿using Develeon64.MacroBot.Services;
 using Develeon64.MacroBot.Utils;
 using Discord;
 using Discord.Interactions;
 using Discord.Rest;
-using Newtonsoft.Json.Linq;
-using SQLite;
 
 namespace Develeon64.MacroBot.Commands {
 	public class TicketCreateButton : InteractionModuleBase<SocketInteractionContext> {
 		[ComponentInteraction("ticket_create|no_connect")]
 		public async Task CreateNoConnectTicket () {
-			SQLiteAsyncConnection db = new("DB/Database.sqlite");
-			try {
-				await db.CreateTableAsync<Tickets>();
-
-				Tickets ticket = new() {
-					Author = this.Context.User.Id.ToString(),
-					//Channel = channel.Id.ToString(),
-					//Message = message.Id.ToString(),
-					Created = DateTime.Now,
-					Modified = DateTime.Now,
-				};
-				await db.InsertAsync(ticket);
-
-				RestTextChannel channel = await this.Context.Guild.CreateTextChannelAsync($"ticket-{this.Context.User.Username}", (c) => { c.CategoryId = Program.globalConfig.getObject("channels").ToObject<JObject>()["ticketCategoryID"].ToObject<ulong>(); });
+			if (!await DatabaseManager.TicketExists(this.Context.User.Id)) {
+				RestTextChannel channel = await this.Context.Guild.CreateTextChannelAsync($"ticket-{this.Context.User.Username}", (c) => {
+					c.CategoryId = ConfigManager.GlobalConfig.Channels.TicketCategoryId;
+					List<Overwrite> overwrites = this.Context.Guild.GetCategoryChannel((ulong)c.CategoryId.Value).PermissionOverwrites.ToList();
+					overwrites.Add(new Overwrite(this.Context.User.Id, PermissionTarget.User, new OverwritePermissions(viewChannel: PermValue.Allow)));
+					c.PermissionOverwrites = overwrites;
+				});
 				DiscordEmbedBuilder embed = new() {
 					Title = "Connection issues",
-					Description = $"We are sorry, that you have problems connecting your device to the server!\nPlease make sure you read the <#{Program.globalConfig.getObject("channels").ToObject<JObject>()["faqChannelID"].ToObject<ulong>()}>.",
+					Description = $"We are sorry, that you have problems connecting your device to the server!\nPlease make sure you read the <#{ConfigManager.GlobalConfig.Channels.FaqChannelId}>.",
 				};
 				embed.AddField("Step 1", "Do step 1", true);
 				embed.AddField("Step 2", "Do step 2", true);
@@ -44,21 +35,13 @@ namespace Develeon64.MacroBot.Commands {
 				buttons.AddRow(row);
 
 				RestMessage message = await channel.SendMessageAsync($"{this.Context.User.Mention}, your Ticket has been created: *Connection Issues *", embed: embed.Build(), components: buttons.Build());
-				ticket.Channel = channel.Id.ToString();
-				ticket.Message = message.Id.ToString();
-				await db.UpdateAsync(ticket);
-				await this.RespondAsync("Your ticket was created.", ephemeral: true);
-			}
-			catch (SQLiteException ex) {
-				Console.WriteLine(ex.Message);
-				if (ex.Message.ToLower() == "constraint") {
-					await this.Context.Channel.SendMessageAsync("NO!");
-				}
-			}
-			finally {
-				//db.GetConnection().Close();
-			}
+				await DatabaseManager.CreateTicket(this.Context.User.Id, channel.Id, message.Id);
 
+				await this.RespondAsync("Your ticket is created.", ephemeral: true);
+			}
+			else {
+				await this.RespondAsync("There is already an open Ticket! Please use your ticket to get support.", ephemeral: true);
+			}
 		}
 	}
 }
