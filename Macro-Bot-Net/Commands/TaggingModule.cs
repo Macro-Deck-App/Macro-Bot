@@ -1,4 +1,4 @@
-﻿using Develeon64.MacroBot.Services;
+﻿sing Develeon64.MacroBot.Services;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
