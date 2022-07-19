@@ -9,11 +9,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Config\commands.json" />
     <None Remove="Config\global.json" />
     <None Remove="Config\tagging.json" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Config\commands.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Config\global.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

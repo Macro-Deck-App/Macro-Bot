@@ -12,5 +12,18 @@ namespace Develeon64.MacroBot.Services {
 				return config;
 			}
 		}
+
+		public static CommandsConfig CommandsConfig
+		{
+			get
+			{
+				if (CacheManager.Get<CommandsConfig>("commandsConfig") is not CommandsConfig config)
+				{
+					config = JsonConvert.DeserializeObject<CommandsConfig>(File.ReadAllText("Config/commands.json"));
+					CacheManager.Set("commandsConfig", new CacheObject<CommandsConfig>(config));
+				}
+				return config;
+			}
+		}
 	}
 }
