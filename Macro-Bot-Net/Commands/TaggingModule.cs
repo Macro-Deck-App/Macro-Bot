@@ -99,10 +99,48 @@ namespace Develeon64.MacroBot.Commands.Tagging
             await RespondAsync(embed: embed.Build(), components: componentBuilder.Build());
         }
 
-        [SlashCommand("edit", "Delete an existing tag")]
-        public async Task Edit()
+
+        [AutocompleteCommand("tag", "edit")]
+        public async Task AutoCompleteEdit()
         {
-            await RespondAsync("WIP");
+            string userInput = (Context.Interaction as SocketAutocompleteInteraction).Data.Current.Value.ToString();
+
+            List<AutocompleteResult> resultList = new();
+            foreach (Tag tag in await DatabaseManager.GetTagsForGuild(Context.Guild.Id))
+            {
+                resultList.Add(new AutocompleteResult(tag.Name, tag.Name));
+            }
+            IEnumerable<AutocompleteResult> results = resultList.AsEnumerable().Where(x => x.Name.StartsWith(userInput, StringComparison.InvariantCultureIgnoreCase));
+
+            await (Context.Interaction as SocketAutocompleteInteraction).RespondAsync(results.Take(25));
+        }
+        [SlashCommand("edit", "Delete an existing tag")]
+        public async Task Edit([Summary("tag"), Autocomplete] string tagName)
+        {
+            Tag tag = await DatabaseManager.GetTag(tagName, Context.Guild.Id);
+
+            if (tag == null)
+            {
+                EmbedBuilder embedBuilder = new EmbedBuilder()
+                {
+                    Title = "Tag not found",
+                    Description = $"The tag `{tagName}` could not be found in the database!"
+                };
+                embedBuilder.WithColor(new Color(255, 50, 50));
+                await RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                return;
+            }
+
+            UserTagAssignable? assignable = editTagAssignments.Find(x => x.guildId == Context.Guild.Id && x.userId == Context.User.Id);
+            if (assignable != null)
+            {
+                editTagAssignments.Remove(assignable);
+            }
+            editTagAssignments.Add(new UserTagAssignable(Context.Guild.Id, Context.User.Id, tagName));
+
+            // Send Modal Prompt
+
+            await RespondWithModalAsync<TagEditModal>("tag_edit_modal");
         }
 
         [AutocompleteCommand("tag", "view")]
@@ -199,15 +237,40 @@ namespace Develeon64.MacroBot.Commands.Tagging
                 EmbedBuilder embedBuilder = new EmbedBuilder()
                 {
                     Title = "Tag Created",
-                    Description = $"Successfully created tag `{assignable.tagName}`"
+                    Description = $"Successfully created tag `{assignable.tagName}`\n\n**Tag Content**\n{modal.TagContent}"
                 };
-                embedBuilder.AddField("Tag Content", modal.TagContent);
                 embedBuilder.WithColor(new Color(50, 255, 50));
 
                 TaggingCommandsModule.createTagAssignments.Remove(assignable);
 
                 await RespondAsync(embed: embedBuilder.Build());
             } else
+            {
+                Logger.Warning(Modules.Tags, $"Could not find Tag name information for user {Context.User.Username} ({Context.User.Id}) in guild {Context.Guild.Name} ({Context.Guild.Id})!");
+                await RespondAsync("An internal error occured while getting Tag Name information, please try again.", ephemeral: true);
+            }
+        }
+
+        [ModalInteraction("tag_edit_modal")]
+        public async Task HandleEditModal(TagEditModal modal)
+        {
+            UserTagAssignable? assignable = TaggingCommandsModule.editTagAssignments.Find(x => x.guildId == Context.Guild.Id && x.userId == Context.User.Id);
+            if (assignable != null)
+            {
+                await DatabaseManager.UpdateTag(assignable.tagName, modal.TagContent, assignable.userId,assignable.guildId);
+
+                EmbedBuilder embedBuilder = new EmbedBuilder()
+                {
+                    Title = "Tag Created",
+                    Description = $"Edited tag `{assignable.tagName}`\n\n**Tag Content**\n{modal.TagContent}"
+                };
+                embedBuilder.WithColor(new Color(50, 255, 50));
+
+                TaggingCommandsModule.editTagAssignments.Remove(assignable);
+
+                await RespondAsync(embed: embedBuilder.Build());
+            }
+            else
             {
                 Logger.Warning(Modules.Tags, $"Could not find Tag name information for user {Context.User.Username} ({Context.User.Id}) in guild {Context.Guild.Name} ({Context.Guild.Id})!");
                 await RespondAsync("An internal error occured while getting Tag Name information, please try again.", ephemeral: true);
