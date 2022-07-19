@@ -14,11 +14,11 @@ namespace Develeon64.MacroBot.Commands
     [Group("tag", "Tag system")]
     public class TaggingModule : InteractionModuleBase<SocketInteractionContext>
     {
-        public static ConfigManager config = new ConfigManager("tagging");
 
         [SlashCommand("create","Create a new tag")]
         public async Task Create([Summary(description: "Name of the tag")] string name)
         {
+            /*
             SocketGuildUser guildUser = Context.Guild.GetUser(Context.User.Id);
             String permisisonGroup = "PermissionManageTags";
             if (!checkPermissions(permisisonGroup, guildUser)) {
@@ -35,6 +35,7 @@ namespace Develeon64.MacroBot.Commands
                 await RespondAsync(embed: errorEmbed.Build(),ephemeral: true);
                 return;
             }
+            */
 
             ModalBuilder modal = new ModalBuilder()
                 .WithTitle("Create Tag")
@@ -65,6 +66,7 @@ namespace Develeon64.MacroBot.Commands
 
         private static Boolean checkPermissions(string permissionGroup,SocketGuildUser user)
         {
+            /*
             JArray manageTagsPermissions = config.getObject(permissionGroup).ToObject<JArray>();
             List<SocketRole> userRoles = user.Roles.ToList<SocketRole>();
             
@@ -76,6 +78,8 @@ namespace Develeon64.MacroBot.Commands
                 }
             }
             return false;
+            */
+            return true;
         }
 
         [ModalInteraction("create_tag_modal")]
