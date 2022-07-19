@@ -249,6 +249,14 @@ namespace Develeon64.MacroBot.Services {
 
 			return tags;
 		}
+		public static async Task<Tag> GetTag(string name, ulong guild)
+		{
+			foreach (Tag tag in await DatabaseManager.GetTagsForGuild(guild))
+			{
+				if (tag.Name == name) return tag;
+			}
+			return null;
+		}
 	}
 
 	public enum IdType {
