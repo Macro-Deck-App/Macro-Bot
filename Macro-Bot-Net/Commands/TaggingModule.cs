@@ -186,14 +186,25 @@ namespace Develeon64.MacroBot.Commands.Tagging
                 Title = tagName,
                 Description = tag.Content,
             };
+
+            String footerText = "";
+            String footerAvatarUrl = "";
+
             SocketGuildUser author = Context.Guild.GetUser(tag.Author);
             if (author != null)
             {
-                embed.WithFooter($"Tag created by {author.DisplayName}",author.GetAvatarUrl());
+                footerText += $"by { author.DisplayName}";
+                footerAvatarUrl = author.GetAvatarUrl();
             } else
             {
-                embed.WithFooter($"Tag created by ${tag.Author}");
+                footerText += $"by ${tag.Author}";
             }
+
+            footerText += " | Last Edited";
+            embed.WithTimestamp((DateTimeOffset)tag.LastEdited);
+
+            embed.WithFooter(footerText, footerAvatarUrl);
+            
 
             await RespondAsync(embed: embed.Build());
         }
@@ -271,15 +282,24 @@ namespace Develeon64.MacroBot.Commands.Tagging
                 Title = tagName + " | Raw Content",
                 Description = tag.Content.Replace("<", "\\<").Replace("*", "\\*").Replace("_", "\\_").Replace("`", "\\`").Replace(":", "\\:"),
             };
+            String footerText = "";
+            String footerAvatarUrl = "";
+
             SocketGuildUser author = Context.Guild.GetUser(tag.Author);
             if (author != null)
             {
-                embed.WithFooter($"Tag created by {author.DisplayName}", author.GetAvatarUrl());
+                footerText += $"by {author.DisplayName}";
+                footerAvatarUrl = author.GetAvatarUrl();
             }
             else
             {
-                embed.WithFooter($"Tag created by ${tag.Author}");
+                footerText += $"by ${tag.Author}";
             }
+
+            footerText += " | Last Edited";
+            embed.WithTimestamp((DateTimeOffset)tag.LastEdited);
+
+            embed.WithFooter(footerText, footerAvatarUrl);
 
             await RespondAsync(embed: embed.Build());
         }
@@ -361,11 +381,11 @@ namespace Develeon64.MacroBot.Commands.Tagging
             UserTagAssignable? assignable = TaggingCommandsModule.editTagAssignments.Find(x => x.guildId == Context.Guild.Id && x.userId == Context.User.Id);
             if (assignable != null)
             {
-                await DatabaseManager.UpdateTag(assignable.tagName, modal.TagContent, assignable.guildId);
+                await DatabaseManager.UpdateTag(assignable.tagName, modal.TagContent, assignable.guildId, assignable.userId);
 
                 EmbedBuilder embedBuilder = new EmbedBuilder()
                 {
-                    Title = "Tag Created",
+                    Title = "Tag Edited",
                     Description = $"Edited tag `{assignable.tagName}`\n\n**Tag Content**\n{modal.TagContent}"
                 };
                 embedBuilder.WithColor(new Color(50, 255, 50));
