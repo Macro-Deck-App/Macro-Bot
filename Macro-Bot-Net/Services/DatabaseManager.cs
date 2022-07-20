@@ -28,6 +28,15 @@ namespace Develeon64.MacroBot.Services {
 					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Tags' ('Name' VARCHAR, 'Content' VARCHAR, 'Author' INTEGER, 'Guild' INTEGER, 'LastEditTimestamp' INTEGER, PRIMARY KEY('Name'));";
 					await command.ExecuteNonQueryAsync();
 				}
+
+				using (SQLiteCommand command = database.CreateCommand()) {
+					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Devs' ('ID' INTEGER, 'DiscordName' TEXT NULL, 'DevName' TEXT, PRIMARY KEY('ID'));";
+					await command.ExecuteNonQueryAsync();
+				}
+				using (SQLiteCommand command = database.CreateCommand()) {
+					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Plugins' ('ID' INTEGER AUTO_INCREMENT, 'Name' TEXT UNIQUE, 'Author' INTEGER, PRIMARY KEY('ID'), FOREIGN KEY ('Author') REFERENCES 'Devs'('ID') ON DELETE SET NULL);";
+					await command.ExecuteNonQueryAsync();
+				}
 			}
 			catch (SQLiteException ex) { }
 			catch (Exception ex) { }
@@ -142,8 +151,6 @@ namespace Develeon64.MacroBot.Services {
 			return null;
 		}
 
-
-
 		public static async Task<bool> TagExists(string name,ulong guildId)
 		{
 			bool exists = false;
@@ -164,6 +171,7 @@ namespace Develeon64.MacroBot.Services {
 			}
 			return exists;
 		}
+
 		public static async Task CreateTag(string name, string content, ulong author, ulong guildId)
 		{
 			try
@@ -182,6 +190,7 @@ namespace Develeon64.MacroBot.Services {
 				await database.CloseAsync();
 			}
 		}
+
 		public static async Task UpdateTag(string name, string content, ulong guildId, ulong editor)
 		{
 			try
@@ -200,6 +209,7 @@ namespace Develeon64.MacroBot.Services {
 				await database.CloseAsync();
 			}
 		}
+
 		public static async Task DeleteTag(string name)
 		{
 			try
@@ -218,6 +228,7 @@ namespace Develeon64.MacroBot.Services {
 				await database.CloseAsync();
 			}
 		}
+
 		public static async Task<List<Tag>> GetTagsForGuild(ulong guildId)
 		{
 			List<Tag> tags = new();
@@ -241,6 +252,19 @@ namespace Develeon64.MacroBot.Services {
 					}
 				}
 			}
+		}
+
+		public static async Task<ulong> GetPluginAuthorId (string name) {
+			ulong id = 0;
+			try {
+				await DatabaseManager.database.OpenAsync();
+				using (SQLiteCommand command = database.CreateCommand()) {
+					command.CommandText = $"SELECT Author FROM 'Plugins' WHERE Name LIKE '{name}';";
+					var reader = await command.ExecuteReaderAsync();
+					reader.Read();
+					id = (ulong)reader.GetInt64(0);
+				}
+			}
 			catch (SQLiteException ex) { }
 			catch (Exception ex) { }
 			finally
@@ -250,6 +274,7 @@ namespace Develeon64.MacroBot.Services {
 
 			return tags;
 		}
+
 		public static async Task<List<Tag>> GetTagsFromUser(ulong guildId,ulong userId)
 		{
 			List<Tag> tags = new();
@@ -289,6 +314,11 @@ namespace Develeon64.MacroBot.Services {
 				if (tag.Name == name) return tag;
 			}
 			return null;
+			finally {
+				await database.CloseAsync();
+			}
+
+			return id;
 		}
 	}
 

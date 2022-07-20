@@ -11,11 +11,19 @@ namespace Develeon64.MacroBot.Commands {
 				Title = "__Ticket-Support__",
 				Description = "Click on the buttons below to create a ticket.\nPlease select the appropriate topic.",
 			};
+
+			SelectMenuBuilder menu = new() {
+				CustomId = "ticket_create|reason",
+				Placeholder = "Select the Reason for your new Ticket",
+			};
+			menu.AddOption(new SelectMenuOptionBuilder("Can't connect", "no_connect"));
+			menu.AddOption(new SelectMenuOptionBuilder("Something is wrong", "wrong_expectation"));
+			menu.AddOption(new SelectMenuOptionBuilder("Setup-Assistance", "setup_assistance"));
+			menu.AddOption(new SelectMenuOptionBuilder("Problem with a plugin", "plugin_problem"));
+			menu.AddOption(new SelectMenuOptionBuilder("Other", "other"));
+
 			ComponentBuilder buttons = new();
-			buttons.AddRow(new ActionRowBuilder().WithButton("Can't connect", "ticket_create|no_connect"));
-			buttons.AddRow(new ActionRowBuilder().WithButton("Something is wrong", "ticket_create|wrong_expectation"));
-			buttons.AddRow(new ActionRowBuilder().WithButton("Setup-Assistance", "ticket_create|setup_assistance"));
-			buttons.AddRow(new ActionRowBuilder().WithButton("Other", "ticket_create|other"));
+			buttons.AddRow(new ActionRowBuilder().WithSelectMenu(menu));
 
 			SocketTextChannel channel = this.Context.Guild.GetTextChannel(998293017557487697);
 			await channel.SendMessageAsync(embed: embed.Build(), components: buttons.Build());

@@ -1,4 +1,5 @@
 ﻿using Develeon64.MacroBot.Services;
+using Develeon64.MacroBot.Utils;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -29,7 +30,43 @@ namespace Develeon64.MacroBot.Commands {
 			await (this.Context.Interaction as SocketMessageComponent).Message.ModifyAsync((message) => {
 				message.Components = new ComponentBuilder().AddRow(row).Build();
 			});
-			await this.RespondAsync($"The <@&{ConfigManager.GlobalConfig.Roles.SupportRoleId}-Team has been contacted.");
+			await this.RespondAsync($"The <@&{ConfigManager.GlobalConfig.Roles.SupportRoleId}>-Team has been contacted.");
+		}
+
+		[ComponentInteraction("ticket_action|plugin_select")]
+		public async Task CreatePluginProblems () {
+			string[] id = (this.Context.Interaction as SocketMessageComponent).Data.Values.ElementAt(0).Split('.');
+			string author = id[0];
+			string plugin = id[1];
+
+			ulong authorID = await DatabaseManager.GetPluginAuthorId(plugin);
+
+			DiscordEmbedBuilder embed = await TicketCreateButton.CreateEmbed(this.Context.Client);
+			embed.WithDescription("The creator of the plugin will help you soon.");
+
+			switch (plugin.ToLower()) {
+				case "twitchplugin":
+					embed.WithTitle("Twitch-Problems");
+					break;
+				case "windowsutils":
+					embed.WithTitle("Problems with Windows Utils");
+					break;
+				case "spotifyplugin":
+					embed.WithTitle("Spotify-Problems");
+					break;
+				case "magichome":
+					embed.WithTitle("Problems with Magic Home");
+					break;
+			}
+
+			ComponentBuilder buttons = new();
+			buttons.AddRow(await TicketCreateButton.CreateActionRow());
+
+			await (this.Context.Interaction as SocketMessageComponent).Message.ModifyAsync((m) => {
+				m.Embed = embed.Build();
+				m.Components = buttons.Build();
+			});
+			await this.RespondAsync($"Your ticket is updated, please wait for <@{authorID}> to answer your ticket.");
 		}
 	}
 }

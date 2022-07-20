@@ -7,5 +7,6 @@
 		Bot,
 		Config,
 		Tags,
+		Tickets,
 	}
 }

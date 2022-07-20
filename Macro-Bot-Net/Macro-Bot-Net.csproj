@@ -29,4 +29,6 @@
 
   <ProjectExtensions><VisualStudio><UserProperties config_4commands_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
 
+  <ProjectExtensions><VisualStudio><UserProperties config_4global_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+
 </Project>
