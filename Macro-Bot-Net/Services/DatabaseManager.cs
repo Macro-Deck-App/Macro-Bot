@@ -182,14 +182,14 @@ namespace Develeon64.MacroBot.Services {
 				await database.CloseAsync();
 			}
 		}
-		public static async Task UpdateTag(string name, string content,ulong author, ulong guildId)
+		public static async Task UpdateTag(string name, string content, ulong guildId)
 		{
 			try
 			{
 				await DatabaseManager.database.OpenAsync();
 				using (SQLiteCommand command = database.CreateCommand())
 				{
-					command.CommandText = $"UPDATE 'Tags' SET 'Content' = '{content}', 'Author' = {author} WHERE 'Tags'.'Name' == '{name}' AND 'Tags'.'Guild' == {guildId}";
+					command.CommandText = $"UPDATE 'Tags' SET 'Content' = '{content}' WHERE 'Tags'.'Name' == '{name}' AND 'Tags'.'Guild' == {guildId}";
 					await command.ExecuteNonQueryAsync();
 				}
 			}

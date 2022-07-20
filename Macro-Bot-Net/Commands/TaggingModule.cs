@@ -189,10 +189,10 @@ namespace Develeon64.MacroBot.Commands.Tagging
             SocketGuildUser author = Context.Guild.GetUser(tag.Author);
             if (author != null)
             {
-                embed.WithFooter($"Tag written by {author.DisplayName}",author.GetAvatarUrl());
+                embed.WithFooter($"Tag created by {author.DisplayName}",author.GetAvatarUrl());
             } else
             {
-                embed.WithFooter($"Tag written by ${tag.Author}");
+                embed.WithFooter($"Tag created by ${tag.Author}");
             }
 
             await RespondAsync(embed: embed.Build());
@@ -274,11 +274,11 @@ namespace Develeon64.MacroBot.Commands.Tagging
             SocketGuildUser author = Context.Guild.GetUser(tag.Author);
             if (author != null)
             {
-                embed.WithFooter($"Tag written by {author.DisplayName}", author.GetAvatarUrl());
+                embed.WithFooter($"Tag created by {author.DisplayName}", author.GetAvatarUrl());
             }
             else
             {
-                embed.WithFooter($"Tag written by ${tag.Author}");
+                embed.WithFooter($"Tag created by ${tag.Author}");
             }
 
             await RespondAsync(embed: embed.Build());
@@ -361,7 +361,7 @@ namespace Develeon64.MacroBot.Commands.Tagging
             UserTagAssignable? assignable = TaggingCommandsModule.editTagAssignments.Find(x => x.guildId == Context.Guild.Id && x.userId == Context.User.Id);
             if (assignable != null)
             {
-                await DatabaseManager.UpdateTag(assignable.tagName, modal.TagContent, assignable.userId,assignable.guildId);
+                await DatabaseManager.UpdateTag(assignable.tagName, modal.TagContent, assignable.guildId);
 
                 EmbedBuilder embedBuilder = new EmbedBuilder()
                 {
