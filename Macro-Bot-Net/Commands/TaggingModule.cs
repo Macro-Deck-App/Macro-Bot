@@ -198,6 +198,41 @@ namespace Develeon64.MacroBot.Commands.Tagging
             await RespondAsync(embed: embed.Build());
         }
 
+        [SlashCommand("list", "List all tags")]
+        public async Task List([Summary("user","The user who created the tags")] IUser? user = null)
+        {
+            List <Tag> tagList = new();
+            String desc = "";
+            String title = "";
+
+            if (user != null)
+            {
+                tagList = await DatabaseManager.GetTagsFromUser(Context.Guild.Id, user.Id);
+                title = $"Tag list";
+                desc += $"Show tags by <@{user.Id}>:\n\n";
+            } else
+            {
+                tagList = await DatabaseManager.GetTagsForGuild(Context.Guild.Id);
+                title = "Tags for " + Context.Guild.Name;
+            }
+            
+            foreach (Tag tag in tagList)
+            {
+                desc += $"`{tag.Name}`";
+                if (user == null) desc += $" by <@{tag.Author}>";
+                desc += "\n";
+            }
+
+            EmbedBuilder embed = new EmbedBuilder()
+            {
+                Title = title,
+                Description = desc,
+            };
+            
+
+            await RespondAsync(embed: embed.Build());
+        }
+
 
 
         private static Boolean checkPermissions(ulong[] permissions, SocketGuildUser user)
