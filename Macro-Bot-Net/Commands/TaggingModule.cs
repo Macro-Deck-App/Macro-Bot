@@ -234,6 +234,57 @@ namespace Develeon64.MacroBot.Commands.Tagging
         }
 
 
+        [AutocompleteCommand("tag", "raw")]
+        public async Task AutoCompleteRaw()
+        {
+            string userInput = (Context.Interaction as SocketAutocompleteInteraction).Data.Current.Value.ToString();
+
+            List<AutocompleteResult> resultList = new();
+            foreach (Tag tag in await DatabaseManager.GetTagsForGuild(Context.Guild.Id))
+            {
+                resultList.Add(new AutocompleteResult(tag.Name, tag.Name));
+            }
+            IEnumerable<AutocompleteResult> results = resultList.AsEnumerable().Where(x => x.Name.StartsWith(userInput, StringComparison.InvariantCultureIgnoreCase));
+
+            await (Context.Interaction as SocketAutocompleteInteraction).RespondAsync(results.Take(25));
+        }
+        [SlashCommand("raw", "View a tags raw content")]
+        public async Task ViewRaw([Summary("tag"), Autocomplete] string tagName)
+        {
+            Tag tag = await DatabaseManager.GetTag(tagName, Context.Guild.Id);
+
+            if (tag == null)
+            {
+                EmbedBuilder embedBuilder = new EmbedBuilder()
+                {
+                    Title = "Tag not found",
+                    Description = $"The tag `{tagName}` could not be found in the database!"
+                };
+                embedBuilder.WithColor(new Color(255, 50, 50));
+                await RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                return;
+            }
+
+
+            EmbedBuilder embed = new EmbedBuilder()
+            {
+                Title = tagName + " | Raw Content",
+                Description = tag.Content.Replace("<", "\\<").Replace("*", "\\*").Replace("_", "\\_").Replace("`", "\\`").Replace(":", "\\:"),
+            };
+            SocketGuildUser author = Context.Guild.GetUser(tag.Author);
+            if (author != null)
+            {
+                embed.WithFooter($"Tag written by {author.DisplayName}", author.GetAvatarUrl());
+            }
+            else
+            {
+                embed.WithFooter($"Tag written by ${tag.Author}");
+            }
+
+            await RespondAsync(embed: embed.Build());
+        }
+
+
 
         private static Boolean checkPermissions(ulong[] permissions, SocketGuildUser user)
         {
