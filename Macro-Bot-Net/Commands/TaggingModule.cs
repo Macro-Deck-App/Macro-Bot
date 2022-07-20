@@ -33,6 +33,12 @@ namespace Develeon64.MacroBot.Commands.Tagging
                 return;
             }
 
+            if (await DatabaseManager.TagExists(name,Context.Guild.Id))
+            {
+                await RespondAsync(embed: buildAlreadyExistsError(name), ephemeral: true);
+                return;
+            }
+
             // Insert user into Assignments cache to get tag name when the Modal is beeing sent
             UserTagAssignable? assignable = createTagAssignments.Find(x => x.guildId == Context.Guild.Id && x.userId == Context.User.Id);
             if (assignable != null)
@@ -218,6 +224,18 @@ namespace Develeon64.MacroBot.Commands.Tagging
             String permissionList = "";
             foreach (ulong permissionID in permissions) permissionList += $"\n<@&{permissionID.ToString()}>";
             embedBuilder.AddField("Required Roles", $"At least one of those roles is required:{permissionList}");
+            embedBuilder.WithColor(new Color(255, 50, 50));
+
+            return embedBuilder.Build();
+        }
+
+        private static Embed buildAlreadyExistsError(string tagName)
+        {
+            EmbedBuilder embedBuilder = new EmbedBuilder()
+            {
+                Title = "Tag already exists",
+                Description = $"The tag `{tagName}` already exists!"
+            };
             embedBuilder.WithColor(new Color(255, 50, 50));
 
             return embedBuilder.Build();

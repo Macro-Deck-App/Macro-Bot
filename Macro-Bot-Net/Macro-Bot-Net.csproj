@@ -27,4 +27,6 @@
     <PackageReference Include="System.Data.SQLite" Version="1.0.116" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties config_4commands_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+
 </Project>
