@@ -27,6 +27,14 @@ namespace Develeon64.MacroBot.Services {
 					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Tickets' ('Author' INTEGER, 'Channel' INTEGER UNIQUE, 'Message' INTEGER UNIQUE, 'Created' INTEGER, 'Modified' INTEGER, PRIMARY KEY('Author'));";
 					await command.ExecuteNonQueryAsync();
 				}
+				using (SQLiteCommand command = database.CreateCommand()) {
+					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Devs' ('ID' INTEGER, 'DiscordName' TEXT NULL, 'DevName' TEXT, PRIMARY KEY('ID'));";
+					await command.ExecuteNonQueryAsync();
+				}
+				using (SQLiteCommand command = database.CreateCommand()) {
+					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Plugins' ('ID' INTEGER AUTO_INCREMENT, 'Name' TEXT UNIQUE, 'Author' INTEGER, PRIMARY KEY('ID'), FOREIGN KEY ('Author') REFERENCES 'Devs'('ID') ON DELETE SET NULL);";
+					await command.ExecuteNonQueryAsync();
+				}
 			}
 			catch (SQLiteException ex) { }
 			catch (Exception ex) { }
@@ -139,6 +147,26 @@ namespace Develeon64.MacroBot.Services {
 				if (ticket.Author == author) return ticket;
 			}
 			return null;
+		}
+
+		public static async Task<ulong> GetPluginAuthorId (string name) {
+			ulong id = 0;
+			try {
+				await DatabaseManager.database.OpenAsync();
+				using (SQLiteCommand command = database.CreateCommand()) {
+					command.CommandText = $"SELECT Author FROM 'Plugins' WHERE Name LIKE '{name}';";
+					var reader = await command.ExecuteReaderAsync();
+					reader.Read();
+					id = (ulong)reader.GetInt64(0);
+				}
+			}
+			catch (SQLiteException ex) { }
+			catch (Exception ex) { }
+			finally {
+				await database.CloseAsync();
+			}
+
+			return id;
 		}
 	}
 
