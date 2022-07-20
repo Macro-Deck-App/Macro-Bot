@@ -18,7 +18,7 @@ namespace Develeon64.MacroBot.Commands {
 				switch ((this.Context.Interaction as SocketMessageComponent).Data.Values.ElementAt(0)) {
 					case "no_connect":
 						embed.WithTitle("Connection issues");
-						embed.WithDescription($"We are sorry, that you have problems connecting your device to the server!\nPlease make sure you read the <#{Program.globalConfig.getObject("channels").ToObject<JObject>()["faqChannelID"].ToObject<ulong>()}>.");
+						embed.WithDescription($"We are sorry, that you have problems connecting your device to the server!\nPlease make sure you read the <#{ConfigManager.GlobalConfig.Channels.FaqChannelId}>.");
 						embed.AddField("Step 1", "Do step 1", true);
 						embed.AddField("Step 2", "Do step 2", true);
 						embed.AddField("Step 3", "Do step 3", true);
@@ -28,7 +28,7 @@ namespace Develeon64.MacroBot.Commands {
 						break;
 					case "setup_assistance":
 						embed.WithTitle("Setup Assistance");
-						embed.WithDescription($"We are sorry, that you're having problems setting your Macro Deck up. Please also see the <#{Program.globalConfig.getObject("channels").ToObject<JObject>()["faqChannelID"].ToObject<ulong>()}>-Channel and follow the below instructions.");
+						embed.WithDescription($"We are sorry, that you're having problems setting your Macro Deck up. Please also see the <#{ConfigManager.GlobalConfig.Channels.FaqChannelId}>-Channel and follow the below instructions.");
 						embed.AddField("Step 1", "Do step 1", true);
 						embed.AddField("Step 2", "Do step 2", true);
 						embed.AddField("Step 3", "Do step 3", true);
@@ -105,7 +105,7 @@ namespace Develeon64.MacroBot.Commands {
 
 		public static async Task<RestTextChannel> CreateChannelAsync (SocketGuild guild, SocketUser user, string message, Embed embed, MessageComponent components) {
 			RestTextChannel channel = await guild.CreateTextChannelAsync($"ticket-{user.Username}", (c) => {
-				c.CategoryId = Program.globalConfig.getObject("channels").ToObject<JObject>()["ticketCategoryID"].ToObject<ulong>();
+				c.CategoryId = ConfigManager.GlobalConfig.Channels.TicketCategoryId;
 				List<Overwrite> overwrites = guild.GetCategoryChannel((ulong)c.CategoryId.Value).PermissionOverwrites.ToList();
 				overwrites.Add(new Overwrite(user.Id, PermissionTarget.User, new OverwritePermissions(viewChannel: PermValue.Allow)));
 				c.PermissionOverwrites = overwrites;

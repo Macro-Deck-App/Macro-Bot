@@ -252,6 +252,13 @@ namespace Develeon64.MacroBot.Services {
 					}
 				}
 			}
+			catch (SQLiteException ex) { }
+			catch (Exception ex) { }
+			finally {
+				await database.CloseAsync();
+			}
+
+			return tags;
 		}
 
 		public static async Task<ulong> GetPluginAuthorId (string name) {
@@ -272,7 +279,7 @@ namespace Develeon64.MacroBot.Services {
 				await database.CloseAsync();
 			}
 
-			return tags;
+			return id;
 		}
 
 		public static async Task<List<Tag>> GetTagsFromUser(ulong guildId,ulong userId)
@@ -314,11 +321,6 @@ namespace Develeon64.MacroBot.Services {
 				if (tag.Name == name) return tag;
 			}
 			return null;
-			finally {
-				await database.CloseAsync();
-			}
-
-			return id;
 		}
 	}
 

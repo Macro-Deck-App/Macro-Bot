@@ -1,4 +1,5 @@
 ﻿using Develeon64.MacroBot.Logging;
+using Develeon64.MacroBot.Services;
 using Develeon64.MacroBot.Utils;
 using Discord;
 using Discord.Interactions;
@@ -16,7 +17,7 @@ namespace Develeon64.MacroBot.Commands {
 			ComponentBuilder buttons = new();
 			buttons.AddRow(await TicketCreateButton.CreateActionRow());
 
-			await TicketCreateButton.CreateChannelAsync(this.Context.Guild, this.Context.User, $"{this.Context.User.Mention} your ticket is created here and a <@&{Program.globalConfig.getObject("roles").ToObject<JObject>()["supportRoleID"].ToObject<ulong>()}> will help you soon:", embed.Build(), buttons.Build());
+			await TicketCreateButton.CreateChannelAsync(this.Context.Guild, this.Context.User, $"{this.Context.User.Mention} your ticket is created here and a <@&{ConfigManager.GlobalConfig.Roles.SupportRoleId}> will help you soon:", embed.Build(), buttons.Build());
 			await this.RespondAsync("Your Ticket is created!", ephemeral: true);
 		}
 
@@ -31,7 +32,7 @@ namespace Develeon64.MacroBot.Commands {
 			ComponentBuilder buttons = new();
 			buttons.AddRow(await TicketCreateButton.CreateActionRow());
 
-			await TicketCreateButton.CreateChannelAsync(this.Context.Guild, this.Context.User, $"{this.Context.User.Mention} your ticket is created here and a <@&{Program.globalConfig.getObject("roles").ToObject<JObject>()["supportRoleID"].ToObject<ulong>()}> will help you soon:", embed.Build(), buttons.Build());
+			await TicketCreateButton.CreateChannelAsync(this.Context.Guild, this.Context.User, $"{this.Context.User.Mention} your ticket is created here and a <@&{ConfigManager.GlobalConfig.Roles.SupportRoleId}> will help you soon:", embed.Build(), buttons.Build());
 			await this.RespondAsync("Your Ticket is created!", ephemeral: true);
 		}
 	}
