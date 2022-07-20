@@ -25,7 +25,7 @@ namespace Develeon64.MacroBot.Services {
 
 				using (SQLiteCommand command = database.CreateCommand())
 				{
-					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Tags' ('Name' VARCHAR, 'Content' VARCHAR, 'Author' INTEGER, 'Guild' INTEGER, PRIMARY KEY('Name'));";
+					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Tags' ('Name' VARCHAR, 'Content' VARCHAR, 'Author' INTEGER, 'Guild' INTEGER, 'LastEditTimestamp' INTEGER, PRIMARY KEY('Name'));";
 					await command.ExecuteNonQueryAsync();
 				}
 			}
@@ -171,7 +171,7 @@ namespace Develeon64.MacroBot.Services {
 				await DatabaseManager.database.OpenAsync();
 				using (SQLiteCommand command = database.CreateCommand())
 				{
-					command.CommandText = $"INSERT INTO 'Tags' VALUES ('{name}', '{content}', {author}, {guildId});";
+					command.CommandText = $"INSERT INTO 'Tags' VALUES ('{name}', '{content}', {author}, {guildId},{DateTimeOffset.Now.ToUnixTimeSeconds()});";
 					await command.ExecuteNonQueryAsync();
 				}
 			}
@@ -182,14 +182,14 @@ namespace Develeon64.MacroBot.Services {
 				await database.CloseAsync();
 			}
 		}
-		public static async Task UpdateTag(string name, string content, ulong guildId)
+		public static async Task UpdateTag(string name, string content, ulong guildId, ulong editor)
 		{
 			try
 			{
 				await DatabaseManager.database.OpenAsync();
 				using (SQLiteCommand command = database.CreateCommand())
 				{
-					command.CommandText = $"UPDATE 'Tags' SET 'Content' = '{content}' WHERE 'Tags'.'Name' == '{name}' AND 'Tags'.'Guild' == {guildId}";
+					command.CommandText = $"UPDATE 'Tags' SET 'Content' = '{content}', 'LastEditTimestamp' = {DateTimeOffset.Now.ToUnixTimeSeconds()} WHERE 'Tags'.'Name' == '{name}' AND 'Tags'.'Guild' == {guildId}";
 					await command.ExecuteNonQueryAsync();
 				}
 			}
@@ -231,12 +231,13 @@ namespace Develeon64.MacroBot.Services {
 					while (reader.Read())
 					{
 						tags.Add(new Tag()
-                        {
+						{
 							Name = reader.GetString(0),
 							Content = reader.GetString(1),
 							Author = (ulong)reader.GetInt64(2),
 							Guild = (ulong)reader.GetInt64(3),
-                        });
+							LastEdited = DateTimeOffset.FromUnixTimeSeconds((long)reader.GetValue(4)).DateTime
+						});
 					}
 				}
 			}
@@ -267,6 +268,7 @@ namespace Develeon64.MacroBot.Services {
 							Content = reader.GetString(1),
 							Author = (ulong)reader.GetInt64(2),
 							Guild = (ulong)reader.GetInt64(3),
+							LastEdited = DateTimeOffset.FromUnixTimeSeconds((long)reader.GetValue(4)).DateTime
 						});
 					}
 				}
