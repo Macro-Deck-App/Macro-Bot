@@ -54,6 +54,7 @@ namespace Develeon64.MacroBot.Commands {
 					case "no_connect":
 						await this.CreateNoConnectTicket();
 						break;
+					case "plugin_problem":
 					case "plugin_problems":
 						ModalBuilder modal = new("Plugin-Problem", "ticket_create|plugin_problem");
 						List<IMessageComponent> components = new();

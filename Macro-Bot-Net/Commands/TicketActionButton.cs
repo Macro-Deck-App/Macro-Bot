@@ -30,7 +30,7 @@ namespace Develeon64.MacroBot.Commands {
 			await (this.Context.Interaction as SocketMessageComponent).Message.ModifyAsync((message) => {
 				message.Components = new ComponentBuilder().AddRow(row).Build();
 			});
-			await this.RespondAsync($"The <@&{Program.globalConfig.getObject("roles").ToObject<JObject>()["supportRoleID"].ToObject<ulong>()}-Team has been contacted.");
+			await this.RespondAsync($"The <@&{Program.globalConfig.getObject("roles").ToObject<JObject>()["supportRoleID"].ToObject<ulong>()}>-Team has been contacted.");
 		}
 	}
 }
