@@ -249,6 +249,37 @@ namespace Develeon64.MacroBot.Services {
 
 			return tags;
 		}
+		public static async Task<List<Tag>> GetTagsFromUser(ulong guildId,ulong userId)
+		{
+			List<Tag> tags = new();
+			try
+			{
+				await DatabaseManager.database.OpenAsync();
+				using (SQLiteCommand command = database.CreateCommand())
+				{
+					command.CommandText = $"SELECT * FROM 'Tags' WHERE 'Tags'.'Author' == {userId} AND 'Tags'.'Guild' == {guildId}";
+					var reader = await command.ExecuteReaderAsync();
+					while (reader.Read())
+					{
+						tags.Add(new Tag()
+						{
+							Name = reader.GetString(0),
+							Content = reader.GetString(1),
+							Author = (ulong)reader.GetInt64(2),
+							Guild = (ulong)reader.GetInt64(3),
+						});
+					}
+				}
+			}
+			catch (SQLiteException ex) { }
+			catch (Exception ex) { }
+			finally
+			{
+				await database.CloseAsync();
+			}
+
+			return tags;
+		}
 		public static async Task<Tag> GetTag(string name, ulong guild)
 		{
 			foreach (Tag tag in await DatabaseManager.GetTagsForGuild(guild))

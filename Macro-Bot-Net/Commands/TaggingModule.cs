@@ -198,6 +198,92 @@ namespace Develeon64.MacroBot.Commands.Tagging
             await RespondAsync(embed: embed.Build());
         }
 
+        [SlashCommand("list", "List all tags")]
+        public async Task List([Summary("user","The user who created the tags")] IUser? user = null)
+        {
+            List <Tag> tagList = new();
+            String desc = "";
+            String title = "";
+
+            if (user != null)
+            {
+                tagList = await DatabaseManager.GetTagsFromUser(Context.Guild.Id, user.Id);
+                title = $"Tag list";
+                desc += $"Show tags by <@{user.Id}>:\n\n";
+            } else
+            {
+                tagList = await DatabaseManager.GetTagsForGuild(Context.Guild.Id);
+                title = "Tags for " + Context.Guild.Name;
+            }
+            
+            foreach (Tag tag in tagList)
+            {
+                desc += $"`{tag.Name}`";
+                if (user == null) desc += $" by <@{tag.Author}>";
+                desc += "\n";
+            }
+
+            EmbedBuilder embed = new EmbedBuilder()
+            {
+                Title = title,
+                Description = desc,
+            };
+            
+
+            await RespondAsync(embed: embed.Build());
+        }
+
+
+        [AutocompleteCommand("tag", "raw")]
+        public async Task AutoCompleteRaw()
+        {
+            string userInput = (Context.Interaction as SocketAutocompleteInteraction).Data.Current.Value.ToString();
+
+            List<AutocompleteResult> resultList = new();
+            foreach (Tag tag in await DatabaseManager.GetTagsForGuild(Context.Guild.Id))
+            {
+                resultList.Add(new AutocompleteResult(tag.Name, tag.Name));
+            }
+            IEnumerable<AutocompleteResult> results = resultList.AsEnumerable().Where(x => x.Name.StartsWith(userInput, StringComparison.InvariantCultureIgnoreCase));
+
+            await (Context.Interaction as SocketAutocompleteInteraction).RespondAsync(results.Take(25));
+        }
+        [SlashCommand("raw", "View a tags raw content")]
+        public async Task ViewRaw([Summary("tag"), Autocomplete] string tagName)
+        {
+            Tag tag = await DatabaseManager.GetTag(tagName, Context.Guild.Id);
+
+            if (tag == null)
+            {
+                EmbedBuilder embedBuilder = new EmbedBuilder()
+                {
+                    Title = "Tag not found",
+                    Description = $"The tag `{tagName}` could not be found in the database!"
+                };
+                embedBuilder.WithColor(new Color(255, 50, 50));
+                await RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                return;
+            }
+
+
+            EmbedBuilder embed = new EmbedBuilder()
+            {
+                Title = tagName + " | Raw Content",
+                Description = tag.Content.Replace("<", "\\<").Replace("*", "\\*").Replace("_", "\\_").Replace("`", "\\`").Replace(":", "\\:"),
+            };
+            SocketGuildUser author = Context.Guild.GetUser(tag.Author);
+            if (author != null)
+            {
+                embed.WithFooter($"Tag written by {author.DisplayName}", author.GetAvatarUrl());
+            }
+            else
+            {
+                embed.WithFooter($"Tag written by ${tag.Author}");
+            }
+
+            await RespondAsync(embed: embed.Build());
+        }
+
 
 
         private static Boolean checkPermissions(ulong[] permissions, SocketGuildUser user)
