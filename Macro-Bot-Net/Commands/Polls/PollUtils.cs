@@ -64,4 +64,13 @@ namespace Develeon64.MacroBot.Commands.Polls
         OneTwoThree,
         OneTwoThreeFour,
     }
+
+    // Enum below is used for database interaction
+    public enum PollVoteOption
+    {
+        Votes1,
+        Votes2,
+        Votes3,
+        Votes4,
+    }
 }
