@@ -81,7 +81,7 @@ namespace Develeon64.MacroBot.Commands.Polls
         public async Task PollButtonYesInteraction()
         {
             SocketUserMessage message = (Context.Interaction as SocketMessageComponent).Message;
-            
+            await DatabaseManager.CreatePoll(1234, 12345, 123456, 1234567, "test", "test1234");
         }
         [ComponentInteraction("poll_button_no")]
         public async Task PollButtonNoInteraction()
