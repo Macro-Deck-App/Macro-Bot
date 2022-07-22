@@ -23,8 +23,7 @@ namespace Develeon64.MacroBot.Services {
 					await command.ExecuteNonQueryAsync();
 				}
 
-				using (SQLiteCommand command = database.CreateCommand())
-				{
+				using (SQLiteCommand command = database.CreateCommand()) {
 					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Tags' ('Name' VARCHAR, 'Content' VARCHAR, 'Author' INTEGER, 'Guild' INTEGER, 'LastEditTimestamp' INTEGER, PRIMARY KEY('Name'));";
 					await command.ExecuteNonQueryAsync();
 				}
@@ -35,6 +34,11 @@ namespace Develeon64.MacroBot.Services {
 				}
 				using (SQLiteCommand command = database.CreateCommand()) {
 					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Plugins' ('ID' INTEGER AUTO_INCREMENT, 'Name' TEXT UNIQUE, 'Author' INTEGER, PRIMARY KEY('ID'), FOREIGN KEY ('Author') REFERENCES 'Devs'('ID') ON DELETE SET NULL);";
+					await command.ExecuteNonQueryAsync();
+				}
+
+				using (SQLiteCommand command = database.CreateCommand()) {
+					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Strikes' ('ID' INTEGER, 'User' Integer, 'Striker' INTEGER, 'Reason' TEXT, 'Created' INTEGER, PRIMARY KEY('ID' AUTOINCREMENT));";
 					await command.ExecuteNonQueryAsync();
 				}
 			}
@@ -86,7 +90,8 @@ namespace Develeon64.MacroBot.Services {
 		}
 
 		public static async Task DeleteTicket (ulong id, IdType type) {
-			if (type is not IdType.Channel and not IdType.User) return;
+			if (type is not IdType.Channel and not IdType.User)
+				return;
 
 			try {
 				await DatabaseManager.database.OpenAsync();
@@ -146,103 +151,83 @@ namespace Develeon64.MacroBot.Services {
 
 		public static async Task<Ticket> GetTicket (ulong author) {
 			foreach (Ticket ticket in await DatabaseManager.GetTickets()) {
-				if (ticket.Author == author) return ticket;
+				if (ticket.Author == author)
+					return ticket;
 			}
 			return null;
 		}
 
-		public static async Task<bool> TagExists(string name,ulong guildId)
-		{
+		public static async Task<bool> TagExists (string name, ulong guildId) {
 			bool exists = false;
-			try
-			{
+			try {
 				await DatabaseManager.database.OpenAsync();
-				using (SQLiteCommand cmd = database.CreateCommand())
-				{
+				using (SQLiteCommand cmd = database.CreateCommand()) {
 					cmd.CommandText = $"SELECT * FROM 'Tags' WHERE 'Tags'.'Name' == '{name}' AND 'Tags'.'Guild' == {guildId}";
 					exists = await cmd.ExecuteScalarAsync() != null;
 				}
 			}
 			catch (SQLiteException ex) { }
 			catch (Exception ex) { }
-			finally
-			{
+			finally {
 				await database.CloseAsync();
 			}
 			return exists;
 		}
 
-		public static async Task CreateTag(string name, string content, ulong author, ulong guildId)
-		{
-			try
-			{
+		public static async Task CreateTag (string name, string content, ulong author, ulong guildId) {
+			try {
 				await DatabaseManager.database.OpenAsync();
-				using (SQLiteCommand command = database.CreateCommand())
-				{
+				using (SQLiteCommand command = database.CreateCommand()) {
 					command.CommandText = $"INSERT INTO 'Tags' VALUES ('{name}', '{content}', {author}, {guildId},{DateTimeOffset.Now.ToUnixTimeSeconds()});";
 					await command.ExecuteNonQueryAsync();
 				}
 			}
 			catch (SQLiteException ex) { }
 			catch (Exception ex) { }
-			finally
-			{
+			finally {
 				await database.CloseAsync();
 			}
 		}
 
-		public static async Task UpdateTag(string name, string content, ulong guildId, ulong editor)
-		{
-			try
-			{
+		public static async Task UpdateTag (string name, string content, ulong guildId, ulong editor) {
+			try {
 				await DatabaseManager.database.OpenAsync();
-				using (SQLiteCommand command = database.CreateCommand())
-				{
+				using (SQLiteCommand command = database.CreateCommand()) {
 					command.CommandText = $"UPDATE 'Tags' SET 'Content' = '{content}', 'LastEditTimestamp' = {DateTimeOffset.Now.ToUnixTimeSeconds()} WHERE 'Tags'.'Name' == '{name}' AND 'Tags'.'Guild' == {guildId}";
 					await command.ExecuteNonQueryAsync();
 				}
 			}
 			catch (SQLiteException ex) { }
 			catch (Exception ex) { }
-			finally
-			{
+			finally {
 				await database.CloseAsync();
 			}
 		}
 
-		public static async Task DeleteTag(string name)
-		{
-			try
-			{
+		public static async Task DeleteTag (string name) {
+			try {
 				await DatabaseManager.database.OpenAsync();
-				using (SQLiteCommand command = database.CreateCommand())
-				{
+				using (SQLiteCommand command = database.CreateCommand()) {
 					command.CommandText = $"DELETE FROM 'Tags' WHERE 'Tags'.'Name' == '{name}';";
 					await command.ExecuteNonQueryAsync();
 				}
 			}
 			catch (SQLiteException ex) { }
 			catch (Exception ex) { }
-			finally
-			{
+			finally {
 				await database.CloseAsync();
 			}
 		}
 
-		public static async Task<List<Tag>> GetTagsForGuild(ulong guildId)
-		{
+		public static async Task<List<Tag>> GetTagsForGuild (ulong guildId) {
 			List<Tag> tags = new();
-			try
-			{
+			try {
 				await DatabaseManager.database.OpenAsync();
-				using (SQLiteCommand command = database.CreateCommand())
-				{
+				using (SQLiteCommand command = database.CreateCommand()) {
 					command.CommandText = $"SELECT * FROM 'Tags' WHERE 'Tags'.'Guild' == {guildId}";
 					var reader = await command.ExecuteReaderAsync();
-					while (reader.Read())
-					{
-						tags.Add(new Tag()
-						{
+					while (reader.Read()) {
+						tags.Add(new Tag() {
 							Name = reader.GetString(0),
 							Content = reader.GetString(1),
 							Author = (ulong)reader.GetInt64(2),
@@ -274,28 +259,22 @@ namespace Develeon64.MacroBot.Services {
 			}
 			catch (SQLiteException ex) { }
 			catch (Exception ex) { }
-			finally
-			{
+			finally {
 				await database.CloseAsync();
 			}
 
 			return id;
 		}
 
-		public static async Task<List<Tag>> GetTagsFromUser(ulong guildId,ulong userId)
-		{
+		public static async Task<List<Tag>> GetTagsFromUser (ulong guildId, ulong userId) {
 			List<Tag> tags = new();
-			try
-			{
+			try {
 				await DatabaseManager.database.OpenAsync();
-				using (SQLiteCommand command = database.CreateCommand())
-				{
+				using (SQLiteCommand command = database.CreateCommand()) {
 					command.CommandText = $"SELECT * FROM 'Tags' WHERE 'Tags'.'Author' == {userId} AND 'Tags'.'Guild' == {guildId}";
 					var reader = await command.ExecuteReaderAsync();
-					while (reader.Read())
-					{
-						tags.Add(new Tag()
-						{
+					while (reader.Read()) {
+						tags.Add(new Tag() {
 							Name = reader.GetString(0),
 							Content = reader.GetString(1),
 							Author = (ulong)reader.GetInt64(2),
@@ -307,20 +286,102 @@ namespace Develeon64.MacroBot.Services {
 			}
 			catch (SQLiteException ex) { }
 			catch (Exception ex) { }
-			finally
-			{
+			finally {
 				await database.CloseAsync();
 			}
 
 			return tags;
 		}
-		public static async Task<Tag> GetTag(string name, ulong guild)
-		{
-			foreach (Tag tag in await DatabaseManager.GetTagsForGuild(guild))
-			{
-				if (tag.Name == name) return tag;
+		public static async Task<Tag> GetTag (string name, ulong guild) {
+			foreach (Tag tag in await DatabaseManager.GetTagsForGuild(guild)) {
+				if (tag.Name == name)
+					return tag;
 			}
 			return null;
+		}
+
+		public static async Task AddStrike (ulong member, ulong striker, string reason) {
+			try {
+				await database.OpenAsync();
+
+				using (SQLiteCommand command = database.CreateCommand()) {
+					command.CommandText = $"INSERT INTO 'Strikes' VALUES (NULL, {member}, {striker}, '{reason}', {DateTimeOffset.Now.ToUniversalTime().ToUnixTimeSeconds()});";
+					await command.ExecuteNonQueryAsync();
+				}
+			}
+			catch (SQLiteException ex) { }
+			catch (Exception ex) { }
+			finally { await database.CloseAsync(); }
+		}
+
+		public static async Task<int> GetStrikeCount (ulong member) {
+			int count = 0;
+
+			try {
+				await database.OpenAsync();
+
+				using (SQLiteCommand command = database.CreateCommand()) {
+					command.CommandText = $"SELECT count() FROM 'Strikes' WHERE User == {member};";
+					var reader = await command.ExecuteReaderAsync();
+					while (reader.Read())
+						count = reader.GetInt32(0);
+				}
+			}
+			catch (SQLiteException ex) { }
+			catch (Exception ex) { }
+			finally { await database.CloseAsync(); }
+
+			return count;
+		}
+
+		public static async Task<int> GetActiveStrikes (ulong member) {
+			int count = 0;
+
+			try {
+				await database.OpenAsync();
+
+				using (SQLiteCommand command = database.CreateCommand()) {
+					command.CommandText = $"SELECT * FROM 'Strikes' WHERE User == {member};";
+					var reader = await command.ExecuteReaderAsync();
+					while (reader.Read()) {
+						if (DateTimeOffset.Now.ToUniversalTime().ToUnixTimeSeconds() - reader.GetInt32(4) < 7776000)
+							count++;
+					}
+				}
+			}
+			catch (SQLiteException ex) { }
+			catch (Exception ex) { }
+			finally { await database.CloseAsync(); }
+
+			return count;
+		}
+
+		public static async Task RemoveStrikes (ulong member) {
+			try {
+				await database.OpenAsync();
+
+				using (SQLiteCommand command = database.CreateCommand()) {
+					command.CommandText = $"DELETE FROM 'Strikes' WHERE User == {member};";
+					var reader = await command.ExecuteNonQueryAsync();
+				}
+			}
+			catch (SQLiteException ex) { }
+			catch (Exception ex) { }
+			finally { await database.CloseAsync(); }
+		}
+
+		public static async Task RemoveStrike (int id) {
+			try {
+				await database.OpenAsync();
+
+				using (SQLiteCommand command = database.CreateCommand()) {
+					command.CommandText = $"DELETE FROM 'Strikes' WHERE ID == {id};";
+					var reader = await command.ExecuteNonQueryAsync();
+				}
+			}
+			catch (SQLiteException ex) { }
+			catch (Exception ex) { }
+			finally { await database.CloseAsync(); }
 		}
 	}
 
