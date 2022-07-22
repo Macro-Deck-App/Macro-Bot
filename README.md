@@ -14,7 +14,10 @@ The ***Macro-Bot*** is the official *Support-Bot* of the official [Support-Disco
 
 - **Tag-System:**  
   Add Tags for frequently asked questions providing simple help, that should solve most of the problems. Easily send a Command to show the contents of a spicific Tag.
-
+  
+- **Info-System**
+  Shows the information of the bot, user, channel, or the server itself.
+  
 ## Written by:
 - [@Develeon64](https://github.com/Develeon64)
 - [@Xenox003](https://github.com/Xenox003)
