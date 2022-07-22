@@ -37,6 +37,12 @@ namespace Develeon64.MacroBot.Services {
 					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Plugins' ('ID' INTEGER AUTO_INCREMENT, 'Name' TEXT UNIQUE, 'Author' INTEGER, PRIMARY KEY('ID'), FOREIGN KEY ('Author') REFERENCES 'Devs'('ID') ON DELETE SET NULL);";
 					await command.ExecuteNonQueryAsync();
 				}
+
+				using (SQLiteCommand command = database.CreateCommand())
+                {
+					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Polls' ('PollId' INTEGER NOT NULL UNIQUE, 'MessageId' INTEGER,'ChannelId' INTEGER,'GuildId' INTEGER,'Author' INTEGER,'Name' TEXT,'Description' TEXT,'Votes1' INTEGER,'Votes2' INTEGER,'Votes3' INTEGER,'Votes4' INTEGER,'Closed' INTEGER,PRIMARY KEY('PollId' AUTOINCREMENT));";
+					await command.ExecuteNonQueryAsync();
+				}
 			}
 			catch (SQLiteException ex) { }
 			catch (Exception ex) { }
@@ -321,6 +327,27 @@ namespace Develeon64.MacroBot.Services {
 				if (tag.Name == name) return tag;
 			}
 			return null;
+		}
+
+		public static async Task CreatePoll(ulong Author, ulong MessageId, ulong ChannelId, ulong GuildId, string name, string description)
+		{
+			try
+			{
+				await DatabaseManager.database.OpenAsync();
+				using (SQLiteCommand command = database.CreateCommand())
+				{
+					command.CommandText = $"INSERT INTO 'Tags' " +
+                        $"('MessageId','ChannelId','GuildId','Author','Name','Description','Closed') VALUES" +
+                        $"({MessageId},{ChannelId},{GuildId},{Author},'{name}','{description}','FALSE');";
+					await command.ExecuteNonQueryAsync();
+				}
+			}
+			catch (SQLiteException ex) { }
+			catch (Exception ex) { }
+			finally
+			{
+				await database.CloseAsync();
+			}
 		}
 	}
 
