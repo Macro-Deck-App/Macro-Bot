@@ -1,4 +1,5 @@
-﻿using Develeon64.MacroBot.Models;
+﻿using Develeon64.MacroBot.Commands.Polls;
+using Develeon64.MacroBot.Models;
 using System.Data.SQLite;
 
 namespace Develeon64.MacroBot.Services {
@@ -336,7 +337,7 @@ namespace Develeon64.MacroBot.Services {
 				await DatabaseManager.database.OpenAsync();
 				using (SQLiteCommand command = database.CreateCommand())
 				{
-					command.CommandText = $"INSERT INTO 'Tags' " +
+					command.CommandText = $"INSERT INTO 'Polls' " +
                         $"('MessageId','ChannelId','GuildId','Author','Name','Description','Closed') VALUES" +
                         $"({MessageId},{ChannelId},{GuildId},{Author},'{name}','{description}','FALSE');";
 					await command.ExecuteNonQueryAsync();
@@ -349,6 +350,62 @@ namespace Develeon64.MacroBot.Services {
 				await database.CloseAsync();
 			}
 		}
+		public static async Task UpdatePollVotes(int pollId,PollVoteOption voteOption,int num)
+        {
+			try
+			{
+				await DatabaseManager.database.OpenAsync();
+				using (SQLiteCommand command = database.CreateCommand())
+				{
+					command.CommandText = $"UPDATE 'Polls' SET '{voteOption.ToString()}' = {num} WHERE 'PollId' == {pollId}";
+					await command.ExecuteNonQueryAsync();
+				}
+			}
+			catch (SQLiteException ex) { }
+			catch (Exception ex) { }
+			finally
+			{
+				await database.CloseAsync();
+			}
+		}
+
+		public static async Task<int> GetPollVotes(int pollId, PollVoteOption voteOption)
+		{
+			try
+			{
+				await DatabaseManager.database.OpenAsync();
+				using (SQLiteCommand command = database.CreateCommand())
+				{
+					command.CommandText = $"SELECT '{voteOption.ToString()}' FROM 'Polls' WHERE 'PollId' == {pollId}";
+					var reader = await command.ExecuteReaderAsync();
+					// TODO: Handle Result
+				}
+			}
+			catch (SQLiteException ex) { }
+			catch (Exception ex) { }
+			finally
+			{
+				await database.CloseAsync();
+			}
+
+			return 0;
+		}
+
+		public static async Task IncrementPollVote(int pollId, PollVoteOption voteOption)
+        {
+			//TODO
+        }
+
+		public static async Task DecrementPollVote(int pollId, PollVoteOption voteOption)
+		{
+			//TODO
+		}
+
+		public static async Task SetPollClosedState(int pollId, bool closed)
+		{
+			//TODO
+		}
+
 	}
 
 	public enum IdType {
