@@ -1,5 +1,8 @@
 ﻿{
+  "polls": {
+    "PermissionManagePolls": [ 963570325939945565, 998322788563689574 ]
+  },
   "tagging": {
-    "PermissionManageTags": [ 963570325939945565, 998322788563689574 ],
+    "PermissionManageTags": [ 963570325939945565, 998322788563689574 ]
   }
 }
