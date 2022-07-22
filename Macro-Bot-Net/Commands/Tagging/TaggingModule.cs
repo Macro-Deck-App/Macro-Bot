@@ -1,4 +1,6 @@
-﻿using Develeon64.MacroBot.Logging;
+﻿/*
+
+using Develeon64.MacroBot.Logging;
 using Develeon64.MacroBot.Models;
 using Develeon64.MacroBot.Services;
 using Discord;
@@ -16,11 +18,12 @@ namespace Develeon64.MacroBot.Commands.Tagging
     [Group("tag", "Tag system")]
     public class TaggingCommandsModule : InteractionModuleBase<SocketInteractionContext>
     {
-
+        
         public static List<UserTagAssignable> createTagAssignments = new();
         public static List<UserTagAssignable> deleteTagAssignments = new();
         public static List<UserTagAssignable> editTagAssignments = new();
 
+        /*
         [SlashCommand("create", "Create a new tag")]
         public async Task Create([Summary(description: "Name of the tag")] string name)
         {
@@ -348,6 +351,7 @@ namespace Develeon64.MacroBot.Commands.Tagging
         }
     }
 
+
     public class TaggingInteractionModule : InteractionModuleBase<SocketInteractionContext>
     {
         [ModalInteraction("tag_create_modal")]
@@ -437,6 +441,7 @@ namespace Develeon64.MacroBot.Commands.Tagging
         }
     }
 
+    /*
     public class TagCreateModal : IModal
     {
         public string Title => "Create Tag";
@@ -468,3 +473,4 @@ namespace Develeon64.MacroBot.Commands.Tagging
         }
     }
 }
+*/
