@@ -23,6 +23,7 @@ namespace Develeon64.MacroBot {
 			};
 			timer.Elapsed += this.Timer_Elapsed;
 
+			Directory.CreateDirectory("DB");
 			await DatabaseManager.Initialize("DB\\Database.db3");
 
 			DiscordSocketConfig config = new() {
