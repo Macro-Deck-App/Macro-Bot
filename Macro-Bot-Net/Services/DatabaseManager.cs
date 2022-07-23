@@ -1,5 +1,6 @@
 ﻿using Develeon64.MacroBot.Commands.Polls;
 using Develeon64.MacroBot.Models;
+using Newtonsoft.Json.Linq;
 using System.Data.SQLite;
 
 namespace Develeon64.MacroBot.Services {
@@ -41,7 +42,7 @@ namespace Develeon64.MacroBot.Services {
 
 				using (SQLiteCommand command = database.CreateCommand())
                 {
-					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Polls' ('PollId' INTEGER NOT NULL UNIQUE, 'MessageId' INTEGER,'ChannelId' INTEGER,'GuildId' INTEGER,'Author' INTEGER,'Name' TEXT,'Description' TEXT,'Votes1' INTEGER,'Votes2' INTEGER,'Votes3' INTEGER,'Votes4' INTEGER,'Closed' INTEGER,'AutoClose' INTEGER,PRIMARY KEY('PollId' AUTOINCREMENT));";
+					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Polls' ('PollId' INTEGER NOT NULL UNIQUE, 'MessageId' INTEGER,'ChannelId' INTEGER,'GuildId' INTEGER,'Author' INTEGER,'Name' TEXT,'Description' TEXT,'Votes1' INTEGER,'Votes2' INTEGER,'Votes3' INTEGER,'Votes4' INTEGER,'Closed' INTEGER, 'Voted' TEXT,'AutoClose' INTEGER,PRIMARY KEY('PollId' AUTOINCREMENT));";
 					await command.ExecuteNonQueryAsync();
 				}
 			}
@@ -369,8 +370,8 @@ namespace Develeon64.MacroBot.Services {
                     }
 
 					command.CommandText = $"INSERT INTO 'Polls' " +
-						$"('MessageId','ChannelId','GuildId','Author','Name','Description','Closed',{argumentAdd}) VALUES" +
-						$"({MessageId},{ChannelId},{GuildId},{Author},'{name}','{description}','FALSE',{valueAdd});";
+						$"('MessageId','ChannelId','GuildId','Author','Name','Description','Closed','Voted',{argumentAdd}) VALUES" +
+						$"({MessageId},{ChannelId},{GuildId},{Author},'{name}','{description}','FALSE','[]',{valueAdd});";
 
 					await command.ExecuteNonQueryAsync();
 				}
@@ -398,7 +399,7 @@ namespace Develeon64.MacroBot.Services {
 				await DatabaseManager.database.OpenAsync();
 				using (SQLiteCommand command = database.CreateCommand())
 				{
-					command.CommandText = $"UPDATE 'Polls' SET 'Name' = {poll.Name},'Name' = {poll.Description},'Name' = {poll.Votes1},'Name' = {poll.Votes2},'Name' = {poll.Votes3},'Name' = {poll.Votes4},'Name' = {poll.Closed} WHERE 'PollId' = {pollId}";
+					command.CommandText = $"UPDATE 'Polls' SET 'Name' = {poll.Name},'Description' = {poll.Description},'Votes1' = {poll.Votes1},'Votes2' = {poll.Votes2},'Votes3' = {poll.Votes3},'Votes4' = {poll.Votes4},'Closed' = {poll.Closed},'Voted' = '{poll.Voted.ToString()}' WHERE 'PollId' = {pollId}";
 					await command.ExecuteNonQueryAsync();
 				}
 			}
@@ -435,6 +436,7 @@ namespace Develeon64.MacroBot.Services {
 							Votes3 = reader.GetInt32(9),
 							Votes4 = reader.GetInt32(10),
 							Closed = reader.GetBoolean(11),
+							Voted = JArray.Parse(reader.GetString(12)),
 						});
 					}
 				}
