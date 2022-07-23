@@ -1,8 +1,10 @@
 ﻿using Develeon64.MacroBot.Logging;
+using Develeon64.MacroBot.Models;
 using Develeon64.MacroBot.Services;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Newtonsoft.Json.Linq;
 
 namespace Develeon64.MacroBot.Commands.Polls
 {
@@ -71,8 +73,11 @@ namespace Develeon64.MacroBot.Commands.Polls
             }
 
             // Send messages
-            await channel.SendMessageAsync(embed: embed.Build(), components: componentBuilder.Build());
-            await RespondAsync($"Poll has been sent to <#{channel.Id}>", ephemeral: true);
+            IUserMessage msg = await channel.SendMessageAsync(embed: embed.Build(), components: componentBuilder.Build());
+
+            long pollId = await DatabaseManager.CreatePoll(Context.User.Id,msg.Id, Context.Channel.Id, Context.Guild.Id, modal.Name, modal.Description, option);
+
+            await RespondAsync($"Poll (ID: {pollId}) has been sent to <#{channel.Id}>", ephemeral: true);
         }
 
 
@@ -81,7 +86,12 @@ namespace Develeon64.MacroBot.Commands.Polls
         public async Task PollButtonYesInteraction()
         {
             SocketUserMessage message = (Context.Interaction as SocketMessageComponent).Message;
-            await DatabaseManager.CreatePoll(1234, 12345, 123456, 1234567, "test", "test1234");
+            Poll poll = await DatabaseManager.GetPoll(message.Id);
+            if (poll.Voted.FirstOrDefault(id => id.ToObject<ulong>() == Context.Interaction.User.Id) != null)
+            {
+                await RespondAsync(PollUtils.getAlreadyVotedError(), components: new ComponentBuilder().WithButton("Remove my Vote", "poll_button_remove_vote", ButtonStyle.Danger).Build(),ephemeral: true);
+                return;
+            }
         }
         [ComponentInteraction("poll_button_no")]
         public async Task PollButtonNoInteraction()

@@ -41,6 +41,11 @@ namespace Develeon64.MacroBot.Commands.Polls
         {
             return "An internal error occured while getting Tag Name information, please try again.";
         }
+
+        public static String getAlreadyVotedError()
+        {
+            return "You have already voted for this!\nIf you have changed your mind, use the button below.";
+        }
     }
 
     public class PollChannelAssignable
@@ -63,14 +68,5 @@ namespace Develeon64.MacroBot.Commands.Polls
         OneTwo,
         OneTwoThree,
         OneTwoThreeFour,
-    }
-
-    // Enum below is used for database interaction
-    public enum PollVoteOption
-    {
-        Votes1,
-        Votes2,
-        Votes3,
-        Votes4,
     }
 }
