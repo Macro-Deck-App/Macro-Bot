@@ -41,7 +41,7 @@ namespace Develeon64.MacroBot.Services {
 
 				using (SQLiteCommand command = database.CreateCommand())
                 {
-					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Polls' ('PollId' INTEGER NOT NULL UNIQUE, 'MessageId' INTEGER,'ChannelId' INTEGER,'GuildId' INTEGER,'Author' INTEGER,'Name' TEXT,'Description' TEXT,'Votes1' INTEGER,'Votes2' INTEGER,'Votes3' INTEGER,'Votes4' INTEGER,'Closed' INTEGER,PRIMARY KEY('PollId' AUTOINCREMENT));";
+					command.CommandText = "CREATE TABLE IF NOT EXISTS 'Polls' ('PollId' INTEGER NOT NULL UNIQUE, 'MessageId' INTEGER,'ChannelId' INTEGER,'GuildId' INTEGER,'Author' INTEGER,'Name' TEXT,'Description' TEXT,'Votes1' INTEGER,'Votes2' INTEGER,'Votes3' INTEGER,'Votes4' INTEGER,'Closed' INTEGER,'AutoClose' INTEGER,PRIMARY KEY('PollId' AUTOINCREMENT));";
 					await command.ExecuteNonQueryAsync();
 				}
 			}
@@ -330,17 +330,56 @@ namespace Develeon64.MacroBot.Services {
 			return null;
 		}
 
-		public static async Task CreatePoll(ulong Author, ulong MessageId, ulong ChannelId, ulong GuildId, string name, string description)
+		public static async Task<long> CreatePoll(ulong Author, ulong MessageId, ulong ChannelId, ulong GuildId, string name, string description,PollOption option)
 		{
+			long pollId = 0;
+
 			try
 			{
 				await DatabaseManager.database.OpenAsync();
 				using (SQLiteCommand command = database.CreateCommand())
 				{
+					string argumentAdd = "";
+					string valueAdd = "";
+
+                    switch (option)
+                    {
+                        case PollOption.YesNo:
+							argumentAdd += "'Votes1','Votes2'";
+							valueAdd += "0,0";
+
+							break;
+                        case PollOption.OneTwo:
+							argumentAdd += "'Votes1','Votes2'";
+							valueAdd += "0,0";
+
+							break;
+                        case PollOption.OneTwoThree:
+							argumentAdd += "'Votes1','Votes2','Votes3'";
+							valueAdd += "0,0,0";
+
+							break;
+                        case PollOption.OneTwoThreeFour:
+							argumentAdd += "'Votes1','Votes2','Votes3','Votes4'";
+							valueAdd += "0,0,0,0";
+
+							break;
+                        default:
+                            break;
+                    }
+
 					command.CommandText = $"INSERT INTO 'Polls' " +
-                        $"('MessageId','ChannelId','GuildId','Author','Name','Description','Closed') VALUES" +
-                        $"({MessageId},{ChannelId},{GuildId},{Author},'{name}','{description}','FALSE');";
+						$"('MessageId','ChannelId','GuildId','Author','Name','Description','Closed',{argumentAdd}) VALUES" +
+						$"({MessageId},{ChannelId},{GuildId},{Author},'{name}','{description}','FALSE',{valueAdd});";
+
 					await command.ExecuteNonQueryAsync();
+				}
+
+				using (SQLiteCommand command = database.CreateCommand())
+                {
+					command.CommandText = $"SELECT * FROM 'Polls' WHERE MessageId = {MessageId};";
+					var idpollId = await command.ExecuteScalarAsync();
+					pollId = (long)idpollId;
 				}
 			}
 			catch (SQLiteException ex) { }
@@ -349,15 +388,17 @@ namespace Develeon64.MacroBot.Services {
 			{
 				await database.CloseAsync();
 			}
+
+			return pollId;
 		}
-		public static async Task UpdatePollVotes(int pollId,PollVoteOption voteOption,int num)
+		public static async Task UpdatePoll(long pollId,Poll poll)
         {
 			try
 			{
 				await DatabaseManager.database.OpenAsync();
 				using (SQLiteCommand command = database.CreateCommand())
 				{
-					command.CommandText = $"UPDATE 'Polls' SET '{voteOption.ToString()}' = {num} WHERE 'PollId' == {pollId}";
+					command.CommandText = $"UPDATE 'Polls' SET 'Name' = {poll.Name},'Name' = {poll.Description},'Name' = {poll.Votes1},'Name' = {poll.Votes2},'Name' = {poll.Votes3},'Name' = {poll.Votes4},'Name' = {poll.Closed} WHERE 'PollId' = {pollId}";
 					await command.ExecuteNonQueryAsync();
 				}
 			}
@@ -368,17 +409,34 @@ namespace Develeon64.MacroBot.Services {
 				await database.CloseAsync();
 			}
 		}
-
-		public static async Task<int> GetPollVotes(int pollId, PollVoteOption voteOption)
+		public static async Task<List<Poll>> GetPolls()
 		{
+			List<Poll> polls = new();
 			try
 			{
 				await DatabaseManager.database.OpenAsync();
 				using (SQLiteCommand command = database.CreateCommand())
 				{
-					command.CommandText = $"SELECT '{voteOption.ToString()}' FROM 'Polls' WHERE 'PollId' == {pollId}";
+					command.CommandText = $"SELECT * FROM 'Polls'";
 					var reader = await command.ExecuteReaderAsync();
-					// TODO: Handle Result
+					while (reader.Read())
+					{
+						polls.Add(new Poll()
+						{
+							Id = reader.GetInt64(0),
+							MessageId = (ulong)reader.GetInt64(1),
+							ChannelId = (ulong)reader.GetInt64(2),
+							GuildId = (ulong)reader.GetInt64(3),
+							Author = (ulong)reader.GetInt64(4),
+							Name = reader.GetString(5),
+							Description = reader.GetString(6),
+							Votes1 = reader.GetInt32(7),
+							Votes2 = reader.GetInt32(8),
+							Votes3 = reader.GetInt32(9),
+							Votes4 = reader.GetInt32(10),
+							Closed = reader.GetBoolean(11),
+						});
+					}
 				}
 			}
 			catch (SQLiteException ex) { }
@@ -388,22 +446,17 @@ namespace Develeon64.MacroBot.Services {
 				await database.CloseAsync();
 			}
 
-			return 0;
+			return polls;
 		}
-
-		public static async Task IncrementPollVote(int pollId, PollVoteOption voteOption)
+		public static async Task<Poll> GetPoll(long pollId)
         {
-			//TODO
+			List<Poll> polls = await GetPolls();
+			return polls.Find(poll => poll.Id == pollId);
         }
-
-		public static async Task DecrementPollVote(int pollId, PollVoteOption voteOption)
+		public static async Task<Poll> GetPoll(ulong messageId)
 		{
-			//TODO
-		}
-
-		public static async Task SetPollClosedState(int pollId, bool closed)
-		{
-			//TODO
+			List<Poll> polls = await GetPolls();
+			return polls.Find(poll => poll.MessageId == messageId);
 		}
 
 	}
