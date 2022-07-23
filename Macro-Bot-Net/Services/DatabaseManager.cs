@@ -371,7 +371,7 @@ namespace Develeon64.MacroBot.Services {
 
 					command.CommandText = $"INSERT INTO 'Polls' " +
 						$"('MessageId','ChannelId','GuildId','Author','Name','Description','Closed','Voted',{argumentAdd}) VALUES" +
-						$"({MessageId},{ChannelId},{GuildId},{Author},'{name}','{description}','FALSE','[]',{valueAdd});";
+						$"({MessageId},{ChannelId},{GuildId},{Author},'{name}','{description}','0','[]',{valueAdd});";
 
 					await command.ExecuteNonQueryAsync();
 				}
@@ -422,7 +422,7 @@ namespace Develeon64.MacroBot.Services {
 					var reader = await command.ExecuteReaderAsync();
 					while (reader.Read())
 					{
-						polls.Add(new Poll()
+						Poll poll = new Poll()
 						{
 							Id = reader.GetInt64(0),
 							MessageId = (ulong)reader.GetInt64(1),
@@ -433,11 +433,13 @@ namespace Develeon64.MacroBot.Services {
 							Description = reader.GetString(6),
 							Votes1 = reader.GetInt32(7),
 							Votes2 = reader.GetInt32(8),
-							Votes3 = reader.GetInt32(9),
-							Votes4 = reader.GetInt32(10),
 							Closed = reader.GetBoolean(11),
 							Voted = JArray.Parse(reader.GetString(12)),
-						});
+						};
+						
+						if (reader[9].GetType() != typeof(DBNull)) poll.Votes3 = reader.GetInt32(9);
+						if (reader[9].GetType() != typeof(DBNull)) poll.Votes4 = reader.GetInt32(10);
+						polls.Add(poll);
 					}
 				}
 			}
