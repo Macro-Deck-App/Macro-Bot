@@ -41,6 +41,10 @@ namespace Develeon64.MacroBot {
 			_client.UserJoined += this.UserJoined;
 			_client.UserLeft += this.UserLeft;
 			_client.ChannelDestroyed += this.ChannelDestroyed;
+			
+			System.Timers.Timer timer2 = new System.Timers.Timer(5 * 60 * 1000);
+			timer2.Elapsed += async (obj, args) => await StatusLoop.StatusLoop1(_client, messageid); // Which can also be written as += new ElapsedEventHandler(OnTick);
+			timer2.Start();
 
 			commandHandler = new InteractionCommandHandler(_client, new InteractionService(_client.Rest));
 			await commandHandler.InitializeAsync();
@@ -89,11 +93,6 @@ namespace Develeon64.MacroBot {
 			//{
 				await commandHandler.GetInteractionService().RegisterCommandsGloballyAsync(true);
 			//}
-
-			System.Timers.Timer timer = new System.Timers.Timer(5 * 60 * 1000);
-			timer.Elapsed += async (obj, args) => await StatusLoop.StatusLoop1(_client, messageid); // Which can also be written as += new ElapsedEventHandler(OnTick);
-			timer.Start();
-			await StatusLoop.StatusLoop1(_client, messageid);
 		}
 
 		private async Task UserJoined (SocketGuildUser member) {

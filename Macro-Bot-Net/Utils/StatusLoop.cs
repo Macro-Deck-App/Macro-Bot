@@ -44,7 +44,7 @@ namespace Develeon64.MacroBot.Utils {
 
             EmbedBuilder embed = new();
             embed.WithTitle("Macro Deck Service Status");
-            embed.WithDescription((website == 1 && extstor == 1 && exstapi == 1 && updtapi == 1)? "✅ All services are online. You should have no problems." : "⚠ There is a problem on one or more services. We are working to the issue.");
+            embed.WithDescription((website == 1 && webclie == 1 && extstor == 1 && exstapi == 1 && updtapi == 1)? "✅ All services are online. You should have no problems." : "⚠ There is a problem on one or more services. We are working to the issue.");
             string type = (website == 1)? "🟢" : "🔴";
             string typ2 = (webclie == 1)? "🟢" : "🔴";
             string typ3 = (extstor == 1)? "🟢" : "🔴";

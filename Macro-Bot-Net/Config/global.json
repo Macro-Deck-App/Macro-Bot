@@ -1,0 +1,18 @@
+﻿{
+  "token": "MTAxMDQ2MDM3MjE5MDM2MzY0OA.Gy-GXP.oYvY5TClb981QsDYlzDNZweWEHaugrT2HDoufY",
+  "githubtoken": "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",
+  "botID": 1010460372190363648,
+  "testGuildID": 963548230300348416,
+  "productiveGuildID": 869913729939148800,
+
+  "roles": {
+    "supportRoleID": 998322788563689574,
+    "moderatorRoleID": 963570325939945565
+  },
+  "channels": {
+    "memberScreeningChannelID": 963557777584832522,
+    "updateChannelID": 1061618898715279521,
+    "imageOnlyChannels": [ 998289359260368937, 998289378868736070 ],
+    "bugsAndIssuesChannels": [ 1012949275401007144, 1012949313682419802 ]
+  }
+}

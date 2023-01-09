@@ -77,11 +77,18 @@ namespace Develeon64.MacroBot.Commands {
             int f = 0;
             List<EmbedFieldBuilder> flds = new();
             foreach (Extension ext in extension) {
-                var extfile = JsonConvert.DeserializeObject<ExtensionFile>(await HTTPRequest.GetAsync($"https://extensionstore.api.macro-deck.app/ExtensionsFiles/{ext.packageId}@latest"));
+                ExtensionFile extfile = new();
+                try {
+                    extfile = JsonConvert.DeserializeObject<ExtensionFile>(await HTTPRequest.GetAsync($"https://extensionstore.api.macro-deck.app/ExtensionsFiles/{ext.packageId}@latest"));
+                } catch (Exception) {}
                 if (f == 15) { fields.Add(flds); flds = new(); f = 0; }
                 EmbedFieldBuilder field = new();
                 field.WithName($"[{ext.extensionType}] {ext.packageId}");
-                field.WithValue($"{((ext.githubRepository is not null)? $"[{ext.name}]({ext.githubRepository})" : ext.name)} by {((ext.dSupportUserId is not null)? $"<@{ext.dSupportUserId}>" : ext.author)}\r\nLatest Version: {extfile.version}\r\nMin API Version: {extfile.minAPIVersion}");
+                string extinfof = "";
+                try {
+                    extinfof = $"Latest Version: {extfile.version}\r\nMin API Version: {extfile.minAPIVersion}";
+                } catch (Exception) {}
+                field.WithValue($"{((ext.githubRepository is not null)? $"[{ext.name}]({ext.githubRepository})" : ext.name)} by {((ext.dSupportUserId is not null)? $"<@{ext.dSupportUserId}>" : ext.author)}\r\n{extinfof}");
                 field.WithIsInline(true);
                 flds.Add(field);
                 f++;
