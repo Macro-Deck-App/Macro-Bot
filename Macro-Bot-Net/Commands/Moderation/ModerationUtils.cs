@@ -6,7 +6,6 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using System.Reflection;
 using Develeon64.MacroBot.Commands.Tagging;
-using Develeon64.MacroBot.Commands.Plugins;
 
 namespace Develeon64.MacroBot.Commands
 {
@@ -26,7 +25,7 @@ namespace Develeon64.MacroBot.Commands
         }
 
         public static async Task BanAsync(IUser user, IGuild guild, string reason, int prune = 0) {
-            if (prune < 0 || prune > 0) {
+            if (prune < 0) {
                 throw new ArgumentException("Prune isn't on the accepted mark.");
             }
             var usertoTimeout = await guild.GetUserAsync(user.Id);

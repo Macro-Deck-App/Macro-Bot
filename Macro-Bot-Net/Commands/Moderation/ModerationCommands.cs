@@ -12,6 +12,8 @@ namespace Develeon64.MacroBot.Commands
     public class ModerationCommands : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("timeout", "Timeout a person")]
+        [RequireUserPermission(GuildPermission.ModerateMembers)]
+        [RequireBotPermission(GuildPermission.ModerateMembers)]
         public async Task TimeoutAsync([Summary(description: "The user you want to timeout")] IUser user, int days = 0, int hours = 1, int minutes = 0, int seconds = 0)
         {
             var modal = new ModalBuilder()
@@ -64,6 +66,8 @@ namespace Develeon64.MacroBot.Commands
             await RespondWithModalAsync(modal.Build());
         }
 
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.BanMembers)]
         [UserCommand("Ban this user")]
         public async Task BanUserCommandAsync(IUser user)
         {
@@ -90,7 +94,7 @@ namespace Develeon64.MacroBot.Commands
                 DiscordEmbedBuilder embed = new()
                 {
                     Title = $"You are banned on {Context.Guild.Name}!",
-                    Description = $"To appeal, either contact suchbyte@gmail.com or use /appeal on this bot."
+                    Description = $"To appeal, contact suchbyte@gmail.com."
                 };
                 embed.AddField("Reason", reason);
 
