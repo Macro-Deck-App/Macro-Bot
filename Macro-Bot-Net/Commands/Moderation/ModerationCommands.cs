@@ -6,7 +6,6 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using System.Reflection;
 using Develeon64.MacroBot.Commands.Tagging;
-using Develeon64.MacroBot.Commands.Plugins;
 
 namespace Develeon64.MacroBot.Commands
 {
