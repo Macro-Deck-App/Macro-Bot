@@ -1,9 +1,11 @@
 ﻿using Develeon64.MacroBot.Utils;
 using Discord;
+using Newtonsoft.Json;
 using Discord.Net;
 using Discord.WebSocket;
 using Develeon64.MacroBot.Logging;
 using Develeon64.MacroBot.Services;
+using Develeon64.MacroBot.Commands;
 using Discord.Interactions;
 using Develeon64.MacroBot.Models;
 using System.Timers;
@@ -13,6 +15,7 @@ namespace Develeon64.MacroBot {
 		private static InteractionCommandHandler commandHandler;
 		private static DiscordSocketClient _client;
 		public ulong messageid = 1;
+		public List<List<string>> stringss = new();
 
 		public static Task Main (string[] args) => new Program().MainAsync(args);
 
@@ -41,9 +44,16 @@ namespace Develeon64.MacroBot {
 			_client.UserJoined += this.UserJoined;
 			_client.UserLeft += this.UserLeft;
 			_client.ChannelDestroyed += this.ChannelDestroyed;
+			_client.ThreadCreated += async (thread) => await ThreadCreated(thread);
+			string str = "-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-";
+			stringss.Add(str.Split(",").ToList());
+			stringss.Add(str.Split(",").ToList());
+			stringss.Add(str.Split(",").ToList());
+			stringss.Add(str.Split(",").ToList());
+			stringss.Add(str.Split(",").ToList());
 			
-			System.Timers.Timer timer2 = new System.Timers.Timer(5 * 60 * 1000);
-			timer2.Elapsed += async (obj, args) => await StatusLoop.StatusLoop1(_client, messageid); // Which can also be written as += new ElapsedEventHandler(OnTick);
+			System.Timers.Timer timer2 = new System.Timers.Timer(25 * 1000);
+			timer2.Elapsed += async (obj, args) => stringss = await StatusLoop.StatusLoop1(_client, messageid, stringss); // Which can also be written as += new ElapsedEventHandler(OnTick);
 			timer2.Start();
 
 			commandHandler = new InteractionCommandHandler(_client, new InteractionService(_client.Rest));
@@ -55,6 +65,58 @@ namespace Develeon64.MacroBot {
 			await Task.Delay(-1);
 		}
 
+		public async Task ButtonExecuted(SocketMessageComponent component, SocketUser user) {
+            //if (component.User != user) { return; }
+
+            if (component.Data.CustomId == "plugin-problem-yes") {
+                await component.Message.DeleteAsync();
+                await component.Channel.SendMessageAsync($"<@{prevplauserid}>, {user.Mention} has a problem on your plugin.");
+                await (component.Channel as SocketThreadChannel)!.ModifyAsync(msg => msg.Name = @$"{component.Channel.Name} (Plugin Problem - {prevplugin})");
+                await (component.Channel as SocketThreadChannel)!.LeaveAsync();
+            } else if (component.Data.CustomId == "plugin-problem-no") {
+                await component.Message.DeleteAsync();
+                var msg = await component.Channel.SendMessageAsync("Got it. Thank you for the clarification.");
+                await Task.Delay(5000);
+                await msg.DeleteAsync();
+                await (component.Channel as SocketThreadChannel)!.LeaveAsync();
+            } else { return; }
+        }
+
+		public string prevthread = "";
+        public ulong prevplauserid = 0;
+        public string prevplugin = "";
+
+        public async Task ThreadCreated(SocketThreadChannel thread) {
+            var msg = await thread.GetMessagesAsync(2).FlattenAsync();
+            var lastmsg = msg.Last();
+            var extension = JsonConvert.DeserializeObject<List<Extension>>(await HTTPRequest.GetAsync($"https://extensionstore.api.macro-deck.app/Extensions"));
+
+            foreach (var ext in extension) {
+                if (prevthread == thread.Name) { return; }
+
+                if ((lastmsg.CleanContent.IndexOf(ext.name, StringComparison.OrdinalIgnoreCase) >= 0) || (lastmsg.CleanContent.IndexOf(ext.packageId, StringComparison.OrdinalIgnoreCase) >= 0) || (thread.Name.IndexOf(ext.name, StringComparison.OrdinalIgnoreCase) >= 0) || (thread.Name.IndexOf(ext.packageId, StringComparison.OrdinalIgnoreCase) >= 0)) {
+                    EmbedBuilder embed = new EmbedBuilder() {
+                        Title = $"Is your problem is this plugin?",
+                        Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
+                    };
+
+                    embed.AddField("Name", $"{ext.name} ({ext.packageId})", true);
+                    embed.AddField("Author", (ext.dSupportUserId is not null)? $"<@{ext.dSupportUserId}>" : ext.author, true);
+                    prevthread = thread.Name;
+                    prevplauserid = (ulong)ext.dSupportUserId!;
+                    prevplugin = ext.packageId!;
+
+                    ComponentBuilder componentb = new ComponentBuilder()
+                        .WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
+                        .WithButton("No", "plugin-problem-no", ButtonStyle.Danger);
+
+                    _client.ButtonExecuted -= async (component) => await ButtonExecuted(component, thread.Owner);
+                    _client.ButtonExecuted += async (component) => await ButtonExecuted(component, thread.Owner);
+
+                    await thread.SendMessageAsync(embed: embed.Build(), components: componentb.Build());
+                }
+            }
+        }
 
 		private async void Timer_Elapsed (object? sender, ElapsedEventArgs e) {
 			DateTime now = DateTime.Now.ToUniversalTime();
@@ -93,6 +155,8 @@ namespace Develeon64.MacroBot {
 			//{
 				await commandHandler.GetInteractionService().RegisterCommandsGloballyAsync(true);
 			//}
+
+			stringss = await StatusLoop.StatusLoop1(_client, 1, stringss);
 		}
 
 		private async Task UserJoined (SocketGuildUser member) {
