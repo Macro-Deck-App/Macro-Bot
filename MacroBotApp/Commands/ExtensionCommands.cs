@@ -3,7 +3,6 @@ using Octokit;
 using Discord.WebSocket;
 using Discord;
 using MacroBot.Config;
-using MacroBot.Models;
 using MacroBot.Utils;
 using Newtonsoft.Json;
 

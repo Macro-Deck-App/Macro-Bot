@@ -1,6 +1,4 @@
-﻿using MacroBot.Utils;
-
-namespace MacroBot.Config;
+﻿namespace MacroBot.Config;
 
 public class BotConfig : LoadableConfig<BotConfig>
 {
@@ -13,14 +11,12 @@ public class BotConfig : LoadableConfig<BotConfig>
 	public ChannelsConfig Channels { get; set; } = new();
 	
 	public class RolesConfig {
-		public ulong AdministratorRoleId { get; set; }
 		public ulong ModeratorRoleId { get; set; }
 		public ulong SupportRoleId { get; set; }
 	}
 
 	public class ChannelsConfig {
 		public ulong MemberScreeningChannelId { get; set; }
-		public ulong TicketCategoryId { get; set; }
 		public ulong SupportTeamChannelId { get; set; }
 		public ulong UpdateChannelId { get; set; }
 		public ulong FaqChannelId { get; set; }

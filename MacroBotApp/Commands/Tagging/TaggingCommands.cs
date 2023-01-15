@@ -1,19 +1,27 @@
 ﻿using Discord;
 using Discord.Interactions;
 using MacroBot.Config;
+using MacroBot.DataAccess.RepositoryInterfaces;
 using MacroBot.Models;
 using MacroBot.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace MacroBot.Commands.Tagging;
 
 [Group("tag", "Tag system")]
+// ReSharper disable once ClassNeverInstantiated.Global
 public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly CommandsConfig _commandsConfig;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly TaggingUtils _taggingUtils;
 
-    public TaggingCommands(CommandsConfig commandsConfig)
+    public TaggingCommands(CommandsConfig commandsConfig, IServiceScopeFactory serviceScopeFactory, TaggingUtils taggingUtils)
     {
         _commandsConfig = commandsConfig;
+        _serviceScopeFactory = serviceScopeFactory;
+        _taggingUtils = taggingUtils;
     }
     
     // Assignable Lists
@@ -25,25 +33,25 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
     [AutocompleteCommand("tag", "delete")]
     public async Task AutoCompleteDelete()
     {
-        await TaggingUtils.AutoCompleteTag(Context);
+        await _taggingUtils.AutoCompleteTag(Context);
     }
 
     [AutocompleteCommand("tag", "edit")]
     public async Task AutoCompleteEdit()
     {
-        await TaggingUtils.AutoCompleteTag(Context);
+        await _taggingUtils.AutoCompleteTag(Context);
     }
 
     [AutocompleteCommand("tag", "view")]
     public async Task AutoCompleteView()
     {
-        await TaggingUtils.AutoCompleteTag(Context);
+        await _taggingUtils.AutoCompleteTag(Context);
     }
 
     [AutocompleteCommand("tag", "raw")]
     public async Task AutoCompleteRaw()
     {
-        await TaggingUtils.AutoCompleteTag(Context);
+        await _taggingUtils.AutoCompleteTag(Context);
     }
 
     // Commands
@@ -53,17 +61,19 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         // Handle Permissions
         var guildUser = Context.Guild.GetUser(Context.User.Id);
         var requiredPermissions = _commandsConfig.Tagging.PermissionManageTags;
-        if (!TaggingUtils.checkPermissions(requiredPermissions, guildUser))
+        if (!_taggingUtils.CheckPermissions(requiredPermissions, guildUser))
         {
 
-            await RespondAsync(embed: TaggingUtils.buildPermissionError(requiredPermissions), ephemeral: true);
+            await RespondAsync(embed: _taggingUtils.buildPermissionError(requiredPermissions), ephemeral: true);
             return;
         }
 
         // Handle Already Exists
-        if (await DatabaseManager.TagExists(name, Context.Guild.Id))
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var tagRepository = scope.ServiceProvider.GetRequiredService<ITagRepository>();
+        if (await tagRepository.TagExists(name, Context.Guild.Id))
         {
-            await RespondAsync(embed: TaggingUtils.buildAlreadyExistsError(name), ephemeral: true);
+            await RespondAsync(embed: _taggingUtils.buildAlreadyExistsError(name), ephemeral: true);
             return;
         }
 
@@ -86,20 +96,22 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         // Handle Permissions
         var guildUser = Context.Guild.GetUser(Context.User.Id);
         var requiredPermissions = _commandsConfig.Tagging.PermissionManageTags;
-        if (!TaggingUtils.checkPermissions(requiredPermissions, guildUser))
+        if (!_taggingUtils.CheckPermissions(requiredPermissions, guildUser))
         {
 
-            await RespondAsync(embed: TaggingUtils.buildPermissionError(requiredPermissions), ephemeral: true);
+            await RespondAsync(embed: _taggingUtils.buildPermissionError(requiredPermissions), ephemeral: true);
             return;
         }
 
         // Get Tag from Database
-        var tag = await DatabaseManager.GetTag(tagName, Context.Guild.Id);
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var tagRepository = scope.ServiceProvider.GetRequiredService<ITagRepository>();
+        var tag = await tagRepository.GetTag(tagName, Context.Guild.Id);
 
         // Handle Tag Not Found
         if (tag == null)
         {
-            await RespondAsync(embed: TaggingUtils.buildTagNotFoundError(tagName), ephemeral: true);
+            await RespondAsync(embed: _taggingUtils.buildTagNotFoundError(tagName), ephemeral: true);
             return;
         }
 
@@ -133,20 +145,22 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         // Handle Permissions
         var guildUser = Context.Guild.GetUser(Context.User.Id);
         var requiredPermissions = _commandsConfig.Tagging.PermissionManageTags;
-        if (!TaggingUtils.checkPermissions(requiredPermissions, guildUser))
+        if (!_taggingUtils.CheckPermissions(requiredPermissions, guildUser))
         {
 
-            await RespondAsync(embed: TaggingUtils.buildPermissionError(requiredPermissions), ephemeral: true);
+            await RespondAsync(embed: _taggingUtils.buildPermissionError(requiredPermissions), ephemeral: true);
             return;
         }
 
         // Get Tag from Database
-        var tag = await DatabaseManager.GetTag(tagName, Context.Guild.Id);
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var tagRepository = scope.ServiceProvider.GetRequiredService<ITagRepository>();
+        var tag = await tagRepository.GetTag(tagName, Context.Guild.Id);
 
         // Handle Tag Not Found
         if (tag == null)
         {
-            await RespondAsync(embed: TaggingUtils.buildTagNotFoundError(tagName), ephemeral: true);
+            await RespondAsync(embed: _taggingUtils.buildTagNotFoundError(tagName), ephemeral: true);
             return;
         }
 
@@ -168,12 +182,14 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
     public async Task View([Summary("tag"), Autocomplete] string tagName)
     {
         // Get Tag from Database
-        var tag = await DatabaseManager.GetTag(tagName, Context.Guild.Id);
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var tagRepository = scope.ServiceProvider.GetRequiredService<ITagRepository>();
+        var tag = await tagRepository.GetTag(tagName, Context.Guild.Id);
 
         // Handle Tag Not Found
         if (tag == null)
         {
-            await RespondAsync(embed: TaggingUtils.buildTagNotFoundError(tagName), ephemeral: true);
+            await RespondAsync(embed: _taggingUtils.buildTagNotFoundError(tagName), ephemeral: true);
             return;
         }
 
@@ -212,20 +228,22 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
     public async Task List([Summary("user", "The user who created the tags")] IUser? user = null)
     {
         // Get tags from database
-        List<Tag> tagList = new();
+        var tagList = new List<Tag>();
         var desc = "";
         var title = "";
 
         // Check if user argument is given
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var tagRepository = scope.ServiceProvider.GetRequiredService<ITagRepository>();
         if (user != null)
         {
-            tagList = await DatabaseManager.GetTagsFromUser(Context.Guild.Id, user.Id);
+            tagList.AddRange(await tagRepository.GetTagsFromUser(Context.Guild.Id, user.Id));
             title = $"Tag list";
             desc += $"Show tags by <@{user.Id}>:\n\n";
         }
         else
         {
-            tagList = await DatabaseManager.GetTagsForGuild(Context.Guild.Id);
+            tagList.AddRange(await tagRepository.GetTagsForGuild(Context.Guild.Id));
             title = "Tags for " + Context.Guild.Name;
         }
 
@@ -259,12 +277,14 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
     public async Task ViewRaw([Summary("tag"), Autocomplete] string tagName)
     {
         // Get Tag from Database
-        var tag = await DatabaseManager.GetTag(tagName, Context.Guild.Id);
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var tagRepository = scope.ServiceProvider.GetRequiredService<ITagRepository>();
+        var tag = await tagRepository.GetTag(tagName, Context.Guild.Id);
 
         // Handle Tag Not Found
         if (tag == null)
         {
-            await RespondAsync(embed: TaggingUtils.buildTagNotFoundError(tagName), ephemeral: true);
+            await RespondAsync(embed: _taggingUtils.buildTagNotFoundError(tagName), ephemeral: true);
             return;
         }
 

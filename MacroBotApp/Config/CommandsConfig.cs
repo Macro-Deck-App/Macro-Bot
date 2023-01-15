@@ -1,6 +1,4 @@
-﻿using MacroBot.Utils;
-
-namespace MacroBot.Config;
+﻿namespace MacroBot.Config;
 
 public class CommandsConfig : LoadableConfig<CommandsConfig>
 {

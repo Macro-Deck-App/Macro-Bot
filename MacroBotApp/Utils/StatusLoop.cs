@@ -4,7 +4,6 @@ using Discord;
 using Newtonsoft.Json;
 using MacroBot.Commands;
 using MacroBot.Config;
-using MacroBot.Services;
 
 namespace MacroBot.Utils;
 

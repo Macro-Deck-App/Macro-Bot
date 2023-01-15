@@ -5,7 +5,6 @@ using Discord.WebSocket;
 using MacroBot.Commands;
 using MacroBot.Config;
 using MacroBot.Extensions;
-using MacroBot.Logging;
 using MacroBot.ServiceInterfaces;
 using MacroBot.Utils;
 using Microsoft.Extensions.Hosting;
@@ -14,21 +13,19 @@ using Serilog;
 
 namespace MacroBot.Services;
 
-public abstract class DiscordService : IDiscordService, IHostedService
+public class DiscordService : IDiscordService, IHostedService
 {
 	private readonly ILogger _logger = Log.ForContext<DiscordService>();
 	
 	private readonly BotConfig _botConfig;
 	private readonly DiscordSocketClient _discordSocketClient;
-    private InteractionCommandHandler commandHandler;
-    
-    
 
-    private string prevthread = "";
+
+	private string prevthread = "";
     private ulong prevplauserid = 0;
     private string prevplugin = "";
 
-    protected DiscordService(BotConfig botConfig,
+    public DiscordService(BotConfig botConfig,
 	    DiscordSocketClient discordSocketClient)
     {
 	    _botConfig = botConfig;
@@ -48,11 +45,7 @@ public abstract class DiscordService : IDiscordService, IHostedService
         _discordSocketClient.MessageReceived += MessageReceived;
         _discordSocketClient.UserJoined += UserJoined;
         _discordSocketClient.UserLeft += UserLeft;
-        _discordSocketClient.ChannelDestroyed += ChannelDestroyed;
         _discordSocketClient.ThreadCreated += async (thread) => await ThreadCreated(thread);
-
-        commandHandler = new InteractionCommandHandler(_discordSocketClient, new InteractionService(_discordSocketClient.Rest));
-        await commandHandler.InitializeAsync();
 
         await _discordSocketClient.LoginAsync(TokenType.Bot, _botConfig.Token);
         await _discordSocketClient.StartAsync();
@@ -84,13 +77,13 @@ public abstract class DiscordService : IDiscordService, IHostedService
 
     private async Task ThreadCreated(SocketThreadChannel thread) {
 		var msg = await thread.GetMessagesAsync(2).FlattenAsync();
-		var lastmsg = msg.Last();
+		var lastMsg = msg.Last();
 		var extension = JsonConvert.DeserializeObject<List<Extension>>(await HttpRequest.GetAsync($"https://extensionstore.api.macro-deck.app/Extensions"));
 
 		foreach (var ext in extension) {
 			if (prevthread == thread.Name) { return; }
 
-			if ((lastmsg.CleanContent.IndexOf(ext.name, StringComparison.OrdinalIgnoreCase) >= 0) || (lastmsg.CleanContent.IndexOf(ext.packageId, StringComparison.OrdinalIgnoreCase) >= 0) || (thread.Name.IndexOf(ext.name, StringComparison.OrdinalIgnoreCase) >= 0) || (thread.Name.IndexOf(ext.packageId, StringComparison.OrdinalIgnoreCase) >= 0)) {
+			if ((lastMsg.CleanContent.IndexOf(ext.name, StringComparison.OrdinalIgnoreCase) >= 0) || (lastMsg.CleanContent.IndexOf(ext.packageId, StringComparison.OrdinalIgnoreCase) >= 0) || (thread.Name.IndexOf(ext.name, StringComparison.OrdinalIgnoreCase) >= 0) || (thread.Name.IndexOf(ext.packageId, StringComparison.OrdinalIgnoreCase) >= 0)) {
 				var embed = new EmbedBuilder() {
 					Title = $"Is your problem is this plugin?",
 					Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
@@ -116,18 +109,18 @@ public abstract class DiscordService : IDiscordService, IHostedService
 	
 	private async Task Ready () {
 		await UpdateMemberCount();
-		await commandHandler.GetInteractionService().RegisterCommandsGloballyAsync(true);
 	}
 
 	private async Task UserJoined (SocketGuildUser member) {
 		await MemberMovement(member, true);
 	}
 
-	private async Task UserLeft (SocketGuild guild, SocketUser user) {
-		await MemberMovement(user as SocketGuildUser, false);
-
-		await (await _discordSocketClient.GetChannelAsync((await DatabaseManager.GetTicket(user.Id)).Channel) as SocketTextChannel).DeleteAsync();
-		await DatabaseManager.DeleteTicket(user.Id, IdType.User);
+	private async Task UserLeft (SocketGuild guild, SocketUser user)
+	{
+		if (user is SocketGuildUser guildUser)
+		{
+			await MemberMovement(guildUser, false);
+		}
 	}
 
 	private async Task MessageReceived (SocketMessage message) {
@@ -160,16 +153,8 @@ public abstract class DiscordService : IDiscordService, IHostedService
 			}
 
 		}
-		if (message.Channel.Name.StartsWith("ticket-"))
-			await DatabaseManager.UpdateTicket(member.Id);
 	}
 
-	private async Task ChannelDestroyed (SocketChannel channel) {
-		if (channel is SocketTextChannel textChannel && textChannel.Name.StartsWith("ticket-")) {
-			await DatabaseManager.DeleteTicket(channel.Id, IdType.Channel);
-		}
-	}
-	
 	private async Task MemberMovement (SocketGuildUser member, bool joined) {
 		DiscordEmbedBuilder embed = new() {
 			Color = joined ? new Color(191, 63, 127) : new Color(191, 127, 63),
@@ -209,7 +194,7 @@ public abstract class DiscordService : IDiscordService, IHostedService
 		for (var i = 0; i < nameParts.Length - 1; i++)
 			channelName += nameParts[i];
 		await channel.ModifyAsync(properties => { properties.Name = $"{channelName}_{memberCount}"; });
-		Logger.Info(Modules.Bot, $"Users on the server: {memberCount}");
+		_logger.Information("Users on the server: {MemberCount}", memberCount);
 		return memberCount;
 	}
 }

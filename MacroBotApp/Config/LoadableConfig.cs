@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using Serilog;
 
-namespace MacroBot.Utils;
+namespace MacroBot.Config;
 
 public class LoadableConfig<T> where T : new()
 {

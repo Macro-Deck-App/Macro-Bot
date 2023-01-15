@@ -1,19 +1,29 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using MacroBot.Models;
+using MacroBot.DataAccess.RepositoryInterfaces;
 using MacroBot.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MacroBot.Commands.Tagging;
 
 public class TaggingUtils
 {
-    public static async Task AutoCompleteTag(SocketInteractionContext Context)
+    private readonly IServiceScopeFactory _serviceScopeFactory;
+
+    public TaggingUtils(IServiceScopeFactory serviceScopeFactory)
+    {
+        _serviceScopeFactory = serviceScopeFactory;
+    }
+    
+    public async Task AutoCompleteTag(SocketInteractionContext Context)
     {
         var userInput = (Context.Interaction as SocketAutocompleteInteraction).Data.Current.Value.ToString();
 
         List<AutocompleteResult> resultList = new();
-        foreach (var tag in await DatabaseManager.GetTagsForGuild(Context.Guild.Id))
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var tagRepository = scope.ServiceProvider.GetRequiredService<ITagRepository>();
+        foreach (var tag in await tagRepository.GetTagsForGuild(Context.Guild.Id))
         {
             resultList.Add(new AutocompleteResult(tag.Name, tag.Name));
         }
@@ -22,7 +32,7 @@ public class TaggingUtils
         await ((SocketAutocompleteInteraction)Context.Interaction).RespondAsync(results.Take(25));
     }
 
-    public static Boolean checkPermissions(ulong[] permissions, SocketGuildUser user)
+    public bool CheckPermissions(ulong[] permissions, SocketGuildUser user)
     {
         List<SocketRole> userRoles = user.Roles.ToList<SocketRole>();
 
@@ -36,7 +46,7 @@ public class TaggingUtils
         return false;
     }
 
-    public static Embed buildPermissionError(ulong[] permissions)
+    public Embed buildPermissionError(ulong[] permissions)
     {
         var embedBuilder = new EmbedBuilder()
         {
@@ -51,7 +61,7 @@ public class TaggingUtils
         return embedBuilder.Build();
     }
 
-    public static Embed buildAlreadyExistsError(string tagName)
+    public Embed buildAlreadyExistsError(string tagName)
     {
         var embedBuilder = new EmbedBuilder()
         {
@@ -63,7 +73,7 @@ public class TaggingUtils
         return embedBuilder.Build();
     }
 
-    public static Embed buildTagNotFoundError(string tagName)
+    public Embed buildTagNotFoundError(string tagName)
     {
         var embedBuilder = new EmbedBuilder()
         {
@@ -75,7 +85,7 @@ public class TaggingUtils
         return embedBuilder.Build();
     }
 
-    public static String getTagInfoError()
+    public string getTagInfoError()
     {
         return "An internal error occured while getting Tag Name information, please try again.";
     }

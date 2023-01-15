@@ -1,17 +1,15 @@
 ﻿using Discord;
-using Newtonsoft.Json;
-using Discord.Net;
 using Discord.WebSocket;
-using Discord.Interactions;
-using System.Timers;
 using MacroBot.Commands;
+using MacroBot.Commands.Tagging;
 using MacroBot.Config;
+using MacroBot.DataAccess;
+using MacroBot.DataAccess.AutoMapper;
+using MacroBot.DataAccess.Repositories;
+using MacroBot.DataAccess.RepositoryInterfaces;
 using MacroBot.Extensions;
-using MacroBot.Logging;
-using MacroBot.Models;
 using MacroBot.ServiceInterfaces;
 using MacroBot.Services;
-using MacroBot.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -19,10 +17,6 @@ using Serilog;
 namespace MacroBot;
 
 public class Program {
-	
-	private const string BotConfigPath = "Config/BotConfig.json";
-	private const string CommandsConfigPath = "Config/Commands.json";
-
 	public static async Task Main(string[] args)
 	{
 		Log.Logger = new LoggerConfiguration()
@@ -30,8 +24,8 @@ public class Program {
 			.CreateLogger();
 		
 		// ReSharper disable once HeapView.ClosureAllocation
-		var botConfig = await BotConfig.LoadAsync(BotConfigPath);
-		var commandsConfig = await CommandsConfig.LoadAsync(CommandsConfigPath);
+		var botConfig = await BotConfig.LoadAsync(Constants.BotConfigPath);
+		var commandsConfig = await CommandsConfig.LoadAsync(Constants.CommandsConfigPath);
 		
 		DiscordSocketConfig discordSocketConfig = new() {
 			AlwaysDownloadUsers = true,
@@ -44,26 +38,21 @@ public class Program {
 			.UseSerilog()
 			.ConfigureServices(services =>
 			{
+				services.AddDbContext<MacroBotContext>();
+				services.AddAutoMapper(typeof(TagMapping));
+				services.AddTransient<ITagRepository, TagRepository>();
+				services.AddTransient<TaggingUtils>();
+				services.AddSingleton<InfoCommands>();
 				services.AddSingleton(botConfig);
 				services.AddSingleton(commandsConfig);
 				services.AddSingleton(discordSocketConfig);
 				services.AddSingleton<DiscordSocketClient>();
-				//services.AddInjectableHostedService<IDiscordService, DiscordService>();
+				services.AddInjectableHostedService<IDiscordService, DiscordService>();
 			});
 
 		var app = builder.Build();
-
+		app.CheckAndCreateDirectories();
+		await app.MigrateDatabaseAsync();
 		await app.RunAsync();
-	}
-
-	//public static Task Main (string[] args) => new Program().MainAsync(args);
-
-	public async Task MainAsync (string[] args) {
-		Directory.CreateDirectory("DB");
-		await DatabaseManager.Initialize("DB/Database.db3");
-
-		
-
-		await Task.Delay(-1);
 	}
 }
