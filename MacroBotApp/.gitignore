@@ -1,0 +1,6 @@
+﻿Config/global.json
+/bin
+/obj
+.idea
+.vs
+.vscode
