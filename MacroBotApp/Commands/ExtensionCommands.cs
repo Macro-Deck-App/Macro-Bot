@@ -2,7 +2,8 @@ using Discord.Interactions;
 using Octokit;
 using Discord.WebSocket;
 using Discord;
-using MacroBot.Services;
+using MacroBot.Config;
+using MacroBot.Models;
 using MacroBot.Utils;
 using Newtonsoft.Json;
 
@@ -10,6 +11,15 @@ namespace MacroBot.Commands;
 
 [Group("extension", "Extension Store Commands")]
 public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext> {
+    private readonly BotConfig _botConfig;
+    private readonly CommandsConfig _commandsConfig;
+
+    public ExtensionCommands(BotConfig botConfig, CommandsConfig commandsConfig)
+    {
+        _botConfig = botConfig;
+        _commandsConfig = commandsConfig;
+    }
+    
     [SlashCommand("get", "Get a plugin")]
     public async Task getPlugin([Summary(description: "Extension Name or Package ID")] string query) {
         await DeferAsync();
@@ -37,7 +47,7 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
 
         if (!String.IsNullOrEmpty(extension.githubRepository)) {
             var client = new GitHubClient(new ProductHeaderValue("DiscordBot"));
-            client.Credentials = new Credentials(ConfigManager.GlobalConfig.GithubToken);
+            client.Credentials = new Credentials(_botConfig.GithubToken);
             var repo = extension.githubRepository.Replace("https://github.com", "").Split("/").ToList();
             var repository = await client.Repository.Get(repo[1], repo[2]);
 

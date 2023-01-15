@@ -90,8 +90,8 @@ public class UserTagAssignable
     public string tagName { get; private set; }
     public UserTagAssignable(ulong guildID, ulong userID, string tagName)
     {
-        this.userId = userID;
-        this.guildId = guildID;
+        userId = userID;
+        guildId = guildID;
         this.tagName = tagName;
     }
 }

@@ -54,7 +54,7 @@ public static class DatabaseManager {
 	public static async Task<bool> TicketExists (ulong author) {
 		var exists = false;
 		try {
-			await DatabaseManager.database.OpenAsync();
+			await database.OpenAsync();
 			using var cmd = database.CreateCommand();
 			cmd.CommandText = $"SELECT * FROM 'Tickets' WHERE 'Tickets'.'Author' == {author}";
 			exists = await cmd.ExecuteScalarAsync() != null;
@@ -69,7 +69,7 @@ public static class DatabaseManager {
 
 	public static async Task CreateTicket (ulong author, ulong channel, ulong message, DateTimeOffset created) {
 		try {
-			await DatabaseManager.database.OpenAsync();
+			await database.OpenAsync();
 			using var command = database.CreateCommand();
 			command.CommandText = $"INSERT INTO 'Tickets' VALUES ({author}, {channel}, {message}, {created.ToUnixTimeSeconds()}, {created.ToUnixTimeSeconds()});";
 			await command.ExecuteNonQueryAsync();
@@ -82,18 +82,18 @@ public static class DatabaseManager {
 	}
 
 	public static async Task CreateTicket (ulong author, ulong channel, ulong message, DateTime created) {
-		await DatabaseManager.CreateTicket(author, channel, message, (DateTimeOffset)created.ToUniversalTime());
+		await CreateTicket(author, channel, message, (DateTimeOffset)created.ToUniversalTime());
 	}
 
 	public static async Task CreateTicket (ulong author, ulong channel, ulong message) {
-		await DatabaseManager.CreateTicket(author, channel, message, DateTimeOffset.Now);
+		await CreateTicket(author, channel, message, DateTimeOffset.Now);
 	}
 
 	public static async Task DeleteTicket (ulong id, IdType type) {
 		if (type is not IdType.Channel and not IdType.User) return;
 
 		try {
-			await DatabaseManager.database.OpenAsync();
+			await database.OpenAsync();
 			using var command = database.CreateCommand();
 			command.CommandText = $"DELETE FROM 'Tickets' WHERE 'Tickets'.'{(type is IdType.User ? "Author" : "Channel")}' == {id};";
 			await command.ExecuteNonQueryAsync();
@@ -107,7 +107,7 @@ public static class DatabaseManager {
 
 	public static async Task UpdateTicket (ulong author) {
 		try {
-			await DatabaseManager.database.OpenAsync();
+			await database.OpenAsync();
 			using var command = database.CreateCommand();
 			command.CommandText = $"UPDATE 'Tickets' SET 'Modified' = {DateTimeOffset.Now.ToUnixTimeSeconds()} WHERE 'Tickets'.'Author' == {author};";
 			await command.ExecuteNonQueryAsync();
@@ -122,7 +122,7 @@ public static class DatabaseManager {
 	public static async Task<List<Ticket>> GetTickets () {
 		List<Ticket> tickets = new();
 		try {
-			await DatabaseManager.database.OpenAsync();
+			await database.OpenAsync();
 			using var command = database.CreateCommand();
 			command.CommandText = $"SELECT * FROM 'Tickets'";
 			var reader = await command.ExecuteReaderAsync();
@@ -146,7 +146,7 @@ public static class DatabaseManager {
 	}
 
 	public static async Task<Ticket> GetTicket (ulong author) {
-		foreach (var ticket in await DatabaseManager.GetTickets()) {
+		foreach (var ticket in await GetTickets()) {
 			if (ticket.Author == author) return ticket;
 		}
 		return null;
@@ -157,7 +157,7 @@ public static class DatabaseManager {
 		var exists = false;
 		try
 		{
-			await DatabaseManager.database.OpenAsync();
+			await database.OpenAsync();
 			using var cmd = database.CreateCommand();
 			cmd.CommandText = $"SELECT * FROM 'Tags' WHERE 'Tags'.'Name' == '{name}' AND 'Tags'.'Guild' == {guildId}";
 			exists = await cmd.ExecuteScalarAsync() != null;
@@ -175,7 +175,7 @@ public static class DatabaseManager {
 	{
 		try
 		{
-			await DatabaseManager.database.OpenAsync();
+			await database.OpenAsync();
 			using var command = database.CreateCommand();
 			command.CommandText = $"INSERT INTO 'Tags' VALUES ('{name}', '{content}', {author}, {guildId},{DateTimeOffset.Now.ToUnixTimeSeconds()});";
 			await command.ExecuteNonQueryAsync();
@@ -192,7 +192,7 @@ public static class DatabaseManager {
 	{
 		try
 		{
-			await DatabaseManager.database.OpenAsync();
+			await database.OpenAsync();
 			using var command = database.CreateCommand();
 			command.CommandText = $"UPDATE 'Tags' SET 'Content' = '{content}', 'LastEditTimestamp' = {DateTimeOffset.Now.ToUnixTimeSeconds()} WHERE 'Tags'.'Name' == '{name}' AND 'Tags'.'Guild' == {guildId}";
 			await command.ExecuteNonQueryAsync();
@@ -209,7 +209,7 @@ public static class DatabaseManager {
 	{
 		try
 		{
-			await DatabaseManager.database.OpenAsync();
+			await database.OpenAsync();
 			using var command = database.CreateCommand();
 			command.CommandText = $"DELETE FROM 'Tags' WHERE 'Tags'.'Name' == '{name}';";
 			await command.ExecuteNonQueryAsync();
@@ -227,7 +227,7 @@ public static class DatabaseManager {
 		List<Tag> tags = new();
 		try
 		{
-			await DatabaseManager.database.OpenAsync();
+			await database.OpenAsync();
 			using var command = database.CreateCommand();
 			command.CommandText = $"SELECT * FROM 'Tags' WHERE 'Tags'.'Guild' == {guildId}";
 			var reader = await command.ExecuteReaderAsync();
@@ -255,7 +255,7 @@ public static class DatabaseManager {
 	public static async Task<ulong> GetPluginAuthorId (string name) {
 		ulong id = 0;
 		try {
-			await DatabaseManager.database.OpenAsync();
+			await database.OpenAsync();
 			using var command = database.CreateCommand();
 			command.CommandText = $"SELECT Author FROM 'Plugins' WHERE Name LIKE '{name}';";
 			var reader = await command.ExecuteReaderAsync();
@@ -277,7 +277,7 @@ public static class DatabaseManager {
 		List<Tag> tags = new();
 		try
 		{
-			await DatabaseManager.database.OpenAsync();
+			await database.OpenAsync();
 			using var command = database.CreateCommand();
 			command.CommandText = $"SELECT * FROM 'Tags' WHERE 'Tags'.'Author' == {userId} AND 'Tags'.'Guild' == {guildId}";
 			var reader = await command.ExecuteReaderAsync();
@@ -304,7 +304,7 @@ public static class DatabaseManager {
 	}
 	public static async Task<Tag> GetTag(string name, ulong guild)
 	{
-		foreach (var tag in await DatabaseManager.GetTagsForGuild(guild))
+		foreach (var tag in await GetTagsForGuild(guild))
 		{
 			if (tag.Name == name) return tag;
 		}

@@ -3,6 +3,7 @@ using System.Web;
 using Discord;
 using Newtonsoft.Json;
 using MacroBot.Commands;
+using MacroBot.Config;
 using MacroBot.Services;
 
 namespace MacroBot.Utils;
@@ -73,11 +74,17 @@ public class Title {
 }
 
 public class StatusLoop {
-    private static readonly HttpClient httpclient = new HttpClient();
-    public static async Task<List<List<string>>> StatusLoop1(DiscordSocketClient client, ulong messageid, List<List<string>> strings) {
-        StatusLoop statusLoop = new();
-        var program = new Program();
-        var channel = (client.GetGuild(ConfigManager.GlobalConfig.TestGuildId).GetChannel(ConfigManager.GlobalConfig.Channels.UpdateChannelId) as ITextChannel);
+    private readonly BotConfig _botConfig;
+    private readonly HttpClient _httpClient;
+
+    public StatusLoop(BotConfig botConfig, HttpClient httpClient)
+    {
+        _botConfig = botConfig;
+        _httpClient = httpClient;
+    }
+    
+    public async Task<List<List<string>>> StatusLoop1(DiscordSocketClient client, ulong messageid, List<List<string>> strings) {
+        var channel = (client.GetGuild(_botConfig.TestGuildId).GetChannel(_botConfig.Channels.UpdateChannelId) as ITextChannel);
 
         var website = 0;
         var webclie = 0;
@@ -108,7 +115,7 @@ public class StatusLoop {
 
         EmbedBuilder embed = new();
         embed.WithTitle("Macro Deck Service Status");
-        embed.WithDescription((website == 1 && webclie == 1 && extstor == 1 && exstapi == 1 && updtapi == 1)? "✅ All services are online. You should have no problems." : "⚠ There is a problem on one or more services. We are working to the issue.");
+        embed.WithDescription((website == 1 && webclie == 1 && extstor == 1 && exstapi == 1 && updtapi == 1)? "✅ All services are online. You should have no problems." : "⚠ There is a problem on one or more services.");
         embed.WithColor((website == 1 && webclie == 1 && extstor == 1 && exstapi == 1 && updtapi == 1)? Color.Green : Color.Gold);
         var type = (website == 1)? "🟢" : "🔴";
         var typ2 = (webclie == 1)? "🟢" : "🔴";
@@ -135,8 +142,10 @@ public class StatusLoop {
         Chart graph = new();
         Dataset dataset = new();
         Dataset dataset2 = new();
-        Data data = new();
-        data.labels = new string[] {"Macro Deck Website", "Macro Deck Web Client", "Macro Deck Extension Store", "Macro Deck Extension Store API", "Macro Deck Update API"};
+        Data data = new()
+        {
+            labels = new[] {"Macro Deck Website", "Macro Deck Web Client", "Macro Deck Extension Store", "Macro Deck Extension Store API", "Macro Deck Update API"}
+        };
         List<Dataset> datasets = new();
         graph.type = "bar";
         graph.data = data;
@@ -146,18 +155,18 @@ public class StatusLoop {
         dataset.label = "Uptime";
         dataset.borderWidth = 2;
         dataset.backgroundColor = "rgb(22, 138, 32)";
-        var st0 = strings[0].Where(str => str.Contains("o")).Count();
-        var st1 = strings[1].Where(str => str.Contains("o")).Count();
-        var st2 = strings[2].Where(str => str.Contains("o")).Count();
-        var st3 = strings[3].Where(str => str.Contains("o")).Count();
-        var st4 = strings[4].Where(str => str.Contains("o")).Count();
-        var std0 = strings[0].Where(str => str.Contains("x")).Count();
-        var std1 = strings[1].Where(str => str.Contains("x")).Count();
-        var std2 = strings[2].Where(str => str.Contains("x")).Count();
-        var std3 = strings[3].Where(str => str.Contains("x")).Count();
-        var std4 = strings[4].Where(str => str.Contains("x")).Count();
-        dataset.data = new int[] { st0, st1, st2, st3, st4 };
-        dataset2.data = new int[] { std0, std1, std2, std3, std4 };
+        var st0 = strings[0].Count(str => str.Contains("o"));
+        var st1 = strings[1].Count(str => str.Contains("o"));
+        var st2 = strings[2].Count(str => str.Contains("o"));
+        var st3 = strings[3].Count(str => str.Contains("o"));
+        var st4 = strings[4].Count(str => str.Contains("o"));
+        var std0 = strings[0].Count(str => str.Contains("x"));
+        var std1 = strings[1].Count(str => str.Contains("x"));
+        var std2 = strings[2].Count(str => str.Contains("x"));
+        var std3 = strings[3].Count(str => str.Contains("x"));
+        var std4 = strings[4].Count(str => str.Contains("x"));
+        dataset.data = new[] { st0, st1, st2, st3, st4 };
+        dataset2.data = new[] { std0, std1, std2, std3, std4 };
         datasets.Add(dataset);
         datasets.Add(dataset2);
         data.datasets = datasets;
@@ -175,18 +184,8 @@ public class StatusLoop {
         embed.WithFooter("Updated on");
         embed.WithCurrentTimestamp();
 
-        try {
-            var msg = await channel!.GetMessageAsync(messageid);
-            await channel!.ModifyMessageAsync(messageid, m => {m.Content = "Macro Deck Service Status";});
-        } catch (Exception) {
-            await channel!.DeleteMessagesAsync(await channel.GetMessagesAsync(10).FlattenAsync());
-            Thread.Sleep(1000);
-
-            var msg = await channel!.SendMessageAsync("Macro Deck Service Status");
-            program.messageid = msg.Id;
-        }
-        await channel!.ModifyMessageAsync(program.messageid, m => {m.Content = "Macro Deck Service Status";m.Embed = embed.Build();});
-
+        await channel.SendMessageAsync(embed: embed.Build());
+        
         return strings;
     }
 }

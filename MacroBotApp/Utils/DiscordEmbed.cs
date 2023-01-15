@@ -11,6 +11,6 @@ public class DiscordEmbedBuilder : EmbedBuilder {
 	}*/
 
 	public EmbedBuilder AddBlankField (bool inline = false) {
-		return this.AddField("\u200b", "\u200b", inline);
+		return AddField("\u200b", "\u200b", inline);
 	}
 }

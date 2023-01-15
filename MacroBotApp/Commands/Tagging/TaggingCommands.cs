@@ -1,6 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
+using MacroBot.Config;
 using MacroBot.Models;
 using MacroBot.Services;
 
@@ -9,6 +9,13 @@ namespace MacroBot.Commands.Tagging;
 [Group("tag", "Tag system")]
 public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
 {
+    private readonly CommandsConfig _commandsConfig;
+
+    public TaggingCommands(CommandsConfig commandsConfig)
+    {
+        _commandsConfig = commandsConfig;
+    }
+    
     // Assignable Lists
     public static List<UserTagAssignable> createTagAssignments = new();
     public static List<UserTagAssignable> deleteTagAssignments = new();
@@ -45,7 +52,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
     {
         // Handle Permissions
         var guildUser = Context.Guild.GetUser(Context.User.Id);
-        var requiredPermissions = ConfigManager.CommandsConfig.Tagging.PermissionManageTags;
+        var requiredPermissions = _commandsConfig.Tagging.PermissionManageTags;
         if (!TaggingUtils.checkPermissions(requiredPermissions, guildUser))
         {
 
@@ -78,7 +85,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
     {
         // Handle Permissions
         var guildUser = Context.Guild.GetUser(Context.User.Id);
-        var requiredPermissions = ConfigManager.CommandsConfig.Tagging.PermissionManageTags;
+        var requiredPermissions = _commandsConfig.Tagging.PermissionManageTags;
         if (!TaggingUtils.checkPermissions(requiredPermissions, guildUser))
         {
 
@@ -125,7 +132,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
     {
         // Handle Permissions
         var guildUser = Context.Guild.GetUser(Context.User.Id);
-        var requiredPermissions = ConfigManager.CommandsConfig.Tagging.PermissionManageTags;
+        var requiredPermissions = _commandsConfig.Tagging.PermissionManageTags;
         if (!TaggingUtils.checkPermissions(requiredPermissions, guildUser))
         {
 

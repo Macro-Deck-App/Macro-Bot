@@ -6,11 +6,11 @@ public class CacheObject<T> {
 
 	public CacheObject (T data) {
 		this.data = data;
-		this.time = DateTime.Now;
+		time = DateTime.Now;
 	}
 
 	public T? GetValue () {
-		return DateTime.Now.Subtract(this.time).TotalMinutes <= 5 ? data : default;
+		return DateTime.Now.Subtract(time).TotalMinutes <= 5 ? data : default;
 	}
 
 	public Type Type {

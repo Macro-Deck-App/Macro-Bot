@@ -14,33 +14,33 @@ public static class Logger {
 			for (var i = 1; i < lines.Length; i++)
 				line += "\n                                            " + lines[i];
 
-			Logger.LogFile(line);
-			Logger.LogConsole(line);
+			LogFile(line);
+			LogConsole(line);
 		}
 	}
 
 	public static void Trace (Modules module, string message) {
-		Logger.Log(module, Levels.Trace, message);
+		Log(module, Levels.Trace, message);
 	}
 
 	public static void Debug (Modules module, string message) {
-		Logger.Log(module, Levels.Debug, message);
+		Log(module, Levels.Debug, message);
 	}
 
 	public static void Info (Modules module, string message) {
-		Logger.Log(module, Levels.Info, message);
+		Log(module, Levels.Info, message);
 	}
 
 	public static void Warning (Modules module, string message) {
-		Logger.Log(module, Levels.Warning, message);
+		Log(module, Levels.Warning, message);
 	}
 
 	public static void Error (Modules module, string message) {
-		Logger.Log(module, Levels.Error, message);
+		Log(module, Levels.Error, message);
 	}
 
 	public static void Critical (Modules module, string message) {
-		Logger.Log(module, Levels.Critical, message);
+		Log(module, Levels.Critical, message);
 	}
 
 	private static void LogConsole (string text) {
