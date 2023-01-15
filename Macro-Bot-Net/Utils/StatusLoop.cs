@@ -170,9 +170,6 @@ namespace Develeon64.MacroBot.Utils {
             var json = JsonConvert.SerializeObject(graph, Formatting.None);
             var jstr = HttpUtility.UrlEncode(json);
 
-            Console.WriteLine(JsonConvert.SerializeObject(graph));
-            Console.WriteLine(jstr);
-
             embed.AddField("Macro Deck website", $"Status: {type} ({((website == 1)? "Online" : "Offline")}, {webs})");
             embed.AddField("Macro Deck Web Client", $"Status: {typ2} ({((webclie == 1)? "Online" : "Offline")}, {webc})");
             embed.AddField("Extension Store", $"Status: {typ3} ({((extstor == 1)? "Online" : "Offline")}, {exts})");
