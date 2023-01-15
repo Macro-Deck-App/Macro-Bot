@@ -47,6 +47,7 @@
 		}
 
 		private static void LogFile (string text) {
+			/*
 			string fileName = $"MacroBot_{DateTime.Now:d}.log";
 			if (!Directory.Exists("Logs"))
 				Directory.CreateDirectory("Logs");
@@ -56,6 +57,7 @@
 			}
 
 			File.AppendAllText($"Logs\\{fileName}", $"{text}\n");
+			*/
 		}
 	}
 }

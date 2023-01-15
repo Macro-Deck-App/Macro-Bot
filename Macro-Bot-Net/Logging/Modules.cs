@@ -5,5 +5,8 @@
 		Gateway,
 		Discord,
 		Bot,
+		Config,
+		Tags,
+		Tickets,
 	}
 }
