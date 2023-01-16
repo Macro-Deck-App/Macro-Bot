@@ -27,7 +27,7 @@ public static class ExtensionMessageBuilder
             EmbedFieldBuilder field = new();
             field.WithName($"[{ext.ExtensionType}] {ext.PackageId}");
             var extensionVersionInfo = extensionFile != null
-                ? $"Latest Version: {extensionFile.Version}\r\nMin API Version: {extensionFile.MinAPIVersion}"
+                ? $"Latest Version: {extensionFile.Version}\r\nMin API Version: {extensionFile.MinApiVersion}"
                 : string.Empty;
             field.WithValue(
                 $"{(ext.GithubRepository is not null 
@@ -37,7 +37,7 @@ public static class ExtensionMessageBuilder
                     : ext.Author)}\r\n" +
                 (extensionFile is not null 
                     ? $"Latest Version: {extensionFile.Version}\r\n" +
-                      $"Min API Version: {extensionFile.MinAPIVersion}"
+                      $"Min API Version: {extensionFile.MinApiVersion}"
                     : string.Empty));
             field.WithIsInline(true);
             flds.Add(field);
@@ -89,7 +89,7 @@ public static class ExtensionMessageBuilder
             if (extensionFile is not null)
             {
                 embed.AddField("Latest version", extensionFile.Version, true);
-                embed.AddField("Min API version", extensionFile.MinAPIVersion, true);
+                embed.AddField("Min API version", extensionFile.MinApiVersion, true);
             }
         }
 
