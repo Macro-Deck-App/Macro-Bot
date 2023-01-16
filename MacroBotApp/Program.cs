@@ -17,7 +17,7 @@ using Serilog;
 
 namespace MacroBot;
 
-public class Program {
+public static class Program {
 	public static async Task Main(string[] args)
 	{
 		Log.Logger = new LoggerConfiguration()
@@ -34,6 +34,12 @@ public class Program {
 			MessageCacheSize = 100,
 			GatewayIntents = GatewayIntents.All,
 		};
+
+		InteractionServiceConfig interactionServiceConfig = new()
+		{
+			AutoServiceScopes = true,
+			DefaultRunMode = RunMode.Async
+		};
 		
 		var builder = Host.CreateDefaultBuilder(args)
 			.UseSerilog()
@@ -47,7 +53,8 @@ public class Program {
 				services.AddSingleton(commandsConfig);
 				services.AddSingleton(discordSocketConfig);
 				services.AddSingleton<DiscordSocketClient>();
-				services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()));
+				services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(),
+					interactionServiceConfig));
 				services.AddSingleton<CommandHandler>();
 				services.AddInjectableHostedService<IDiscordService, DiscordService>();
 			});

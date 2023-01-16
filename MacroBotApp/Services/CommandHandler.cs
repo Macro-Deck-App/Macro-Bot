@@ -28,7 +28,7 @@ public class CommandHandler
             // process the InteractionCreated payloads to execute Interactions commands
             _client.InteractionCreated += HandleInteraction;
             
-            _logger.Information("Command handler initialized - {NoModules} loaded - {Modules}",
+            _logger.Information("Command handler initialized - {NoModules} modules loaded - {Modules}",
                 _commands.Modules.Count,
                 string.Join(",", _commands.Modules.Select(x => x.Name)));
         }

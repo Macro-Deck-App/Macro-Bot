@@ -15,7 +15,7 @@ public static class DiscordSocketClientExtensions
         client.Log += delegate(LogMessage message)
         {
             if (message.Message is null || 
-                message.Exception?.Message is null)
+                message.Exception?.InnerException is null)
             {
                 return Task.CompletedTask;
             }

@@ -1,4 +1,4 @@
-﻿namespace MacroBot.ServiceInterfaces;
+namespace MacroBot.ServiceInterfaces;
 
 public interface IDiscordService
 {

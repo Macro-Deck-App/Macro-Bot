@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-using Discord;
-using Discord.Interactions;
+﻿using Discord;
 using Discord.Net;
 using Discord.WebSocket;
 using MacroBot.Commands;
@@ -21,8 +19,6 @@ public class DiscordService : IDiscordService, IHostedService
 	
 	private readonly BotConfig _botConfig;
 	private readonly DiscordSocketClient _discordSocketClient;
-	private readonly IServiceScopeFactory _serviceScopeFactory;
-	private readonly InteractionService _interactionService;
 	private readonly IServiceProvider _serviceProvider;
 
 
@@ -32,14 +28,10 @@ public class DiscordService : IDiscordService, IHostedService
 
     public DiscordService(BotConfig botConfig,
 	    DiscordSocketClient discordSocketClient,
-	    IServiceScopeFactory serviceScopeFactory,
-	    InteractionService interactionService,
 	    IServiceProvider serviceProvider)
     {
 	    _botConfig = botConfig;
 	    _discordSocketClient = discordSocketClient;
-	    _serviceScopeFactory = serviceScopeFactory;
-	    _interactionService = interactionService;
 	    _serviceProvider = serviceProvider;
     }
     
@@ -58,11 +50,9 @@ public class DiscordService : IDiscordService, IHostedService
         _discordSocketClient.UserLeft += UserLeft;
         _discordSocketClient.ThreadCreated += async (thread) => await ThreadCreated(thread);
 
+        await _serviceProvider.GetRequiredService<CommandHandler>().InitializeAsync();
         await _discordSocketClient.LoginAsync(TokenType.Bot, _botConfig.Token);
         await _discordSocketClient.StartAsync();
-        
-        await _serviceProvider.GetRequiredService<CommandHandler>().InitializeAsync();
-        //await _discordSocketClient.MapModulesAsync(_interactionService, _serviceScopeFactory, _logger);
     }
 
     private async Task ButtonExecuted(SocketMessageComponent component, IMentionable user)
@@ -97,40 +87,46 @@ public class DiscordService : IDiscordService, IHostedService
 		foreach (var ext in extension) {
 			if (prevthread == thread.Name) { return; }
 
-			if ((lastMsg.CleanContent.IndexOf(ext.name, StringComparison.OrdinalIgnoreCase) >= 0) || (lastMsg.CleanContent.IndexOf(ext.packageId, StringComparison.OrdinalIgnoreCase) >= 0) || (thread.Name.IndexOf(ext.name, StringComparison.OrdinalIgnoreCase) >= 0) || (thread.Name.IndexOf(ext.packageId, StringComparison.OrdinalIgnoreCase) >= 0)) {
-				var embed = new EmbedBuilder() {
-					Title = $"Is your problem is this plugin?",
-					Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
-				};
+			if ((lastMsg.CleanContent.IndexOf(ext.name, StringComparison.OrdinalIgnoreCase) < 0) &&
+			    (lastMsg.CleanContent.IndexOf(ext.packageId, StringComparison.OrdinalIgnoreCase) < 0) &&
+			    (thread.Name.IndexOf(ext.name, StringComparison.OrdinalIgnoreCase) < 0) &&
+			    (thread.Name.IndexOf(ext.packageId, StringComparison.OrdinalIgnoreCase) < 0)) continue;
+			
+			var embed = new EmbedBuilder() {
+				Title = $"Is your problem is this plugin?",
+				Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
+			};
 
-				embed.AddField("Name", $"{ext.name} ({ext.packageId})", true);
-				embed.AddField("Author", (ext.dSupportUserId is not null)? $"<@{ext.dSupportUserId}>" : ext.author, true);
-				prevthread = thread.Name;
-				prevplauserid = (ulong)ext.dSupportUserId!;
-				prevplugin = ext.packageId!;
+			embed.AddField("Name", $"{ext.name} ({ext.packageId})", true);
+			embed.AddField("Author", (ext.dSupportUserId is not null)? $"<@{ext.dSupportUserId}>" : ext.author, true);
+			prevthread = thread.Name;
+			prevplauserid = (ulong)ext.dSupportUserId!;
+			prevplugin = ext.packageId!;
 
-				var componentb = new ComponentBuilder()
-					.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
-					.WithButton("No", "plugin-problem-no", ButtonStyle.Danger);
+			var components = new ComponentBuilder()
+				.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
+				.WithButton("No", "plugin-problem-no", ButtonStyle.Danger);
 
-				_discordSocketClient.ButtonExecuted -= async (component) => await ButtonExecuted(component, thread.Owner);
-				_discordSocketClient.ButtonExecuted += async (component) => await ButtonExecuted(component, thread.Owner);
+			_discordSocketClient.ButtonExecuted -= async (component) => await ButtonExecuted(component, thread.Owner);
+			_discordSocketClient.ButtonExecuted += async (component) => await ButtonExecuted(component, thread.Owner);
 
-				await thread.SendMessageAsync(embed: embed.Build(), components: componentb.Build());
-			}
+			await thread.SendMessageAsync(embed: embed.Build(), components: components.Build());
 		}
 	}
 
     private async Task Ready () {
+	    _logger.Information("Discord ready");
 		await UpdateMemberCount();
 	}
 
 	private async Task UserJoined (SocketGuildUser member) {
+		_logger.Information("{User} joined the server", member.Nickname);
 		await MemberMovement(member, true);
 	}
 
 	private async Task UserLeft (SocketGuild guild, SocketUser user)
 	{
+		_logger.Information("{User} left the server", user.Username);
 		if (user is SocketGuildUser guildUser)
 		{
 			await MemberMovement(guildUser, false);
@@ -138,13 +134,18 @@ public class DiscordService : IDiscordService, IHostedService
 	}
 
 	private async Task MessageReceived (SocketMessage message) {
+		_logger.Debug("Message received: {Message}", message.Content);
 		if (message.Author is not SocketGuildUser member || member.IsBot || member.Roles.Contains(member.Guild.GetRole(_botConfig.Roles.ModeratorRoleId)))
 			return;
 		var imageChannels = _botConfig.Channels.ImageOnlyChannels;
 
 		if (message.MentionedEveryone) {
 			await message.DeleteAsync();
-			_logger.Information($"Message containing @everyone from {message.Author.Username}#{message.Author.Discriminator} in {message.Channel.Name} was deleted!");
+			_logger.Information(
+				"Message containing @everyone from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted",
+				message.Author.Username,
+				message.Author.Discriminator,
+				message.Channel.Name);
 		}
 		else if (imageChannels.Contains(message.Channel.Id)) {
 			await message.DeleteAsync();
