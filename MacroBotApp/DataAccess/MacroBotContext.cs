@@ -1,6 +1,3 @@
-using System.Data.Entity.Infrastructure;
-using System.Data.Entity.Migrations;
-using System.Data.Entity.Migrations.Infrastructure;
 using System.Reflection;
 using MacroBot.DataAccess.Entities;
 using MacroBot.DataAccess.EntityConfiguations;

@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using MacroBot.Commands;
 using MacroBot.Commands.Tagging;
 using MacroBot.Config;
 using MacroBot.DataAccess;
@@ -27,6 +26,7 @@ public static class Program {
 		// ReSharper disable once HeapView.ClosureAllocation
 		var botConfig = await BotConfig.LoadAsync(Constants.BotConfigPath);
 		var commandsConfig = await CommandsConfig.LoadAsync(Constants.CommandsConfigPath);
+		var statusCheckConfig = await StatusCheckConfig.LoadAsync(Constants.StatusCheckConfigPath);
 		
 		DiscordSocketConfig discordSocketConfig = new() {
 			AlwaysDownloadUsers = true,
@@ -52,11 +52,15 @@ public static class Program {
 				services.AddSingleton(botConfig);
 				services.AddSingleton(commandsConfig);
 				services.AddSingleton(discordSocketConfig);
+				services.AddSingleton(statusCheckConfig);
 				services.AddSingleton<DiscordSocketClient>();
 				services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(),
 					interactionServiceConfig));
 				services.AddSingleton<CommandHandler>();
 				services.AddInjectableHostedService<IDiscordService, DiscordService>();
+				services.AddInjectableHostedService<IStatusCheckService, StatusCheckService>();
+				services.AddInjectableHostedService<ITimerService, TimerService>();
+				services.AddHttpClient();
 			});
 
 		var app = builder.Build();

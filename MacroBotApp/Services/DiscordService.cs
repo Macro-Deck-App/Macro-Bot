@@ -1,14 +1,16 @@
-﻿using Discord;
+﻿using System.Net.Http.Json;
+using Discord;
+using Discord.Interactions;
 using Discord.Net;
 using Discord.WebSocket;
-using MacroBot.Commands;
 using MacroBot.Config;
+using MacroBot.Discord;
 using MacroBot.Extensions;
+using MacroBot.Models;
 using MacroBot.ServiceInterfaces;
 using MacroBot.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json;
 using Serilog;
 
 namespace MacroBot.Services;
@@ -20,7 +22,11 @@ public class DiscordService : IDiscordService, IHostedService
 	private readonly BotConfig _botConfig;
 	private readonly DiscordSocketClient _discordSocketClient;
 	private readonly IServiceProvider _serviceProvider;
+	private readonly IStatusCheckService _statusCheckService;
+	private readonly InteractionService _interactionService;
+	private readonly IHttpClientFactory _httpClientFactory;
 
+	private ulong _updateMessageId = 1;
 
 	private string prevthread = "";
     private ulong prevplauserid = 0;
@@ -28,11 +34,17 @@ public class DiscordService : IDiscordService, IHostedService
 
     public DiscordService(BotConfig botConfig,
 	    DiscordSocketClient discordSocketClient,
-	    IServiceProvider serviceProvider)
+	    IServiceProvider serviceProvider,
+	    IStatusCheckService statusCheckService,
+	    InteractionService interactionService,
+	    IHttpClientFactory httpClientFactory)
     {
 	    _botConfig = botConfig;
 	    _discordSocketClient = discordSocketClient;
 	    _serviceProvider = serviceProvider;
+	    _statusCheckService = statusCheckService;
+	    _interactionService = interactionService;
+	    _httpClientFactory = httpClientFactory;
     }
     
     public Task StopAsync(CancellationToken cancellationToken)
@@ -42,17 +54,32 @@ public class DiscordService : IDiscordService, IHostedService
     
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _discordSocketClient.UseSerilog();
+	    await InitializeDiscord();
+	    InitializeStatusCheckService();
+    }
 
-        _discordSocketClient.Ready += Ready;
-        _discordSocketClient.MessageReceived += MessageReceived;
-        _discordSocketClient.UserJoined += UserJoined;
-        _discordSocketClient.UserLeft += UserLeft;
-        _discordSocketClient.ThreadCreated += async (thread) => await ThreadCreated(thread);
+    private void InitializeStatusCheckService()
+    {
+	    _statusCheckService.ItemStatusInCollectionChanged += StatusCheckServiceOnItemStatusInCollectionChanged;
+    }
 
-        await _serviceProvider.GetRequiredService<CommandHandler>().InitializeAsync();
-        await _discordSocketClient.LoginAsync(TokenType.Bot, _botConfig.Token);
-        await _discordSocketClient.StartAsync();
+    private async void StatusCheckServiceOnItemStatusInCollectionChanged(object? sender, EventArgs e)
+    {
+	    await UpdateStatusMessage();
+    }
+
+    private async Task InitializeDiscord()
+    {
+	    _discordSocketClient.UseSerilog();
+	    _discordSocketClient.Ready += Ready;
+	    _discordSocketClient.MessageReceived += MessageReceived;
+	    _discordSocketClient.UserJoined += UserJoined;
+	    _discordSocketClient.UserLeft += UserLeft;
+	    _discordSocketClient.ThreadCreated += async (thread) => await ThreadCreated(thread);
+
+	    await _serviceProvider.GetRequiredService<CommandHandler>().InitializeAsync();
+	    await _discordSocketClient.LoginAsync(TokenType.Bot, _botConfig.Token);
+	    await _discordSocketClient.StartAsync();
     }
 
     private async Task ButtonExecuted(SocketMessageComponent component, IMentionable user)
@@ -82,26 +109,27 @@ public class DiscordService : IDiscordService, IHostedService
     private async Task ThreadCreated(SocketThreadChannel thread) {
 		var msg = await thread.GetMessagesAsync(2).FlattenAsync();
 		var lastMsg = msg.Last();
-		var extension = JsonConvert.DeserializeObject<List<Extension>>(await HttpRequest.GetAsync($"https://extensionstore.api.macro-deck.app/Extensions"));
-
+		using var httpClient = _httpClientFactory.CreateClient();
+		var extension = await httpClient.GetFromJsonAsync<List<Extension>>("https://extensionstore.api.macro-deck.app/Extensions");
+		
 		foreach (var ext in extension) {
 			if (prevthread == thread.Name) { return; }
 
-			if ((lastMsg.CleanContent.IndexOf(ext.name, StringComparison.OrdinalIgnoreCase) < 0) &&
-			    (lastMsg.CleanContent.IndexOf(ext.packageId, StringComparison.OrdinalIgnoreCase) < 0) &&
-			    (thread.Name.IndexOf(ext.name, StringComparison.OrdinalIgnoreCase) < 0) &&
-			    (thread.Name.IndexOf(ext.packageId, StringComparison.OrdinalIgnoreCase) < 0)) continue;
+			if (lastMsg.CleanContent.IndexOf(ext.Name, StringComparison.OrdinalIgnoreCase) < 0 &&
+			    lastMsg.CleanContent.IndexOf(ext.PackageId, StringComparison.OrdinalIgnoreCase) < 0 &&
+			    thread.Name.IndexOf(ext.Name, StringComparison.OrdinalIgnoreCase) < 0 &&
+			    thread.Name.IndexOf(ext.PackageId, StringComparison.OrdinalIgnoreCase) < 0) continue;
 			
 			var embed = new EmbedBuilder() {
 				Title = $"Is your problem is this plugin?",
 				Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
 			};
 
-			embed.AddField("Name", $"{ext.name} ({ext.packageId})", true);
-			embed.AddField("Author", (ext.dSupportUserId is not null)? $"<@{ext.dSupportUserId}>" : ext.author, true);
+			embed.AddField("Name", $"{ext.Name} ({ext.PackageId})", true);
+			embed.AddField("Author", ext.DSupportUserId is not null? $"<@{ext.DSupportUserId}>" : ext.Author, true);
 			prevthread = thread.Name;
-			prevplauserid = (ulong)ext.dSupportUserId!;
-			prevplugin = ext.packageId!;
+			prevplauserid = (ulong)ext.DSupportUserId!;
+			prevplugin = ext.PackageId!;
 
 			var components = new ComponentBuilder()
 				.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
@@ -116,8 +144,9 @@ public class DiscordService : IDiscordService, IHostedService
 
     private async Task Ready () {
 	    _logger.Information("Discord ready");
+	    await _interactionService.RegisterCommandsGloballyAsync();
 		await UpdateMemberCount();
-	}
+    }
 
 	private async Task UserJoined (SocketGuildUser member) {
 		_logger.Information("{User} joined the server", member.Nickname);
@@ -212,4 +241,31 @@ public class DiscordService : IDiscordService, IHostedService
 		_logger.Information("Users on the server: {MemberCount}", memberCount);
 		return memberCount;
 	}
+
+	private async Task UpdateStatusMessage()
+	{
+		var status = _statusCheckService.LastStatusCheckResults.ToArray();
+		var messageEmbed = DiscordStatusCheckMessageBuilder.Build(status);
+		var channel = (_discordSocketClient.GetGuild(_botConfig.TestGuildId)
+			.GetChannel(_botConfig.Channels.UpdateChannelId) as ITextChannel);
+		try {
+			var msg = await channel!.GetMessageAsync(_updateMessageId);
+			await channel!.ModifyMessageAsync(_updateMessageId, m =>
+			{
+				m.Content = Constants.StatusUpdateMessageTitle;
+			});
+		} catch (Exception) {
+			await channel!.DeleteMessagesAsync(await channel.GetMessagesAsync(10).FlattenAsync());
+			Thread.Sleep(1000);
+
+			var msg = await channel!.SendMessageAsync(Constants.StatusUpdateMessageTitle);
+			_updateMessageId = msg.Id;
+		}
+		await channel!.ModifyMessageAsync(_updateMessageId, m =>
+		{
+			m.Content = Constants.StatusUpdateMessageTitle;
+			m.Embed = messageEmbed;
+		});
+	}
+	
 }

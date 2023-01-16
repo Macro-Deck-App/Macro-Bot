@@ -3,9 +3,7 @@ using Discord.Interactions;
 using MacroBot.Config;
 using MacroBot.DataAccess.RepositoryInterfaces;
 using MacroBot.Models;
-using MacroBot.Services;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace MacroBot.Commands.Tagging;
 
