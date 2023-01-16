@@ -41,9 +41,10 @@ public class CommandHandler
                 var ctx = new SocketInteractionContext(_client, arg);
                 await _commands.ExecuteCommandAsync(ctx, _services);
                 _logger.Information(
-                    "{Interaction} executed by {User}", 
-                    ctx.Interaction.Type, 
-                    ctx.User.Username);
+                    "{Interaction} executed by {User} -> {Data}", 
+                    ctx.Interaction.Type,
+                    ctx.User.Username,
+                    ctx.Interaction.Data);
             }
             catch (Exception ex)
             {
