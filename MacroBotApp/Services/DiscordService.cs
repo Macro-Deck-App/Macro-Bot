@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System.Reflection;
+using Discord;
 using Discord.Interactions;
 using Discord.Net;
 using Discord.WebSocket;
@@ -7,6 +8,7 @@ using MacroBot.Config;
 using MacroBot.Extensions;
 using MacroBot.ServiceInterfaces;
 using MacroBot.Utils;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using Serilog;
@@ -19,6 +21,9 @@ public class DiscordService : IDiscordService, IHostedService
 	
 	private readonly BotConfig _botConfig;
 	private readonly DiscordSocketClient _discordSocketClient;
+	private readonly IServiceScopeFactory _serviceScopeFactory;
+	private readonly InteractionService _interactionService;
+	private readonly IServiceProvider _serviceProvider;
 
 
 	private string prevthread = "";
@@ -26,10 +31,16 @@ public class DiscordService : IDiscordService, IHostedService
     private string prevplugin = "";
 
     public DiscordService(BotConfig botConfig,
-	    DiscordSocketClient discordSocketClient)
+	    DiscordSocketClient discordSocketClient,
+	    IServiceScopeFactory serviceScopeFactory,
+	    InteractionService interactionService,
+	    IServiceProvider serviceProvider)
     {
 	    _botConfig = botConfig;
 	    _discordSocketClient = discordSocketClient;
+	    _serviceScopeFactory = serviceScopeFactory;
+	    _interactionService = interactionService;
+	    _serviceProvider = serviceProvider;
     }
     
     public Task StopAsync(CancellationToken cancellationToken)
@@ -49,6 +60,9 @@ public class DiscordService : IDiscordService, IHostedService
 
         await _discordSocketClient.LoginAsync(TokenType.Bot, _botConfig.Token);
         await _discordSocketClient.StartAsync();
+        
+        await _serviceProvider.GetRequiredService<CommandHandler>().InitializeAsync();
+        //await _discordSocketClient.MapModulesAsync(_interactionService, _serviceScopeFactory, _logger);
     }
 
     private async Task ButtonExecuted(SocketMessageComponent component, IMentionable user)
@@ -106,8 +120,8 @@ public class DiscordService : IDiscordService, IHostedService
 			}
 		}
 	}
-	
-	private async Task Ready () {
+
+    private async Task Ready () {
 		await UpdateMemberCount();
 	}
 

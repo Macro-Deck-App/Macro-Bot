@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
 using MacroBot.Commands;
 using MacroBot.Commands.Tagging;
@@ -42,11 +43,12 @@ public class Program {
 				services.AddAutoMapper(typeof(TagMapping));
 				services.AddTransient<ITagRepository, TagRepository>();
 				services.AddTransient<TaggingUtils>();
-				services.AddSingleton<InfoCommands>();
 				services.AddSingleton(botConfig);
 				services.AddSingleton(commandsConfig);
 				services.AddSingleton(discordSocketConfig);
 				services.AddSingleton<DiscordSocketClient>();
+				services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()));
+				services.AddSingleton<CommandHandler>();
 				services.AddInjectableHostedService<IDiscordService, DiscordService>();
 			});
 

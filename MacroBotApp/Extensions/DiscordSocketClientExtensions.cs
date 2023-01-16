@@ -1,5 +1,8 @@
-﻿using Discord;
+﻿using System.Reflection;
+using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
 namespace MacroBot.Extensions;
@@ -54,5 +57,18 @@ public static class DiscordSocketClientExtensions
 
             return Task.CompletedTask;
         };
+    }
+
+    public static async Task MapModulesAsync(this DiscordSocketClient discordSocketClient,
+        InteractionService interactionService,
+        IServiceScopeFactory serviceScopeFactory, ILogger logger)
+    {
+        var scope = serviceScopeFactory.CreateAsyncScope();
+        var serviceProvider = scope.ServiceProvider;
+        await interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
+        logger.Information(
+            "{NoOfModules} modules mapped - {Modules}", 
+            interactionService.Modules.Count,
+            string.Join(",", interactionService.Modules.Select(x => x.Name)));
     }
 }
