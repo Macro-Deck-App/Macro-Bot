@@ -4,8 +4,9 @@ using MacroBot.Config;
 using MacroBot.DataAccess.RepositoryInterfaces;
 using MacroBot.Models;
 using Microsoft.Extensions.DependencyInjection;
+// ReSharper disable UnusedMember.Global
 
-namespace MacroBot.Commands.Tagging;
+namespace MacroBot.Discord.Modules.Tagging;
 
 [Group("tag", "Tag system")]
 // ReSharper disable once ClassNeverInstantiated.Global

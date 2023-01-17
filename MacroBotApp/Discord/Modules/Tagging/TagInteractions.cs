@@ -4,9 +4,10 @@ using Discord.WebSocket;
 using MacroBot.DataAccess.RepositoryInterfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+
 // ReSharper disable ClassNeverInstantiated.Global
 
-namespace MacroBot.Commands.Tagging;
+namespace MacroBot.Discord.Modules.Tagging;
 
 public class TaggingInteractions : InteractionModuleBase<SocketInteractionContext>
 {

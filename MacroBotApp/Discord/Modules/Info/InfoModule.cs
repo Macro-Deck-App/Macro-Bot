@@ -3,13 +3,14 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using System.Reflection;
 using MacroBot.Utils;
+// ReSharper disable MemberCanBePrivate.Global
 
-namespace MacroBot.Commands;
+namespace MacroBot.Discord.Modules.Info;
 
 [Group("info", "Show information about the bot, server, channel, or user")]
-public class InfoCommands : InteractionModuleBase<SocketInteractionContext>
+// ReSharper disable once UnusedType.Global
+public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
 {
-
     [SlashCommand("bot", "Show information about the bot")]
     public async Task bot()
     {
@@ -109,7 +110,7 @@ public class InfoCommands : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("guild", "Show information about the guild (same as /info server)")]
-    public async Task guildInfo()
+    public async Task GuildInfo()
     {
         DiscordEmbedBuilder embed = new()
         {
@@ -165,7 +166,7 @@ public class InfoCommands : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("server", "Show information about the server (same as /info guild)")]
-    public async Task serverInfo() => await guildInfo();
+    public async Task serverInfo() => await GuildInfo();
 
     [SlashCommand("channel", "Show information about a specific text channel")]
     public async Task channelInfo([Summary(description: "Show information of specified channel")] ITextChannel? channel = null)

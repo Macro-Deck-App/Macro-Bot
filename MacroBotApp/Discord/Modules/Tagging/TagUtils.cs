@@ -4,7 +4,7 @@ using Discord.WebSocket;
 using MacroBot.DataAccess.RepositoryInterfaces;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace MacroBot.Commands.Tagging;
+namespace MacroBot.Discord.Modules.Tagging;
 
 public class TaggingUtils
 {

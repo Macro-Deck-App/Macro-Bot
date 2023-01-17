@@ -1,12 +1,12 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using MacroBot.Commands.Tagging;
 using MacroBot.Config;
 using MacroBot.DataAccess;
 using MacroBot.DataAccess.AutoMapper;
 using MacroBot.DataAccess.Repositories;
 using MacroBot.DataAccess.RepositoryInterfaces;
+using MacroBot.Discord.Modules.Tagging;
 using MacroBot.Extensions;
 using MacroBot.ServiceInterfaces;
 using MacroBot.Services;

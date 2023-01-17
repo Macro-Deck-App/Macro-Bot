@@ -6,6 +6,7 @@
     <RootNamespace>MacroBot</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,10 +32,6 @@
     <PackageReference Include="Serilog.Extensions.Hosting" Version="4.1.2" />
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.0" />
     <PackageReference Include="System.Data.SQLite" Version="1.0.116" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Modules" />
   </ItemGroup>
 
   <ProjectExtensions>

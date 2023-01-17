@@ -1,10 +1,12 @@
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Discord;
 using MacroBot.Config;
-using MacroBot.Discord;
+// ReSharper disable UnusedMember.Global
 
-namespace MacroBot.Commands;
+// ReSharper disable UnusedType.Global
+
+namespace MacroBot.Discord.Modules.ExtensionStore;
 
 [Group("extension", "Extension Store Commands")]
 public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext> {
