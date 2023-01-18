@@ -3,6 +3,7 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Serilog;
+using ILogger = Serilog.ILogger;
 
 namespace MacroBot.Services;
 

@@ -6,6 +6,7 @@ using MacroBot.Models;
 using MacroBot.ServiceInterfaces;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using ILogger = Serilog.ILogger;
 
 namespace MacroBot.Services;
 

@@ -24,10 +24,11 @@ public static class DiscordStatusCheckMessageBuilder
             var status = statusCheckResult.Online
                 ? statusCheckResult.OnlineWithWarnings ? 2 : 0
                 : 1;
-            embed.AddField("Macro Deck website", $"Status: {StatusIcons[status]} ({StatusDescriptions[status]}, {statusCheckResult.StatusCode})");
+            embed.AddField(statusCheckResult.Name,
+                $"Status: {StatusIcons[status]} ({StatusDescriptions[status]}, {statusCheckResult.StatusCode})");
         }
         
-        embed.WithFooter("Updated on");
+        embed.WithFooter("Last change");
         embed.WithCurrentTimestamp();
 
         return embed.Build();

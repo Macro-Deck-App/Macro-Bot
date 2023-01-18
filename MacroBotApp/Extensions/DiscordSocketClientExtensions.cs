@@ -4,6 +4,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using ILogger = Serilog.ILogger;
 
 namespace MacroBot.Extensions;
 

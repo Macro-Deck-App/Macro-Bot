@@ -15,7 +15,7 @@ public class MacroBotContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder options)
     {
         if (options.IsConfigured) return;
-        var connectionStringBuilder = new SqliteConnectionStringBuilder { DataSource = Constants.DatabasePath };
+        var connectionStringBuilder = new SqliteConnectionStringBuilder { DataSource = Paths.DatabasePath };
         var connectionString = connectionStringBuilder.ToString();
         var connection = new SqliteConnection(connectionString); 
         var loggerFactory = new LoggerFactory()

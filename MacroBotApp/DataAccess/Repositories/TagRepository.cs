@@ -4,6 +4,7 @@ using MacroBot.DataAccess.RepositoryInterfaces;
 using MacroBot.Models;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using ILogger = Serilog.ILogger;
 
 namespace MacroBot.DataAccess.Repositories;
 

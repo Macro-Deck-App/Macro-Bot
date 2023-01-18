@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using MacroBot.DataAccess.RepositoryInterfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using ILogger = Serilog.ILogger;
 
 // ReSharper disable ClassNeverInstantiated.Global
 

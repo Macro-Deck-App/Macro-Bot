@@ -1,50 +1,40 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using Discord;
 using MacroBot.Models;
+using Serilog;
+using ILogger = Serilog.ILogger;
 
-namespace MacroBot.Discord;
+namespace MacroBot.Discord.Modules.ExtensionStore;
 
-public static class ExtensionMessageBuilder
+public class ExtensionMessageBuilder
 {
+    private static readonly ILogger _logger = Log.ForContext<ExtensionMessageBuilder>();
 
-    public static async Task<Embed> BuildAllExtensionsAsync(IHttpClientFactory httpClientFactory,
-        List<List<EmbedFieldBuilder>> fields)
+    public static async Task<Embed> BuildAllExtensionsAsync(IHttpClientFactory httpClientFactory)
     {
         using var httpClient = httpClientFactory.CreateClient();
-        var extensions = await httpClient.GetFromJsonAsync<List<Extension>>("https://extensionstore.api.macro-deck.app/Extensions");
+        var extensions =
+            await httpClient.GetFromJsonAsync<List<Extension>>("https://extensionstore.api.macro-deck.app/Extensions");
+
+        _logger.Information("Loaded {NoExtensions} extensions", extensions?.Count);
+        
         var embed = new EmbedBuilder()
             .WithTitle("Macro Deck Extensions")
             .WithDescription("This is the list of Macro Deck Extensions.");
-        var f = 0;
-        List<EmbedFieldBuilder> flds = new();
+        var fields = new List<EmbedFieldBuilder>();
         foreach (var ext in extensions)
         {
-            var extensionFile =
-                await httpClient.GetFromJsonAsync<ExtensionFile>(
-                    $"https://extensionstore.api.macro-deck.app/ExtensionsFiles/{ext.PackageId}@latest");
-            
-            if (f == 15) { fields.Add(flds); flds = new(); f = 0; }
             EmbedFieldBuilder field = new();
             field.WithName($"[{ext.ExtensionType}] {ext.PackageId}");
-            var extensionVersionInfo = extensionFile != null
-                ? $"Latest Version: {extensionFile.Version}\r\nMin API Version: {extensionFile.MinApiVersion}"
-                : string.Empty;
             field.WithValue(
                 $"{(ext.GithubRepository is not null 
                     ? $"[{ext.Name}]({ext.GithubRepository})" 
-                    : ext.Name)} by {(ext.DSupportUserId is not null 
+                    : ext.Name)} by {(!string.IsNullOrWhiteSpace(ext.DSupportUserId)
                     ? $"<@{ext.DSupportUserId}>" 
-                    : ext.Author)}\r\n" +
-                (extensionFile is not null 
-                    ? $"Latest Version: {extensionFile.Version}\r\n" +
-                      $"Min API Version: {extensionFile.MinApiVersion}"
-                    : string.Empty));
+                    : ext.Author)}\r\n");
             field.WithIsInline(true);
-            flds.Add(field);
-            f++;
-        }
-        if (!(f >= 15)) {
-            fields.Add(flds);
+            fields.Add(field);
         }
         embed.WithFields(fields[0]);
         return embed.Build();
@@ -79,7 +69,7 @@ public static class ExtensionMessageBuilder
             embed.WithUrl(extension.GithubRepository);
             
             embed.AddField("Package ID", extension.PackageId);
-            embed.AddField("Author", extension.DSupportUserId is not null
+            embed.AddField("Author", !string.IsNullOrWhiteSpace(extension.DSupportUserId)
                 ? $"<@{extension.DSupportUserId}> ({extension.Author})"
                 : extension.Author, true);
             

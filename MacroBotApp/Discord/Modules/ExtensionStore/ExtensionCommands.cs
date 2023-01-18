@@ -8,7 +8,7 @@ using MacroBot.Config;
 
 namespace MacroBot.Discord.Modules.ExtensionStore;
 
-[Group("extension", "Extension Store Commands")]
+[Group("extensions", "Extension Store Commands")]
 public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext> {
     
     private readonly BotConfig _botConfig;
@@ -28,26 +28,20 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("get", "Get a plugin")]
-    public async Task GetPlugin([Summary(description: "Extension Name or Package ID")] string query) {
-        await DeferAsync();
-        var embed = await ExtensionMessageBuilder.BuildSearchExtensionAsync(_httpClientFactory, query);
-        await FollowupAsync(embed: embed);
+    public async Task GetPlugin([Summary(description: "Extension Name or Package ID")] string search) {
+        await DeferAsync(ephemeral: true);
+        var embed = await ExtensionMessageBuilder.BuildSearchExtensionAsync(_httpClientFactory, search);
+        await FollowupAsync(embed: embed, ephemeral: true);
     }
 
-    [SlashCommand("getall", "Get all plugins")]
+    // Temporarely disabled
+    
+   /* [SlashCommand("browse", "Get all plugins")]
     public async Task GetPlugins() {
-        _allPluginFields = new List<List<EmbedFieldBuilder>>();
-        await DeferAsync();
-        var embed = await ExtensionMessageBuilder.BuildAllExtensionsAsync(_httpClientFactory, _allPluginFields);
-        Context.Client.ButtonExecuted -= ClientOnButtonExecuted;
-        Context.Client.ButtonExecuted += ClientOnButtonExecuted;
-        var builder = new ComponentBuilder()
-            .WithButton("<", "plugin-list-page-back", ButtonStyle.Success, disabled: true)
-            .WithButton($"1 / {_allPluginFields.Count}", "page", ButtonStyle.Secondary, disabled: true)
-            .WithButton(">", "plugin-list-page-forward", ButtonStyle.Success, disabled: (_allPluginFields.Count is 1));
-
-        await FollowupAsync("1", embed: embed, components: builder.Build());
-    }
+        await DeferAsync(ephemeral: true);
+        var embed = await ExtensionMessageBuilder.BuildAllExtensionsAsync(_httpClientFactory);
+        await FollowupAsync(embed: embed, ephemeral: true);
+    }*/
 
     private async Task ClientOnButtonExecuted(SocketMessageComponent msg)
     {
@@ -55,8 +49,11 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
     }
     
     private async Task PlBtnExecuted(SocketMessageComponent smc, IPresence user) {
-        if (smc.User != user) { return; }
-        await smc.DeferAsync();
+        if (smc.User != user)
+        {
+            return;
+        }
+        await smc.DeferAsync(ephemeral: true);
 
         var content = smc.Message.CleanContent;
         var id = smc.Data.CustomId;

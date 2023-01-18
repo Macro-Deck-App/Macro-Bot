@@ -12,6 +12,7 @@ using MacroBot.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using ILogger = Serilog.ILogger;
 
 namespace MacroBot.Services;
 
@@ -29,7 +30,7 @@ public class DiscordService : IDiscordService, IHostedService
 	private ulong _updateMessageId = 1;
 
 	private string prevthread = "";
-    private ulong prevplauserid = 0;
+    private ulong? prevplauserid = 0;
     private string prevplugin = "";
 
     public DiscordService(BotConfig botConfig,
@@ -82,13 +83,57 @@ public class DiscordService : IDiscordService, IHostedService
 	    await _discordSocketClient.StartAsync();
     }
 
-    private async Task ButtonExecuted(SocketMessageComponent component, IMentionable user)
+    private async Task ThreadCreated(SocketThreadChannel thread) {
+		var msg = await thread.GetMessagesAsync(2).FlattenAsync();
+		var lastMsg = msg.Last();
+		using var httpClient = _httpClientFactory.CreateClient();
+		var extensions = await httpClient.GetFromJsonAsync<List<Extension>>("https://extensionstore.api.macro-deck.app/Extensions");
+
+		if (extensions is null)
+		{
+			return;
+		}
+		
+		foreach (var extension in extensions) {
+			if (prevthread == thread.Name)
+			{
+				return;
+			}
+
+			if (lastMsg.CleanContent.IndexOf(extension.Name, StringComparison.OrdinalIgnoreCase) < 0 &&
+			    lastMsg.CleanContent.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0 &&
+			    thread.Name.IndexOf(extension.Name, StringComparison.OrdinalIgnoreCase) < 0 &&
+			    thread.Name.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0) continue;
+			
+			var embed = new EmbedBuilder {
+				Title = $"Do you have a problem with a plugin?",
+				Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
+			};
+
+			embed.AddField("Name", $"{extension.Name} ({extension.PackageId})", true);
+			embed.AddField("Author", extension.DSupportUserId is not null? $"<@{extension.DSupportUserId}>" : extension.Author, true);
+			prevthread = thread.Name;
+			prevplauserid = extension.DSupportUserId is not null ? ulong.Parse(extension.DSupportUserId) : null;
+			prevplugin = extension.PackageId!;
+
+			var components = new ComponentBuilder()
+				.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
+				.WithButton("No", "plugin-problem-no", ButtonStyle.Danger);
+
+			_discordSocketClient.ButtonExecuted -= DiscordSocketClientOnButtonExecuted;
+			_discordSocketClient.ButtonExecuted += DiscordSocketClientOnButtonExecuted;
+
+			await thread.SendMessageAsync(embed: embed.Build(), components: components.Build());
+		}
+	}
+
+    private async Task DiscordSocketClientOnButtonExecuted(SocketMessageComponent component)
     {
 	    switch (component.Data.CustomId)
 	    {
 		    case "plugin-problem-yes":
 			    await component.Message.DeleteAsync();
-			    await component.Channel.SendMessageAsync($"<@{prevplauserid}>, {user.Mention} has a problem on your plugin.");
+			    await component.Channel.SendMessageAsync($"<@{prevplauserid}>, {component.User.Mention} has a problem on your plugin.");
 			    await (component.Channel as SocketThreadChannel)!.ModifyAsync(msg => msg.Name = @$"{component.Channel.Name} (Plugin Problem - {prevplugin})");
 			    await (component.Channel as SocketThreadChannel)!.LeaveAsync();
 			    break;
@@ -105,43 +150,7 @@ public class DiscordService : IDiscordService, IHostedService
 			    return;
 	    }
     }
-
-    private async Task ThreadCreated(SocketThreadChannel thread) {
-		var msg = await thread.GetMessagesAsync(2).FlattenAsync();
-		var lastMsg = msg.Last();
-		using var httpClient = _httpClientFactory.CreateClient();
-		var extension = await httpClient.GetFromJsonAsync<List<Extension>>("https://extensionstore.api.macro-deck.app/Extensions");
-		
-		foreach (var ext in extension) {
-			if (prevthread == thread.Name) { return; }
-
-			if (lastMsg.CleanContent.IndexOf(ext.Name, StringComparison.OrdinalIgnoreCase) < 0 &&
-			    lastMsg.CleanContent.IndexOf(ext.PackageId, StringComparison.OrdinalIgnoreCase) < 0 &&
-			    thread.Name.IndexOf(ext.Name, StringComparison.OrdinalIgnoreCase) < 0 &&
-			    thread.Name.IndexOf(ext.PackageId, StringComparison.OrdinalIgnoreCase) < 0) continue;
-			
-			var embed = new EmbedBuilder() {
-				Title = $"Is your problem is this plugin?",
-				Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
-			};
-
-			embed.AddField("Name", $"{ext.Name} ({ext.PackageId})", true);
-			embed.AddField("Author", ext.DSupportUserId is not null? $"<@{ext.DSupportUserId}>" : ext.Author, true);
-			prevthread = thread.Name;
-			prevplauserid = (ulong)ext.DSupportUserId!;
-			prevplugin = ext.PackageId!;
-
-			var components = new ComponentBuilder()
-				.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
-				.WithButton("No", "plugin-problem-no", ButtonStyle.Danger);
-
-			_discordSocketClient.ButtonExecuted -= async (component) => await ButtonExecuted(component, thread.Owner);
-			_discordSocketClient.ButtonExecuted += async (component) => await ButtonExecuted(component, thread.Owner);
-
-			await thread.SendMessageAsync(embed: embed.Build(), components: components.Build());
-		}
-	}
-
+    
     private async Task Ready () {
 	    _logger.Information("Discord ready");
 	    await _interactionService.RegisterCommandsGloballyAsync();
@@ -163,7 +172,6 @@ public class DiscordService : IDiscordService, IHostedService
 	}
 
 	private async Task MessageReceived (SocketMessage message) {
-		_logger.Debug("Message received: {Message}", message.Content);
 		if (message.Author is not SocketGuildUser member || member.IsBot || member.Roles.Contains(member.Guild.GetRole(_botConfig.Roles.ModeratorRoleId)))
 			return;
 		var imageChannels = _botConfig.Channels.ImageOnlyChannels;
@@ -184,16 +192,27 @@ public class DiscordService : IDiscordService, IHostedService
 					Color = new Color(63, 127, 191),
 					Description = message.CleanContent.Replace("<", "\\<").Replace("*", "\\*").Replace("_", "\\_").Replace("`", "\\`").Replace(":", "\\:"),
 					Timestamp = message.Timestamp,
-					Title = "__Yout Post__",
+					Title = "__Your Post__",
 				};
 				embed.WithAuthor(member.Guild.Name, member.Guild.IconUrl);
 
-				await member.SendMessageAsync(text: $"The channel ${message.Channel} is only meant for images.\nHere is your text, so that you don't need to rewrite it into another channel:", embed: embed.Build());
-				_logger.Information($"Message without image from {message.Author.Username}#{message.Author.Discriminator} in {message.Channel.Name} was deleted! DM with their text was successfully sent.");
+				await member.SendMessageAsync(
+					text:
+					$"The channel ${message.Channel} is only meant for images.\nHere is your text, so that you don't need to rewrite it into another channel:",
+					embed: embed.Build());
+				_logger.Information(
+					"Message without image from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted! DM with their text was successfully sent",
+					message.Author.Username,
+					message.Author.Discriminator,
+					message.Channel.Name);
 
 			}
 			catch (HttpException) {
-				_logger.Information($"Message without image from {message.Author.Username}#{message.Author.Discriminator} in {message.Channel.Name} was deleted! DM with their text was not sent.");
+				_logger.Information(
+					"Message without image from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted! DM with their text was not sent",
+					message.Author.Username,
+					message.Author.Discriminator,
+					message.Channel.Name);
 			}
 
 		}
@@ -242,6 +261,18 @@ public class DiscordService : IDiscordService, IHostedService
 		return memberCount;
 	}
 
+	public async Task SendBroadcastFromWebhook(WebhooksConfig.WebhookItem webhookItem)
+	{
+		var channel = (_discordSocketClient.GetGuild(_botConfig.TestGuildId)
+			.GetChannel(webhookItem.ChannelId) as ITextChannel);
+		if (channel is null)
+		{
+			return;
+		}
+		
+		
+	}
+	
 	private async Task UpdateStatusMessage()
 	{
 		var status = _statusCheckService.LastStatusCheckResults.ToArray();

@@ -2,6 +2,7 @@ using System.Timers;
 using MacroBot.ServiceInterfaces;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using ILogger = Serilog.ILogger;
 using Timer = System.Timers.Timer;
 
 namespace MacroBot.Services;

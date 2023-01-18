@@ -134,7 +134,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
             .WithButton("Delete Tag", "tag-delete-confirm", ButtonStyle.Success)
             .WithButton("Cancel Deletion", "tag-delete-cancel", ButtonStyle.Danger);
 
-        await RespondAsync(embed: embed.Build(), components: componentBuilder.Build());
+        await RespondAsync(embed: embed.Build(), components: componentBuilder.Build(), ephemeral: true);
     }
 
 
@@ -268,7 +268,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         };
 
         // Reply with viewer embed
-        await RespondAsync(embed: embed.Build());
+        await RespondAsync(embed: embed.Build(), ephemeral: true);
     }
 
 
@@ -313,6 +313,6 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         embed.WithFooter(footerText, footerAvatarUrl);
 
         // Reply with viewer embed
-        await RespondAsync(embed: embed.Build());
+        await RespondAsync(embed: embed.Build(), ephemeral: true);
     }
 }

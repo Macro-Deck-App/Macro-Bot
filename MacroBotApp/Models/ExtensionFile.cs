@@ -4,7 +4,7 @@ namespace MacroBot.Models;
 
 public class ExtensionFile {
     [JsonPropertyName("version")]
-    public string? Version;
+    public string Version { get; set; }
     [JsonPropertyName("minApiVersion")]
-    public int? MinApiVersion;
+    public int MinApiVersion { get; set; }
 }

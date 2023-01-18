@@ -19,7 +19,7 @@ public static class AppExtensions
 
     public static void CheckAndCreateDirectories(this IHost app)
     {
-        CheckAndCreate(Constants.MainDirectory);
+        CheckAndCreate(Paths.MainDirectory);
 
         static void CheckAndCreate(string path)
         {

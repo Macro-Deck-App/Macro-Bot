@@ -4,15 +4,15 @@ namespace MacroBot.Models;
 
 public class Extension {
     [JsonPropertyName("packageId")]
-    public string? PackageId;
+    public string PackageId { get; set; }
     [JsonPropertyName("extensionType")]
-    public string? ExtensionType;
+    public string ExtensionType { get; set; }
     [JsonPropertyName("name")]
-    public string? Name;
+    public string Name { get; set; }
     [JsonPropertyName("author")]
-    public string? Author;
+    public string Author { get; set; }
     [JsonPropertyName("gitHubRepository")]
-    public string? GithubRepository;
+    public string GithubRepository { get; set; }
     [JsonPropertyName("dSupportUserId")]
-    public ulong? DSupportUserId;
+    public string? DSupportUserId { get; set; }
 }
