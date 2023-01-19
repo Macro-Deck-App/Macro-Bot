@@ -74,6 +74,8 @@ public class StatusCheckService : IStatusCheckService, IHostedService
             results.Add(result);
         }
 
+        results = new ConcurrentBag<StatusCheckResult>(results.OrderBy(x => x.Name));
+
         _logger.Information(
             "Status check done. {NoOnline}/{Total} online {NoWarnings} with warnings",
             results.Count(x => x.Online),
