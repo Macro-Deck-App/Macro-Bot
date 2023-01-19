@@ -12,10 +12,10 @@ public static class DiscordStatusCheckMessageBuilder
     {
         EmbedBuilder embed = new();
         embed.WithTitle("Macro Deck Service Status");
-        embed.WithDescription(statusCheckResults.Any(x => x is { Online: true, OnlineWithWarnings: false }) 
+        embed.WithDescription(statusCheckResults.All(x => x is { Online: true, OnlineWithWarnings: false }) 
             ? "✅ All services are working."
             : "⚠ There is a problem on one or more services.");
-        embed.WithColor(statusCheckResults.Any(x => x is { Online: true, OnlineWithWarnings: false }) 
+        embed.WithColor(statusCheckResults.All(x => x is { Online: true, OnlineWithWarnings: false }) 
             ? Color.Green 
             : Color.Gold);
 

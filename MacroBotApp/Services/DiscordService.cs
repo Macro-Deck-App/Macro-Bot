@@ -272,6 +272,47 @@ public class DiscordService : IDiscordService, IHostedService
 		
 		
 	}
+
+	public async Task BroadcastWebhookAsync(ulong channelId, WebhookRequest webhookRequest)
+	{
+		var channel = (_discordSocketClient.GetGuild(_botConfig.TestGuildId)
+			.GetChannel(channelId) as ITextChannel);
+		if (channel is null)
+		{
+			_logger.Fatal("Cannot execute webhook {WebhookId} - Channel does not exist", channelId);
+			return;
+		}
+
+		var text = (webhookRequest.ToEveryone 
+			? "@everyone" 
+			: ".")
+			  + "\r\n"
+		    + $"**{webhookRequest.Title}**" 
+		    + "\r\n"
+		    + webhookRequest.Content;
+
+		var embed = new EmbedBuilder();
+		var buildEmbed = false;
+		if (!string.IsNullOrWhiteSpace(webhookRequest.Description))
+		{
+			buildEmbed = true;
+			embed.Description = webhookRequest.Description;
+		}
+
+		if (!string.IsNullOrWhiteSpace(webhookRequest.ThumbnailUrl))
+		{
+			buildEmbed = true;
+			embed.ThumbnailUrl = webhookRequest.ThumbnailUrl;
+		}
+
+		if (!string.IsNullOrWhiteSpace(webhookRequest.ImageUrl))
+		{
+			buildEmbed = true;
+			embed.ImageUrl = webhookRequest.ImageUrl;
+		}
+
+		await channel.SendMessageAsync(text: text, embed: (buildEmbed ? embed.Build() : null));
+	}
 	
 	private async Task UpdateStatusMessage()
 	{

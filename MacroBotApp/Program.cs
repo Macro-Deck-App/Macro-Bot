@@ -79,10 +79,8 @@ public static class Program {
 			.AllowCredentials());
 		
 		app.MapControllers();
-		app.UseDefaultFiles();                                
-		app.UseStaticFiles();
 		app.UseCookiePolicy();
-		
+
 		await app.MigrateDatabaseAsync();
 		await app.RunAsync();
 	}

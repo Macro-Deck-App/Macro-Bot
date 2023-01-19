@@ -1,4 +1,6 @@
 using MacroBot.Config;
+using MacroBot.Models;
+using MacroBot.ServiceInterfaces;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using ILogger = Serilog.ILogger;
@@ -12,20 +14,26 @@ public class WebhookController : ControllerBase
     private readonly ILogger _logger = Log.ForContext<WebhookController>();
     
     private readonly WebhooksConfig _webhooksConfig;
+    private readonly IDiscordService _discordService;
 
-    public WebhookController(WebhooksConfig webhooksConfig)
+    public WebhookController(WebhooksConfig webhooksConfig,
+        IDiscordService discordService)
     {
         _webhooksConfig = webhooksConfig;
+        _discordService = discordService;
     }
     
-    [HttpGet("{webhookId}")]
-    public IActionResult RunAsync(string webhookId)
+    [HttpPost("{webhookId}")]
+    public IActionResult RunAsync(string webhookId, 
+        [FromBody] WebhookRequest webhookRequest)
     {
-        var webhook = _webhooksConfig.Items.FirstOrDefault(x => x.Id.Equals(webhookId));
+        var webhook = _webhooksConfig.Webhooks.FirstOrDefault(x => x.Id.Equals(webhookId));
         if (webhook is null)
         {
             return NotFound();
         }
+
+        _discordService.BroadcastWebhookAsync(webhook.ChannelId, webhookRequest);
         
         return Ok();
     }
