@@ -10,6 +10,7 @@ using MacroBot.Models.Extensions;
 using MacroBot.Models.Webhook;
 using MacroBot.ServiceInterfaces;
 using Serilog;
+using Serilog.Events;
 using ILogger = Serilog.ILogger;
 
 namespace MacroBot.Services;
@@ -27,6 +28,8 @@ public class DiscordService : IDiscordService, IHostedService
 	private readonly IHttpClientFactory _httpClientFactory;
 
 	private ulong _updateMessageId = 1;
+	
+	public bool DiscordReady { get; private set; }
 
 	private string prevthread = "";
     private ulong? prevplauserid = 0;
@@ -151,6 +154,7 @@ public class DiscordService : IDiscordService, IHostedService
     }
     
     private async Task Ready () {
+	    DiscordReady = true;
 	    _logger.Information("Discord ready");
 	    await _interactionService.RegisterCommandsGloballyAsync();
 		await UpdateMemberCount();
@@ -171,11 +175,23 @@ public class DiscordService : IDiscordService, IHostedService
 	}
 
 	private async Task MessageReceived (SocketMessage message) {
-		if (message.Author is not SocketGuildUser member || member.IsBot || member.Roles.Contains(member.Guild.GetRole(_botConfig.Roles.ModeratorRoleId)))
+		if (message.Author is not SocketGuildUser member || member.IsBot)
+		{
 			return;
+		}
+
+		if (_botConfig.Channels.LogChannelId.Equals(message.Channel.Id))
+		{
+			await message.DeleteAsync();
+			return;
+		}
+		
+		var messageByModerator = member.Roles.Contains(member.Guild.GetRole(_botConfig.Roles.ModeratorRoleId));
 		var imageChannels = _botConfig.Channels.ImageOnlyChannels;
 
-		if (message.MentionedEveryone) {
+
+		if (message.MentionedEveryone && !messageByModerator)
+		{
 			await message.DeleteAsync();
 			_logger.Information(
 				"Message containing @everyone from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted",
@@ -183,7 +199,8 @@ public class DiscordService : IDiscordService, IHostedService
 				message.Author.Discriminator,
 				message.Channel.Name);
 		}
-		else if (imageChannels.Contains(message.Channel.Id)) {
+		
+		if (imageChannels.Contains(message.Channel.Id) && !DiscordMessageFilter.FilterForImageChannels(message)) {
 			await message.DeleteAsync();
 
 			try {
@@ -238,9 +255,9 @@ public class DiscordService : IDiscordService, IHostedService
 
 		await (member.Guild.GetChannel(_botConfig.Channels.MemberScreeningChannelId) as SocketTextChannel).SendMessageAsync(embed: embed.Build());
 	}
-	
+
 	private async Task<int> UpdateMemberCount () {
-		var guild = _discordSocketClient.GetGuild(_botConfig.TestGuildId);
+		var guild = _discordSocketClient.GetGuild(_botConfig.GuildId);
 		var memberCount = 0;
 		List<string> memberNames = new();
 		foreach (var member in guild.Users)
@@ -262,8 +279,12 @@ public class DiscordService : IDiscordService, IHostedService
 
 	public async Task BroadcastWebhookAsync(WebhookItem webhook, WebhookRequest webhookRequest)
 	{
+		if (!DiscordReady)
+		{
+			return;
+		}
 		_logger.Information("Executing Webhook {WebhookId}", webhook.Id);
-		if (_discordSocketClient.GetGuild(_botConfig.TestGuildId)
+		if (_discordSocketClient.GetGuild(_botConfig.GuildId)
 			    .GetChannel(webhook.ChannelId) is not ITextChannel channel)
 		{
 			_logger.Fatal("Cannot execute webhook {WebhookId} - Channel does not exist", webhook.ChannelId);
@@ -327,10 +348,14 @@ public class DiscordService : IDiscordService, IHostedService
 	
 	private async Task UpdateStatusMessage()
 	{
+		if (!DiscordReady)
+		{
+			return;
+		}
 		var status = _statusCheckService.LastStatusCheckResults.ToArray();
 		var messageEmbed = DiscordStatusCheckMessageBuilder.Build(status);
-		var channel = (_discordSocketClient.GetGuild(_botConfig.TestGuildId)
-			.GetChannel(_botConfig.Channels.UpdateChannelId) as ITextChannel);
+		var channel = (_discordSocketClient.GetGuild(_botConfig.GuildId)
+			.GetChannel(_botConfig.Channels.StatusCheckChannelId) as ITextChannel);
 		try {
 			var msg = await channel!.GetMessageAsync(_updateMessageId);
 			await channel!.ModifyMessageAsync(_updateMessageId, m =>

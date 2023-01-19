@@ -26,7 +26,7 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
         embed.AddField("Written by", "<@!298215920709664768>\n<@!367398650076463118>\n<@!908002848967626842>\n<@!300244123569487873>", true);
         embed.WithFooter(Context.Guild.Name + " | " + Context.Guild.Id, Context.Guild.IconUrl);
 
-        await RespondAsync(embed: embed.Build());
+        await RespondAsync(embed: embed.Build(), ephemeral: true);
     }
 
     [UserCommand("Show user information")]
@@ -105,7 +105,7 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
             embed.WithColor(new Color(88, 101, 242));
         }
 
-        await RespondAsync(embed: embed.Build());
+        await RespondAsync(embed: embed.Build(), ephemeral: true);
     }
 
     [SlashCommand("guild", "Show information about the guild (same as /info server)")]
@@ -161,7 +161,7 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
         embed.AddField("Voice Channels", voice, true);
         embed.WithFooter($"ID: {Context.Guild.Id}");
 
-        await RespondAsync(embed: embed.Build());
+        await RespondAsync(embed: embed.Build(), ephemeral: true);
     }
 
     [SlashCommand("server", "Show information about the server (same as /info guild)")]
@@ -181,7 +181,7 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
             embed.AddField("Type", Context.Channel.GetChannelType(), true);
             embed.WithFooter($"ID: {Context.Channel.Id}");
 
-            await RespondAsync(embed: embed.Build());
+            await RespondAsync(embed: embed.Build(), ephemeral: true);
         }
         else
         {
@@ -193,7 +193,7 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
             embed.AddField("Created", $"<t:{channel.CreatedAt.ToUnixTimeSeconds()}>", true);
             embed.WithFooter($"ID: {channel.Id}");
 
-            await RespondAsync(embed: embed.Build());
+            await RespondAsync(embed: embed.Build(), ephemeral: true);
         }
     }
 }

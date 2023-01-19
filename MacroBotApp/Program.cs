@@ -8,9 +8,11 @@ using MacroBot.DataAccess.Repositories;
 using MacroBot.DataAccess.RepositoryInterfaces;
 using MacroBot.Discord.Modules.Tagging;
 using MacroBot.Extensions;
+using MacroBot.Logger;
 using MacroBot.ServiceInterfaces;
 using MacroBot.Services;
 using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace MacroBot;
 
@@ -62,7 +64,10 @@ public static class Program {
 		builder.Services.AddEndpointsApiExplorer();
 		builder.Services.AddSwaggerGen();
 		builder.Services.AddControllers();
-		builder.Host.UseSerilog();
+		builder.Host.UseSerilog((context, services, configuration) => 
+				configuration
+					.WriteTo.Console(theme: AnsiConsoleTheme.Code)
+					.WriteTo.DiscordSink(services));
 
 		var app = builder.Build();
 		app.UseSwagger();

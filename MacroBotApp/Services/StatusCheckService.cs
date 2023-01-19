@@ -63,6 +63,13 @@ public class StatusCheckService : IStatusCheckService, IHostedService
             {
                 statusInCollectionChanged = true;
                 StatusOfItemChanged?.Invoke(result, EventArgs.Empty);
+                if (!result.Online)
+                {
+                    _logger.Fatal("{Url} is offline! StatusCode: {StatusCode}", statusCheckItem.Url, result.StatusCode);
+                } else if (result.OnlineWithWarnings)
+                {
+                    _logger.Error("{Url} is online with warnings! StatusCode: {StatusCode}", statusCheckItem.Url, result.StatusCode);
+                }
             }
             results.Add(result);
         }
@@ -101,7 +108,7 @@ public class StatusCheckService : IStatusCheckService, IHostedService
         }
         catch
         {
-            _logger.Warning("{Url} seems to be offline", statusCheckItem.Url);
+            // ignored
         }
         
         if (!statusCheckItem.StatusEndpoint)
