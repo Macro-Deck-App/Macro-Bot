@@ -274,7 +274,7 @@ public class DiscordService : IDiscordService, IHostedService
 			? "@everyone" 
 			: ".")
 			  + "\r\n"
-		    + $"**{webhookRequest.Title}**" 
+		    + (!string.IsNullOrWhiteSpace(webhookRequest.Title) ? $"**{webhookRequest.Title}**" : "")
 		    + "\r\n"
 		    + webhookRequest.Text;
 

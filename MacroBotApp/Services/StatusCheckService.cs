@@ -94,18 +94,28 @@ public class StatusCheckService : IStatusCheckService, IHostedService
             statusCheckItem.Name, 
             statusCheckItem.Url);
         using var httpClient = _httpClientFactory.CreateClient();
-        var request = await httpClient.GetAsync(statusCheckItem.Url);
+        HttpResponseMessage? request = null;
+        try
+        {
+            request = await httpClient.GetAsync(statusCheckItem.Url);
+        }
+        catch
+        {
+            _logger.Warning("{Url} seems to be offline", statusCheckItem.Url);
+        }
         
         if (!statusCheckItem.StatusEndpoint)
         {
-            return new StatusCheckResult(statusCheckItem.Name, request.StatusCode == HttpStatusCode.OK, request.StatusCode);
+            return new StatusCheckResult(statusCheckItem.Name,
+                request?.StatusCode == HttpStatusCode.OK,
+                request?.StatusCode ?? HttpStatusCode.NotFound);
         }
 
         var onlineWithWarnings = false;
         var online = false;
         try
         {
-            if (request.StatusCode == HttpStatusCode.OK)
+            if (request?.StatusCode == HttpStatusCode.OK)
             {
                 online = true;
                 var result = await request.Content.ReadAsStringAsync();
@@ -115,8 +125,11 @@ public class StatusCheckService : IStatusCheckService, IHostedService
         }
         catch (Exception ex)
         {
-            onlineWithWarnings = request.StatusCode == HttpStatusCode.OK;
+            onlineWithWarnings = request?.StatusCode == HttpStatusCode.OK;
         }
-        return new StatusCheckResult(statusCheckItem.Name, online, request.StatusCode, onlineWithWarnings);
+        return new StatusCheckResult(statusCheckItem.Name,
+            online,
+            request?.StatusCode ?? HttpStatusCode.NotFound,
+            onlineWithWarnings);
     }
 }

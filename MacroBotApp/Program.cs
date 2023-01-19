@@ -69,7 +69,7 @@ public static class Program {
 		app.UseSwaggerUI(c =>
 		{
 			c.SwaggerEndpoint("/swagger/v1/swagger.json", "Macro Bot API");
-			c.RoutePrefix = "docs";
+			c.RoutePrefix = "";
 		});
 
 		app.UseCors(x => x
