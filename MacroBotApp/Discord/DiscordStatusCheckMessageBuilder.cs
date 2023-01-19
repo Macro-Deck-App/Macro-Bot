@@ -1,5 +1,5 @@
 using Discord;
-using MacroBot.Models;
+using MacroBot.Models.Status;
 
 namespace MacroBot.Discord;
 

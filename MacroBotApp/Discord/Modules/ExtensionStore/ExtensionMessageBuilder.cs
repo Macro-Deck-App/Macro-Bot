@@ -1,7 +1,5 @@
-using System.Net.Http.Json;
-using System.Text.Json;
 using Discord;
-using MacroBot.Models;
+using MacroBot.Models.Extensions;
 using Serilog;
 using ILogger = Serilog.ILogger;
 

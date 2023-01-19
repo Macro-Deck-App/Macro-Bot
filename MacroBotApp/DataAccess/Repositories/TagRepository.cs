@@ -1,7 +1,7 @@
 using AutoMapper;
 using MacroBot.DataAccess.Entities;
 using MacroBot.DataAccess.RepositoryInterfaces;
-using MacroBot.Models;
+using MacroBot.Discord.Modules.Tagging;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using ILogger = Serilog.ILogger;

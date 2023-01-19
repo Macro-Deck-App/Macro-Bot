@@ -2,19 +2,18 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using System.Reflection;
-using MacroBot.Utils;
-// ReSharper disable MemberCanBePrivate.Global
+using JetBrains.Annotations;
 
 namespace MacroBot.Discord.Modules.Info;
 
 [Group("info", "Show information about the bot, server, channel, or user")]
-// ReSharper disable once UnusedType.Global
+[UsedImplicitly]
 public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("bot", "Show information about the bot")]
     public async Task bot()
     {
-        DiscordEmbedBuilder embed = new()
+        EmbedBuilder embed = new()
         {
             Title = Context.Client.CurrentUser.Username,
             Description = "Here you can find the information of this Discord Bot."
@@ -36,7 +35,7 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("user", "Show information about a user")]
     public async Task userInfo([Summary(description: "Shows information about the user")] SocketGuildUser user, bool asUser = false)
     {
-        DiscordEmbedBuilder embed = new();
+        EmbedBuilder embed = new();
         if (user.IsBot != true || asUser)
         {
             embed.Title = user.Username;
@@ -112,7 +111,7 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("guild", "Show information about the guild (same as /info server)")]
     public async Task GuildInfo()
     {
-        DiscordEmbedBuilder embed = new()
+        EmbedBuilder embed = new()
         {
             Title = Context.Guild.Name,
             Description = "Here you can find the information of this server."
@@ -173,7 +172,7 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
     {
         if (channel == null)
         {
-            DiscordEmbedBuilder embed = new()
+            EmbedBuilder embed = new()
             {
                 Title = "#" + Context.Channel.Name,
                 Description = $"Here you can find the information of <#{Context.Channel.Id}>."
@@ -186,7 +185,7 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
         }
         else
         {
-            DiscordEmbedBuilder embed = new()
+            EmbedBuilder embed = new()
             {
                 Title = "#" + channel.Name,
                 Description = $"Here you can find the information of <#{channel.Id}>."

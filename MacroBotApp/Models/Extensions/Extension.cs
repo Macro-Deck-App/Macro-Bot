@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MacroBot.Models;
+namespace MacroBot.Models.Extensions;
 
 public class Extension {
     [JsonPropertyName("packageId")]

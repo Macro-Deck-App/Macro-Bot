@@ -1,14 +1,12 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using JetBrains.Annotations;
 using MacroBot.Config;
-// ReSharper disable UnusedMember.Global
-
-// ReSharper disable UnusedType.Global
-
 namespace MacroBot.Discord.Modules.ExtensionStore;
 
 [Group("extensions", "Extension Store Commands")]
+[UsedImplicitly]
 public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext> {
     
     private readonly BotConfig _botConfig;

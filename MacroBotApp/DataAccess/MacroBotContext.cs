@@ -3,7 +3,6 @@ using MacroBot.DataAccess.Entities;
 using MacroBot.DataAccess.EntityConfiguations;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Serilog;
 
 namespace MacroBot.DataAccess;

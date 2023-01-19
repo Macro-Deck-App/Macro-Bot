@@ -1,4 +1,4 @@
-namespace MacroBot.Models;
+namespace MacroBot.Models.Status;
 
 public class StatusEndpointResponse
 {

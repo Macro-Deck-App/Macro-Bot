@@ -1,5 +1,5 @@
 using MacroBot.Config;
-using MacroBot.Models;
+using MacroBot.Models.Webhook;
 using MacroBot.ServiceInterfaces;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
@@ -33,7 +33,7 @@ public class WebhookController : ControllerBase
             return NotFound();
         }
 
-        _discordService.BroadcastWebhookAsync(webhook.ChannelId, webhookRequest);
+        _discordService.BroadcastWebhookAsync(webhook, webhookRequest);
         
         return Ok();
     }

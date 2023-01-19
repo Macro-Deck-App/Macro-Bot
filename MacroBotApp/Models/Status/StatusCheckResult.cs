@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace MacroBot.Models;
+namespace MacroBot.Models.Status;
 
 public struct StatusCheckResult
 {

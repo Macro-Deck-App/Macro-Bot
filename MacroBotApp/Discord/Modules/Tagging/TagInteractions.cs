@@ -1,15 +1,14 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using JetBrains.Annotations;
 using MacroBot.DataAccess.RepositoryInterfaces;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using ILogger = Serilog.ILogger;
 
-// ReSharper disable ClassNeverInstantiated.Global
-
 namespace MacroBot.Discord.Modules.Tagging;
 
+[UsedImplicitly]
 public class TaggingInteractions : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly IServiceScopeFactory _serviceScopeFactory;

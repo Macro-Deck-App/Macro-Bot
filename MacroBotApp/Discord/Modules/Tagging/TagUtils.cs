@@ -2,7 +2,6 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using MacroBot.DataAccess.RepositoryInterfaces;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace MacroBot.Discord.Modules.Tagging;
 

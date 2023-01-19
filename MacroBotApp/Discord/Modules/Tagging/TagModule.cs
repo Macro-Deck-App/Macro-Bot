@@ -1,15 +1,13 @@
 ﻿using Discord;
 using Discord.Interactions;
+using JetBrains.Annotations;
 using MacroBot.Config;
 using MacroBot.DataAccess.RepositoryInterfaces;
-using MacroBot.Models;
-using Microsoft.Extensions.DependencyInjection;
-// ReSharper disable UnusedMember.Global
 
 namespace MacroBot.Discord.Modules.Tagging;
 
 [Group("tag", "Tag system")]
-// ReSharper disable once ClassNeverInstantiated.Global
+[UsedImplicitly]
 public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly CommandsConfig _commandsConfig;

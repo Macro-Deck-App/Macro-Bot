@@ -9,7 +9,7 @@ public static class Paths
             var environment = Environment.GetEnvironmentVariable("ENVIRONMENT");
             if (string.IsNullOrWhiteSpace(environment))
             {
-                return "Config";
+                return "__testConfigs__";
             }
             return environment == "DEVELOPMENT" ? "/etc/macro bot dev" : "/etc/macro bot";
         }
@@ -20,4 +20,19 @@ public static class Paths
     public static string CommandsConfigPath = Path.Combine(MainDirectory, "Commands.json");
     public static string StatusCheckConfigPath = Path.Combine(MainDirectory, "StatusCheck.json");
     public static string DatabasePath = Path.Combine(MainDirectory, "Database.db");
+
+    public static void EnsureDirectoriesCreated()
+    {
+        CheckAndCreateDirectory(MainDirectory);
+        static void CheckAndCreateDirectory(string path)
+        {
+            if (Directory.Exists(path))
+            {
+                return;
+            }
+
+            Directory.CreateDirectory(path);
+        }
+    }
+    
 }

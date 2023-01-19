@@ -1,8 +1,8 @@
-using MacroBot.Models;
+using MacroBot.Models.Webhook;
 
 namespace MacroBot.ServiceInterfaces;
 
 public interface IDiscordService
 {
-    public Task BroadcastWebhookAsync(ulong channelId, WebhookRequest webhookRequest);
+    public Task BroadcastWebhookAsync(WebhookItem webhook, WebhookRequest webhookRequest);
 }

@@ -1,6 +1,6 @@
 using AutoMapper;
 using MacroBot.DataAccess.Entities;
-using MacroBot.Models;
+using MacroBot.Discord.Modules.Tagging;
 
 namespace MacroBot.DataAccess.AutoMapper;
 

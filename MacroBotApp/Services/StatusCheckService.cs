@@ -2,9 +2,8 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Text.Json;
 using MacroBot.Config;
-using MacroBot.Models;
+using MacroBot.Models.Status;
 using MacroBot.ServiceInterfaces;
-using Microsoft.Extensions.Hosting;
 using Serilog;
 using ILogger = Serilog.ILogger;
 

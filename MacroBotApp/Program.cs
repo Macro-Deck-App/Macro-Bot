@@ -10,8 +10,6 @@ using MacroBot.Discord.Modules.Tagging;
 using MacroBot.Extensions;
 using MacroBot.ServiceInterfaces;
 using MacroBot.Services;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Serilog;
 
 namespace MacroBot;
@@ -22,6 +20,8 @@ public static class Program {
 		Log.Logger = new LoggerConfiguration()
 			.WriteTo.Console()
 			.CreateLogger();
+		
+		Paths.EnsureDirectoriesCreated();
 		
 		// ReSharper disable once HeapView.ClosureAllocation
 		var botConfig = await BotConfig.LoadAsync(Paths.BotConfigPath);

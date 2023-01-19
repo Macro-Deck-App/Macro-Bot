@@ -1,21 +1,20 @@
-﻿using System.Net.Http.Json;
-using Discord;
+﻿using Discord;
 using Discord.Interactions;
 using Discord.Net;
 using Discord.WebSocket;
+using JetBrains.Annotations;
 using MacroBot.Config;
 using MacroBot.Discord;
 using MacroBot.Extensions;
-using MacroBot.Models;
+using MacroBot.Models.Extensions;
+using MacroBot.Models.Webhook;
 using MacroBot.ServiceInterfaces;
-using MacroBot.Utils;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Serilog;
 using ILogger = Serilog.ILogger;
 
 namespace MacroBot.Services;
 
+[UsedImplicitly]
 public class DiscordService : IDiscordService, IHostedService
 {
 	private readonly ILogger _logger = Log.ForContext<DiscordService>();
@@ -188,7 +187,7 @@ public class DiscordService : IDiscordService, IHostedService
 			await message.DeleteAsync();
 
 			try {
-				var embed = new DiscordEmbedBuilder() {
+				var embed = new EmbedBuilder() {
 					Color = new Color(63, 127, 191),
 					Description = message.CleanContent.Replace("<", "\\<").Replace("*", "\\*").Replace("_", "\\_").Replace("`", "\\`").Replace(":", "\\:"),
 					Timestamp = message.Timestamp,
@@ -219,7 +218,7 @@ public class DiscordService : IDiscordService, IHostedService
 	}
 
 	private async Task MemberMovement (SocketGuildUser member, bool joined) {
-		DiscordEmbedBuilder embed = new() {
+		EmbedBuilder embed = new() {
 			Color = joined ? new Color(191, 63, 127) : new Color(191, 127, 63),
 			Description = $"Latest member count: **{await UpdateMemberCount()}**",
 			ThumbnailUrl = member.GetAvatarUrl(),
@@ -261,25 +260,13 @@ public class DiscordService : IDiscordService, IHostedService
 		return memberCount;
 	}
 
-	public async Task SendBroadcastFromWebhook(WebhooksConfig.WebhookItem webhookItem)
+	public async Task BroadcastWebhookAsync(WebhookItem webhook, WebhookRequest webhookRequest)
 	{
-		var channel = (_discordSocketClient.GetGuild(_botConfig.TestGuildId)
-			.GetChannel(webhookItem.ChannelId) as ITextChannel);
-		if (channel is null)
+		_logger.Information("Executing Webhook {WebhookId}", webhook.Id);
+		if (_discordSocketClient.GetGuild(_botConfig.TestGuildId)
+			    .GetChannel(webhook.ChannelId) is not ITextChannel channel)
 		{
-			return;
-		}
-		
-		
-	}
-
-	public async Task BroadcastWebhookAsync(ulong channelId, WebhookRequest webhookRequest)
-	{
-		var channel = (_discordSocketClient.GetGuild(_botConfig.TestGuildId)
-			.GetChannel(channelId) as ITextChannel);
-		if (channel is null)
-		{
-			_logger.Fatal("Cannot execute webhook {WebhookId} - Channel does not exist", channelId);
+			_logger.Fatal("Cannot execute webhook {WebhookId} - Channel does not exist", webhook.ChannelId);
 			return;
 		}
 
@@ -289,29 +276,53 @@ public class DiscordService : IDiscordService, IHostedService
 			  + "\r\n"
 		    + $"**{webhookRequest.Title}**" 
 		    + "\r\n"
-		    + webhookRequest.Content;
+		    + webhookRequest.Text;
 
-		var embed = new EmbedBuilder();
-		var buildEmbed = false;
-		if (!string.IsNullOrWhiteSpace(webhookRequest.Description))
+		var webhookRequestEmbed = webhookRequest.Embed;
+		EmbedBuilder? embed = null;
+		if (webhookRequestEmbed is not null)
 		{
-			buildEmbed = true;
-			embed.Description = webhookRequest.Description;
-		}
+			_logger.Information("Webhook {WebhookId} contains an embed", webhook.Id);
+			embed = new EmbedBuilder();
 
-		if (!string.IsNullOrWhiteSpace(webhookRequest.ThumbnailUrl))
-		{
-			buildEmbed = true;
-			embed.ThumbnailUrl = webhookRequest.ThumbnailUrl;
-		}
+			if (webhookRequestEmbed.Color is not null)
+			{
+				var color = webhookRequestEmbed.Color;
+				embed.WithColor(new Color(color.R, color.G, color.B));
+			}
+			
+			if (!string.IsNullOrWhiteSpace(webhookRequestEmbed.Description))
+			{
+				embed.Description = webhookRequestEmbed.Description;
+			}
 
-		if (!string.IsNullOrWhiteSpace(webhookRequest.ImageUrl))
-		{
-			buildEmbed = true;
-			embed.ImageUrl = webhookRequest.ImageUrl;
-		}
+			if (webhookRequestEmbed.Fields is not null && webhookRequestEmbed.Fields.Count > 0)
+			{
+				var embedFieldBuilders = new List<EmbedFieldBuilder>();
+				foreach (var field in webhookRequestEmbed.Fields)
+				{
+					var embedFieldBuilder = new EmbedFieldBuilder();
+					embedFieldBuilder.WithName(field.Name);
+					embedFieldBuilder.WithValue(field.Value);
+					embedFieldBuilder.WithIsInline(field.Inline ?? true);
+					embedFieldBuilders.Add(embedFieldBuilder);
+				}
+				embed.WithFields(embedFieldBuilders);
+			}
 
-		await channel.SendMessageAsync(text: text, embed: (buildEmbed ? embed.Build() : null));
+			if (!string.IsNullOrWhiteSpace(webhookRequestEmbed.ThumbnailUrl))
+			{
+				embed.ThumbnailUrl = webhookRequestEmbed.ThumbnailUrl;
+			}
+
+			if (!string.IsNullOrWhiteSpace(webhookRequestEmbed.ImageUrl))
+			{
+				embed.ImageUrl = webhookRequestEmbed.ImageUrl;
+			}
+		}
+		
+		await channel.SendMessageAsync(text: text, embed: embed?.Build());
+		_logger.Information("Webhook {WebhookId} executed", webhook.Id);
 	}
 	
 	private async Task UpdateStatusMessage()

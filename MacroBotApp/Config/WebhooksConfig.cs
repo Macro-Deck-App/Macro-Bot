@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+using MacroBot.Models.Webhook;
 
 namespace MacroBot.Config;
 
@@ -13,10 +13,5 @@ public class WebhooksConfig : LoadableConfig<WebhooksConfig>
         }
     };
     
-    public class WebhookItem
-    {
-        public string Id { get; set; }
-        public string BearerAuthKey { get; set; }
-        public ulong ChannelId { get; set; }
-    }
+    
 }

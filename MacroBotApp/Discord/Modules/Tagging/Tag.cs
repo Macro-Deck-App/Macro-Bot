@@ -1,4 +1,4 @@
-﻿namespace MacroBot.Models;
+﻿namespace MacroBot.Discord.Modules.Tagging;
 
 public class Tag {
 	public ulong Author { get; set; }
