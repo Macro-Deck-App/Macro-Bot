@@ -27,9 +27,6 @@ public static class DiscordStatusCheckMessageBuilder
             embed.AddField(statusCheckResult.Name,
                 $"Status: {StatusIcons[status]} ({StatusDescriptions[status]}, {statusCheckResult.StatusCode})");
         }
-        
-        embed.WithFooter("Last change");
-        embed.WithCurrentTimestamp();
 
         return embed.Build();
     }

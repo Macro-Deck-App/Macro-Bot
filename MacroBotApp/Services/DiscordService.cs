@@ -7,10 +7,10 @@ using MacroBot.Config;
 using MacroBot.Discord;
 using MacroBot.Extensions;
 using MacroBot.Models.Extensions;
+using MacroBot.Models.Status;
 using MacroBot.Models.Webhook;
 using MacroBot.ServiceInterfaces;
 using Serilog;
-using Serilog.Events;
 using ILogger = Serilog.ILogger;
 
 namespace MacroBot.Services;
@@ -28,6 +28,7 @@ public class DiscordService : IDiscordService, IHostedService
 	private readonly IHttpClientFactory _httpClientFactory;
 
 	private ulong _updateMessageId = 1;
+	private int _currentUpdateEmbedHash = 0;
 	
 	public bool DiscordReady { get; private set; }
 
@@ -63,14 +64,14 @@ public class DiscordService : IDiscordService, IHostedService
 
     private void InitializeStatusCheckService()
     {
-	    _statusCheckService.ItemStatusInCollectionChanged += StatusCheckServiceOnItemStatusInCollectionChanged;
+	    _statusCheckService.StatusCheckFinished += StatusCheckServiceOnStatusCheckFinished;
     }
 
-    private async void StatusCheckServiceOnItemStatusInCollectionChanged(object? sender, EventArgs e)
+    private async void StatusCheckServiceOnStatusCheckFinished(object? sender, StatusCheckFinishedEventArgs e)
     {
 	    await UpdateStatusMessage();
     }
-
+    
     private async Task InitializeDiscord()
     {
 	    _discordSocketClient.UseSerilog();
@@ -180,7 +181,14 @@ public class DiscordService : IDiscordService, IHostedService
 			return;
 		}
 
-		if (_botConfig.Channels.LogChannelId.Equals(message.Channel.Id))
+		var protectedChannels = new []
+		{
+			_botConfig.Channels.LogChannelId,
+			_botConfig.Channels.MemberScreeningChannelId,
+			_botConfig.Channels.StatusCheckChannelId
+		};
+
+		if (protectedChannels.Contains(message.Channel.Id))
 		{
 			await message.DeleteAsync();
 			return;
@@ -354,6 +362,14 @@ public class DiscordService : IDiscordService, IHostedService
 		}
 		var status = _statusCheckService.LastStatusCheckResults.ToArray();
 		var messageEmbed = DiscordStatusCheckMessageBuilder.Build(status);
+		var messageEmbedHash = messageEmbed.GetHashCode();
+		if (messageEmbedHash == _currentUpdateEmbedHash)
+		{
+			_logger.Debug(
+				"Status message embed has not changed - Hash: {HashCode}",
+				_currentUpdateEmbedHash);
+			return;
+		}
 		var channel = (_discordSocketClient.GetGuild(_botConfig.GuildId)
 			.GetChannel(_botConfig.Channels.StatusCheckChannelId) as ITextChannel);
 		try {
@@ -374,6 +390,7 @@ public class DiscordService : IDiscordService, IHostedService
 			m.Content = Constants.StatusUpdateMessageTitle;
 			m.Embed = messageEmbed;
 		});
+		_currentUpdateEmbedHash = messageEmbedHash;
 	}
 	
 }

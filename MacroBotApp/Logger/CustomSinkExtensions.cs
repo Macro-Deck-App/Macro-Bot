@@ -1,6 +1,3 @@
-using Discord.WebSocket;
-using MacroBot.Config;
-using MacroBot.ServiceInterfaces;
 using Serilog;
 using Serilog.Configuration;
 

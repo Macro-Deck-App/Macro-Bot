@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Text.Json;
+using JetBrains.Annotations;
 using MacroBot.Config;
 using MacroBot.Models.Status;
 using MacroBot.ServiceInterfaces;
@@ -9,6 +10,7 @@ using ILogger = Serilog.ILogger;
 
 namespace MacroBot.Services;
 
+[UsedImplicitly]
 public class StatusCheckService : IStatusCheckService, IHostedService
 {
     private readonly ILogger _logger = Log.ForContext<StatusCheckService>();
@@ -24,7 +26,9 @@ public class StatusCheckService : IStatusCheckService, IHostedService
     public IEnumerable<StatusCheckResult> LastStatusCheckResults { get; private set; } = Enumerable.Empty<StatusCheckResult>();
     public DateTime LastStatusCheck { get; private set; }
 
-    public StatusCheckService(IHttpClientFactory httpClientFactory, TimerService timerService, StatusCheckConfig statusCheckConfig)
+    public StatusCheckService(IHttpClientFactory httpClientFactory,
+        TimerService timerService,
+        StatusCheckConfig statusCheckConfig)
     {
         _httpClientFactory = httpClientFactory;
         _timerService = timerService;
@@ -74,7 +78,7 @@ public class StatusCheckService : IStatusCheckService, IHostedService
             results.Add(result);
         }
 
-        results = new ConcurrentBag<StatusCheckResult>(results.OrderBy(x => x.Name));
+        results = new ConcurrentBag<StatusCheckResult>(results.OrderByDescending(x => x.Name));
 
         _logger.Information(
             "Status check done. {NoOnline}/{Total} online {NoWarnings} with warnings",
@@ -110,21 +114,19 @@ public class StatusCheckService : IStatusCheckService, IHostedService
         }
         catch
         {
-            // ignored
+            return new StatusCheckResult(statusCheckItem.Name, false, HttpStatusCode.NotFound);
         }
         
         if (!statusCheckItem.StatusEndpoint)
         {
-            return new StatusCheckResult(statusCheckItem.Name,
-                request?.StatusCode == HttpStatusCode.OK,
-                request?.StatusCode ?? HttpStatusCode.NotFound);
+            return new StatusCheckResult(statusCheckItem.Name, request.StatusCode == HttpStatusCode.OK, request.StatusCode);
         }
 
         var onlineWithWarnings = false;
         var online = false;
         try
         {
-            if (request?.StatusCode == HttpStatusCode.OK)
+            if (request.StatusCode == HttpStatusCode.OK)
             {
                 online = true;
                 var result = await request.Content.ReadAsStringAsync();
@@ -132,13 +134,10 @@ public class StatusCheckService : IStatusCheckService, IHostedService
                 onlineWithWarnings = endpointResponse is null || !endpointResponse.Ok;
             }
         }
-        catch (Exception ex)
+        catch
         {
-            onlineWithWarnings = request?.StatusCode == HttpStatusCode.OK;
+            onlineWithWarnings = request.StatusCode == HttpStatusCode.OK;
         }
-        return new StatusCheckResult(statusCheckItem.Name,
-            online,
-            request?.StatusCode ?? HttpStatusCode.NotFound,
-            onlineWithWarnings);
+        return new StatusCheckResult(statusCheckItem.Name, online, request.StatusCode, onlineWithWarnings);
     }
 }
