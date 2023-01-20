@@ -54,7 +54,7 @@ public class StatusCheckService : IStatusCheckService, IHostedService
 
     private async Task CheckAllAsync()
     {
-        _logger.Information("Starting status check...");
+        _logger.Verbose("Starting status check...");
         var results = new ConcurrentBag<StatusCheckResult>();
         var statusInCollectionChanged = false;
         foreach (var statusCheckItem in _statusCheckConfig.StatusCheckItems)
@@ -102,7 +102,7 @@ public class StatusCheckService : IStatusCheckService, IHostedService
 
     private async Task<StatusCheckResult> CheckAsync(StatusCheckConfig.StatusCheckItem statusCheckItem)
     {
-        _logger.Information(
+        _logger.Verbose(
             "Checking status of {Name} - {Url}...", 
             statusCheckItem.Name, 
             statusCheckItem.Url);
