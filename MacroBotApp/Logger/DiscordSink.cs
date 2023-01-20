@@ -20,7 +20,7 @@ public class DiscordSink : ILogEventSink
 
     public void Emit(LogEvent logEvent)
     {
-        if (_discordSocketClient is null || _botConfig is null)
+        if (_discordSocketClient is null || _botConfig is null || logEvent.Level < LogEventLevel.Information)
         {
             return;
         }

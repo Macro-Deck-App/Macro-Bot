@@ -164,7 +164,7 @@ public class DiscordService : IDiscordService, IHostedService
     
     private async Task Ready () {
 	    DiscordReady = true;
-	    _logger.Information("Discord ready");
+	    _logger.Information("Bot ready");
 	    await _interactionService.RegisterCommandsGloballyAsync();
 		await UpdateMemberCount();
     }
@@ -300,7 +300,6 @@ public class DiscordService : IDiscordService, IHostedService
 		for (var i = 0; i < nameParts.Length - 1; i++)
 			channelName += nameParts[i];
 		await channel.ModifyAsync(properties => { properties.Name = $"{channelName}_{memberCount}"; });
-		_logger.Information("Users on the server: {MemberCount}", memberCount);
 		return memberCount;
 	}
 

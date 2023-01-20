@@ -42,18 +42,18 @@ public class TimerService : ITimerService, IHostedService
 
     private void TimerOnElapsed(object? sender, ElapsedEventArgs e)
     {
-        _logger.Information("Minute timer elapsed");
+        _logger.Verbose("Minute timer elapsed");
         MinuteTimerElapsed?.Invoke(this, EventArgs.Empty);
         if (DateTime.Now - hourTimerLastElapsed >= TimeSpan.FromMinutes(1))
         {
-            _logger.Information("Hour timer elapsed");
+            _logger.Verbose("Hour timer elapsed");
             HourTimerElapsed?.Invoke(this, EventArgs.Empty);
             hourTimerLastElapsed = DateTime.Now;
         }
 
         if (DateTime.Now.Hour == 5 && DateTime.Now - dailyTimerLastElapsed >= TimeSpan.FromHours(23))
         {
-            _logger.Information("Daily timer elapsed");
+            _logger.Verbose("Daily timer elapsed");
             DailyTimerElapsed?.Invoke(this, EventArgs.Empty);
             dailyTimerLastElapsed = DateTime.Now;
         }
