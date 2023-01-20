@@ -205,17 +205,28 @@ public class DiscordService : IDiscordService, IHostedService
 		var messageByModerator = member.Roles.Contains(member.Guild.GetRole(_botConfig.Roles.ModeratorRoleId));
 		var imageChannels = _botConfig.Channels.ImageOnlyChannels;
 
-
-		if (message.MentionedEveryone && !messageByModerator)
+		if ((message.MentionedEveryone 
+		     || message.MentionedRoles.Count > 0
+		     || message.MentionedUsers.Count > 0) 
+		    && !messageByModerator)
 		{
 			await message.DeleteAsync();
 			_logger.Information(
-				"Message containing @everyone from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted",
+				"Message containing users/roles/everyone from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted. Message: {Message}",
 				message.Author.Username,
 				message.Author.Discriminator,
-				message.Channel.Name);
+				message.Channel.Name,
+				message.CleanContent);
+			try
+			{
+				await member.SendMessageAsync("You are not allowed to mention users/roles/everyone");
+			}
+			catch (Exception ex)
+			{
+				_logger.Error(ex, "Cannot send message to {User}", message.Author.Username);
+			}
 		}
-		
+
 		if (imageChannels.Contains(message.Channel.Id) && !DiscordMessageFilter.FilterForImageChannels(message)) {
 			await message.DeleteAsync();
 

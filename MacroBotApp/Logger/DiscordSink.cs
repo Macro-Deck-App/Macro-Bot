@@ -20,12 +20,18 @@ public class DiscordSink : ILogEventSink
 
     public void Emit(LogEvent logEvent)
     {
-        if (_discordSocketClient is null || _botConfig is null || logEvent.Level < LogEventLevel.Warning)
+        if (_discordSocketClient is null || _botConfig is null)
         {
             return;
         }
-        if (_discordSocketClient.GetGuild(_botConfig.GuildId)
-                ?.GetChannel(_botConfig.Channels.LogChannelId) is not ITextChannel channel)
+
+        var logChannel = _discordSocketClient.GetGuild(_botConfig.GuildId)
+            ?.GetChannel(_botConfig.Channels.LogChannelId) as ITextChannel;
+
+        var errorChannel = _discordSocketClient.GetGuild(_botConfig.GuildId)
+            ?.GetChannel(_botConfig.Channels.ErrorLogChannelId) as ITextChannel;
+
+        if (logChannel is null && errorChannel is null)
         {
             return;
         }
@@ -37,10 +43,11 @@ public class DiscordSink : ILogEventSink
         {
             Color = logEvent.Level switch
             {
+                LogEventLevel.Information => Color.Teal,
                 LogEventLevel.Warning => Color.Gold,
                 LogEventLevel.Error => Color.Red,
                 LogEventLevel.Fatal => Color.DarkRed,
-                _ => Color.Default
+                _ => Color.LightGrey
             }
         };
 
@@ -59,6 +66,27 @@ public class DiscordSink : ILogEventSink
 
         var text = adminRole is not null && logEvent.Level > LogEventLevel.Warning ? adminRole.Mention : null;
 
-        Task.Run(() => channel.SendMessageAsync(text, embed: embedBuilder.Build()));
+        Task.Run(() => SendSafeAsync(logChannel, text, embedBuilder.Build()));
+
+        if (logEvent.Level >= LogEventLevel.Warning)
+        {
+            Task.Run(() => SendSafeAsync(errorChannel, text, embedBuilder.Build()));   
+        }
+    }
+
+    private static async Task SendSafeAsync(ITextChannel? channel, string? text, Embed? embed)
+    {
+        if (channel is null)
+        {
+            return;
+        }
+        try
+        {
+            await channel.SendMessageAsync(text, embed: embed);
+        }
+        catch
+        {
+            // ignored
+        }
     }
 }
