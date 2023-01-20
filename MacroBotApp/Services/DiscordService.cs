@@ -10,6 +10,7 @@ using MacroBot.Models.Extensions;
 using MacroBot.Models.Status;
 using MacroBot.Models.Webhook;
 using MacroBot.ServiceInterfaces;
+using Microsoft.VisualBasic;
 using Serilog;
 using ILogger = Serilog.ILogger;
 
@@ -69,7 +70,14 @@ public class DiscordService : IDiscordService, IHostedService
 
     private async void StatusCheckServiceOnStatusCheckFinished(object? sender, StatusCheckFinishedEventArgs e)
     {
-	    await UpdateStatusMessage();
+	    try
+	    {
+		    await UpdateStatusMessage();
+	    }
+	    catch (Exception ex)
+	    {
+		    _logger.Fatal(ex, "Error while updating status check message");
+	    }
     }
     
     private async Task InitializeDiscord()
@@ -349,9 +357,16 @@ public class DiscordService : IDiscordService, IHostedService
 				embed.ImageUrl = webhookRequestEmbed.ImageUrl;
 			}
 		}
-		
-		await channel.SendMessageAsync(text: text, embed: embed?.Build());
-		_logger.Information("Webhook {WebhookId} executed", webhook.Id);
+
+		try
+		{
+			await channel.SendMessageAsync(text: text, embed: embed?.Build());
+			_logger.Information("Webhook {WebhookId} executed", webhook.Id);
+		}
+		catch (Exception ex)
+		{
+			_logger.Error(ex, "Cannot execute webhook {WebhookId}", webhook.Id);
+		}
 	}
 	
 	private async Task UpdateStatusMessage()
