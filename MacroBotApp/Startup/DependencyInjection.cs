@@ -52,8 +52,7 @@ public static class DependencyInjection
         services.AddInjectableHostedService<IStatusCheckService, StatusCheckService>();
         services.AddInjectableHostedService<ITimerService, TimerService>();
         services.AddHttpClient();
-        services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
+        services.AddSwagger();
         services.AddControllers();
     }
 }
