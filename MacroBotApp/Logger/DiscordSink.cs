@@ -1,6 +1,7 @@
 using Discord;
 using Discord.WebSocket;
 using MacroBot.Config;
+using MacroBot.Extensions;
 using Serilog.Core;
 using Serilog.Events;
 
@@ -48,12 +49,12 @@ public class DiscordSink : ILogEventSink
         embedBuilder.AddField("Level", logEvent.Level.ToString());
 
         var message = logEvent.RenderMessage();
-        embedBuilder.AddField("Message", message);
+        embedBuilder.AddField("Message", message.Truncate(1023));
 
         if (logEvent.Exception is not null)
         {
-            embedBuilder.AddField("Exception", logEvent.Exception.Message);
-            embedBuilder.AddField("Stack Trace", logEvent.Exception.StackTrace);
+            embedBuilder.AddField("Exception", logEvent.Exception.Message.Truncate(1023));
+            embedBuilder.AddField("Stack Trace", logEvent.Exception.StackTrace.Truncate(1023));
         }
 
         var text = adminRole is not null && logEvent.Level > LogEventLevel.Warning ? adminRole.Mention : null;
