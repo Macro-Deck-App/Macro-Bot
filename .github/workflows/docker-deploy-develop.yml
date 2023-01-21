@@ -1,0 +1,32 @@
+name: Deploy Develop
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "develop" ]
+      
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file MacroBotApp/Dockerfile --tag suchbyte/macro-bot:dev_${{ github.sha }}
+    - name: Log into registry ${{ env.REGISTRY }}
+      uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
+      with:
+        registry: docker.io
+        username: suchbyte
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Push the Docker image
+      run: docker push suchbyte/macro-bot:dev_${{ github.sha }}
+    - name: Updating the image on the server
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.DOCKER_HOST }}
+        username: ${{ secrets.GITHUBWORKFLOWS_USER }}
+        password: ${{ secrets.GITHUBWORKFLOWS_USER_PASSWORD }}
+        port: ${{ secrets.DOCKER_HOST_PORT }}
+        script: |
+          cd "scripts/Macro Bot/"
+          ./update_develop.sh dev_${{ github.sha }}
