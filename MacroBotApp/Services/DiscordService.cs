@@ -256,7 +256,7 @@ public class DiscordService : IDiscordService, IHostedService
 		if ((message.MentionedEveryone 
 		     || message.MentionedRoles.Count > 0
 		     || message.MentionedUsers.Count > 0) 
-		    && !messageByModerator)
+		    && !(messageByModerator || member.GetPermissions(message.Channel as IGuildChannel).ManageMessages))
 		{
 			await message.DeleteAsync();
 			_logger.Information(
@@ -267,7 +267,10 @@ public class DiscordService : IDiscordService, IHostedService
 				message.CleanContent);
 			try
 			{
-				await member.SendMessageAsync("You are not allowed to mention users/roles/everyone");
+				await member.SendMessageAsync(embed: new EmbedBuilder() {
+					Title = "Hello there!",
+					Description = $"It looks like you mentioned either a user, a role or @everyone! It is not allowed on the {(message.Channel as IGuildChannel)!.Guild.Name} server. Your message is below."
+				}.AddField("Message", message.CleanContent).Build());
 			}
 			catch (Exception ex)
 			{
