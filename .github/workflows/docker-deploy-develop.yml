@@ -1,4 +1,4 @@
-name: Deploy Production
+name: Deploy Develop
 
 on:
   workflow_dispatch:
