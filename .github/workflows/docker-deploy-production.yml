@@ -29,4 +29,6 @@ jobs:
         username: ${{ secrets.GITHUBWORKFLOWS_USER }}
         password: ${{ secrets.GITHUBWORKFLOWS_USER_PASSWORD }}
         port: ${{ secrets.DOCKER_HOST_PORT }}
-        script: ${{ secrets.UPDATE_MACRO_BOT_PROD_SCRIPT}} ${{steps.get-version.outputs.version}}
+        script: |
+          cd "/home/githubworkflows/scripts/Macro\ Bot/"
+          ./update_production.sh ${{steps.get-version.outputs.version}}
