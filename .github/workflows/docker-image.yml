@@ -18,6 +18,6 @@ jobs:
       with:
         registry: docker.io
         username: suchbyte
-        password: ${{ secrets.DOCKER_PW }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
     - name: Push the Docker image
       run: docker push suchbyte/macro-bot:${{ env.TAG }}
