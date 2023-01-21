@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using JetBrains.Annotations;
 using MacroBot.Config;
 using MacroBot.Discord;
+using MacroBot.Discord.Modules.OldExtensionStore;
 using MacroBot.Extensions;
 using MacroBot.Models.Extensions;
 using MacroBot.Models.Status;
@@ -36,6 +37,7 @@ public class DiscordService : IDiscordService, IHostedService
 	private string prevthread = "";
     private ulong? prevplauserid = 0;
     private string prevplugin = "";
+	private List<string> plsinthisthread = new();
 
     public DiscordService(BotConfig botConfig,
 	    DiscordSocketClient discordSocketClient,
@@ -94,6 +96,51 @@ public class DiscordService : IDiscordService, IHostedService
 	    await _discordSocketClient.StartAsync();
     }
 
+	private async Task ThreadCreated(SocketThreadChannel thread) {
+		plsinthisthread = new();
+		var msg = await thread.GetMessagesAsync(2).FlattenAsync();
+		var lastMsg = msg.Last();
+		PluginUtils pluginUtils = new PluginUtils();
+        var extensions = await pluginUtils.GetPluginsAsync();
+
+		if (extensions is null)
+		{
+			return;
+		}
+		
+		foreach (var extension in extensions) {
+			if (lastMsg.CleanContent.IndexOf(extension.name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
+			    lastMsg.CleanContent.IndexOf(extension.package_id, StringComparison.OrdinalIgnoreCase) < 0 &&
+			    thread.Name.IndexOf(extension.name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
+			    thread.Name.IndexOf(extension.package_id, StringComparison.OrdinalIgnoreCase) < 0) continue;
+
+			if ((prevthread == thread.Name && prevplugin == extension.package_id) || (plsinthisthread.Contains(extension.package_id))) return;
+			if (extension.type.IndexOf("plugin", StringComparison.OrdinalIgnoreCase) < 0) continue;
+
+			plsinthisthread.Add(extension.package_id);
+			
+			var embed = new EmbedBuilder {
+				Title = $"Do you have a problem with a plugin?",
+				Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
+			};
+
+			embed.AddField("Name", $"{extension.name} ({extension.package_id})", true);
+			embed.AddField("Author", extension.author, true);
+			prevthread = thread.Name;
+			prevplugin = extension.package_id!;
+
+			var components = new ComponentBuilder()
+				.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
+				.WithButton("No", "plugin-problem-no", ButtonStyle.Danger);
+
+			_discordSocketClient.ButtonExecuted -= DiscordSocketClientOnButtonExecuted;
+			_discordSocketClient.ButtonExecuted += DiscordSocketClientOnButtonExecuted;
+
+			await thread.SendMessageAsync(embed: embed.Build(), components: components.Build());
+		}
+	}
+
+	/*
     private async Task ThreadCreated(SocketThreadChannel thread) {
 		var msg = await thread.GetMessagesAsync(2).FlattenAsync();
 		var lastMsg = msg.Last();
@@ -137,6 +184,7 @@ public class DiscordService : IDiscordService, IHostedService
 			await thread.SendMessageAsync(embed: embed.Build(), components: components.Build());
 		}
 	}
+	*/
 
     private async Task DiscordSocketClientOnButtonExecuted(SocketMessageComponent component)
     {
@@ -144,19 +192,19 @@ public class DiscordService : IDiscordService, IHostedService
 	    {
 		    case "plugin-problem-yes":
 			    await component.Message.DeleteAsync();
-			    await component.Channel.SendMessageAsync($"<@{prevplauserid}>, {component.User.Mention} has a problem on your plugin.");
+			   // await component.Channel.SendMessageAsync($"{component.User.Mention} has a problem on your plugin."); // <@{prevplauserid}>, 
 			    await (component.Channel as SocketThreadChannel)!.ModifyAsync(msg => msg.Name = @$"{component.Channel.Name} (Plugin Problem - {prevplugin})");
 			    await (component.Channel as SocketThreadChannel)!.LeaveAsync();
+				plsinthisthread = new();
 			    break;
 		    case "plugin-problem-no":
-		    {
 			    await component.Message.DeleteAsync();
 			    var msg = await component.Channel.SendMessageAsync("Got it. Thank you for the clarification.");
 			    await Task.Delay(5000);
 			    await msg.DeleteAsync();
 			    await (component.Channel as SocketThreadChannel)!.LeaveAsync();
+				plsinthisthread = new();
 			    break;
-		    }
 		    default:
 			    return;
 	    }
