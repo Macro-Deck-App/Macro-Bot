@@ -9,8 +9,8 @@ jobs:
   build:
     strategy:
       matrix:
-        configuration: [Debug, Release]
-    runs-on: ubuntu-latest
+        configuration: [Release]
+    runs-on: windows-latest
     permissions:
       contents: read
       packages: write
@@ -38,7 +38,7 @@ jobs:
     # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.0.2
-
+      
     # Execute all unit tests in the solution
     - name: Execute unit tests
       run: dotnet test
@@ -48,7 +48,6 @@ jobs:
       run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
       env:
         Configuration: ${{ matrix.configuration }}
-
 
     # Workaround: https://github.com/docker/build-push-action/issues/461
     - name: Setup Docker buildx
