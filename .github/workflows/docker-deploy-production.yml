@@ -29,4 +29,3 @@ jobs:
         username: ${{ secrets.DOCKER_UPDATE_MACROBOT_USER }}
         password: ${{ secrets.DOCKER_UPDATE_MACROBOT_USER_PASSWORD }}
         port: ${{ secrets.DOCKER_HOST_PORT }}
-        script: ./home/scripts/Macro Bot/update_production.sh ${{steps.get-version.outputs.version}}
