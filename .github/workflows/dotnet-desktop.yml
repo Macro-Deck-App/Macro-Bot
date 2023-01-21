@@ -21,7 +21,7 @@ jobs:
       Wap_Project_Directory: MacroBotApp    # Replace with the Wap project directory relative to the solution, i.e. MyWpfApp.Package.
       Wap_Project_Path: MacroBotApp/MacroDeckApp.csproj                   # Replace with the path to your Wap project, i.e. MyWpf.App.Package\MyWpfApp.Package.wapproj.
       REGISTRY: docker.io
-      IMAGE_NAME: ${{ suchbyte.macro-bot }}
+      IMAGE_NAME: suchbyte.macro-bot
   
     steps:
     - name: Checkout
