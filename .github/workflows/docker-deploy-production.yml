@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Deploy Production
 
 on:
   workflow_dispatch:
@@ -22,3 +22,11 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
     - name: Push the Docker image
       run: docker push suchbyte/macro-bot:${{steps.get-version.outputs.version}}
+    - name: Updating the image on the server
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.DOCKER_HOST }}
+        username: ${{ secrets.DOCKER_UPDATE_MACROBOT_USER }}
+        password: ${{ secrets.DOCKER_UPDATE_MACROBOT_USER_PASSWORD }}
+        port: ${{ secrets.DOCKER_HOST_PORT }}
+        script: ${{ secrets.UPDATE_PRODUCTION_SCRIPT }}
