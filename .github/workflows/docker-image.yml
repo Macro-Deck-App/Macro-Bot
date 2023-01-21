@@ -1,0 +1,24 @@
+name: Docker Image CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: kzrnm/get-net-sdk-project-versions-action@v1
+      id: get-version
+      with:
+        proj-path: MacroBotApp/MacroBotApp.csproj
+    - name: Build the Docker image
+      run: docker build . --file MacroBotApp/Dockerfile --tag suchbyte/macro-bot:${{steps.get-version.outputs.version}}
+    - name: Log into registry ${{ env.REGISTRY }}
+      uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
+      with:
+        registry: docker.io
+        username: suchbyte
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Push the Docker image
+      run: docker push suchbyte/macro-bot:${{steps.get-version.outputs.version}}
