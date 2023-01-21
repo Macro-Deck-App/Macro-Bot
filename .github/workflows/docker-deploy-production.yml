@@ -29,4 +29,4 @@ jobs:
         username: ${{ secrets.DOCKER_UPDATE_MACROBOT_USER }}
         password: ${{ secrets.DOCKER_UPDATE_MACROBOT_USER_PASSWORD }}
         port: ${{ secrets.DOCKER_HOST_PORT }}
-        script: ${{ secrets.UPDATE_PRODUCTION_SCRIPT }}
+        script: ${{ secrets.UPDATE_PRODUCTION_SCRIPT }} ${{steps.get-version.outputs.version}}
