@@ -7,11 +7,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v3
     - uses: kzrnm/get-net-sdk-project-versions-action@v1
       id: get-version
       with:
         proj-path: MacroDeckApp/MacroDeckApp.csproj
-    - uses: actions/checkout@v3
     - name: Build the Docker image
       run: docker build . --file MacroBotApp/Dockerfile --tag suchbyte/macro-bot:${{steps.get-version.outputs.version}}
     - name: Log into registry ${{ env.REGISTRY }}
