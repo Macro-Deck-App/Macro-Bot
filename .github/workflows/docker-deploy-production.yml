@@ -29,4 +29,4 @@ jobs:
         username: ${{ secrets.GITHUBWORKFLOWS_USER }}
         password: ${{ secrets.GITHUBWORKFLOWS_USER_PASSWORD }}
         port: ${{ secrets.DOCKER_HOST_PORT }}
-        script: ${{ env.UPDATE_MACRO_BOT_PROD_SCRIPT}} ${{steps.get-version.outputs.version}}
+        script: ${{ secrets.UPDATE_MACRO_BOT_PROD_SCRIPT}} ${{steps.get-version.outputs.version}}
