@@ -1,0 +1,23 @@
+name: Docker Image CI
+
+on:
+  workflow_dispatch:
+  
+env:
+  TAG: $(date +%s)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file MacroBotApp/Dockerfile --tag macro-bot:${{ env.TAG }}
+    - name: Log into registry ${{ env.REGISTRY }}
+      uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
+      with:
+        registry: docker.io
+        username: suchbyte
+        password: ${{ secrets.DOCKER_PW }}
+    - name: Push the Docker image
+      run: docker push suchbyte/macro-bot:${{ env.TAG }}
