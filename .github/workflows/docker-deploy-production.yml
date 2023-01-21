@@ -1,8 +1,10 @@
 name: Deploy Production
 
 on:
-  workflow_dispatch:
-
+  create:
+    tags:
+      - v*
+      
 jobs:
   build:
     runs-on: ubuntu-latest
