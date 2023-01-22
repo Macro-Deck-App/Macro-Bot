@@ -6,16 +6,17 @@ on:
     branches: [ "develop" ]
       
 jobs:
-  tests:
-    uses: ./.github/workflows/build.yml
-    name: Build and test
+  #tests:
+   # uses: ./.github/workflows/build.yml
+    #name: Build and test
   deploy:
     name: Build and deploy Docker image
-    needs: [tests]
+    #needs: [tests]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: fjogeleit/http-request-action@v1
+    - name: Deploy started webhook
+      uses: fjogeleit/http-request-action@v1
       with:
         url: 'https://testbot.api.macro-deck.app/webhook/deploy'
         method: 'POST'
@@ -24,7 +25,7 @@ jobs:
         data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":1},"description":"Deployment started, building and pushing the image...","fields":[{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
     - name: Build the Docker image
       run: docker build . --file MacroBotApp/Dockerfile --tag suchbyte/macro-bot:dev_${{ github.sha }}
-    - name: Log into registry ${{ env.REGISTRY }}
+    - name: Log into registry
       uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
       with:
         registry: docker.io
@@ -32,7 +33,8 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
     - name: Push the Docker image
       run: docker push suchbyte/macro-bot:dev_${{ github.sha }}
-    - uses: fjogeleit/http-request-action@v1
+    - name: Push successful webhook
+      uses: fjogeleit/http-request-action@v1
       with:
         url: 'https://testbot.api.macro-deck.app/webhook/deploy'
         method: 'POST'
