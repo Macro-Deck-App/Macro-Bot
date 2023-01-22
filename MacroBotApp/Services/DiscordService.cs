@@ -10,7 +10,6 @@ using MacroBot.Models.Extensions;
 using MacroBot.Models.Status;
 using MacroBot.Models.Webhook;
 using MacroBot.ServiceInterfaces;
-using Microsoft.VisualBasic;
 using Serilog;
 using ILogger = Serilog.ILogger;
 
@@ -65,10 +64,10 @@ public class DiscordService : IDiscordService, IHostedService
 
     private void InitializeStatusCheckService()
     {
-	    _statusCheckService.StatusCheckFinished += StatusCheckServiceOnStatusCheckFinished;
+	    _statusCheckService.ItemStatusInCollectionChanged += StatusCheckServiceOnItemStatusInCollectionChanged;
     }
 
-    private async void StatusCheckServiceOnStatusCheckFinished(object? sender, StatusCheckFinishedEventArgs e)
+    private async void StatusCheckServiceOnItemStatusInCollectionChanged(object? sender, EventArgs e)
     {
 	    try
 	    {
@@ -79,7 +78,7 @@ public class DiscordService : IDiscordService, IHostedService
 		    _logger.Fatal(ex, "Error while updating status check message");
 	    }
     }
-    
+
     private async Task InitializeDiscord()
     {
 	    _discordSocketClient.UseSerilog();
@@ -386,35 +385,18 @@ public class DiscordService : IDiscordService, IHostedService
 		}
 		var status = _statusCheckService.LastStatusCheckResults.ToArray();
 		var messageEmbed = DiscordStatusCheckMessageBuilder.Build(status);
-		var messageEmbedHash = messageEmbed.GetHashCode();
-		if (messageEmbedHash == _currentUpdateEmbedHash)
+
+		if (_discordSocketClient.GetGuild(_botConfig.GuildId)
+			    .GetChannel(_botConfig.Channels.StatusCheckChannelId) is not ITextChannel channel)
 		{
-			_logger.Debug(
-				"Status message embed has not changed - Hash: {HashCode}",
-				_currentUpdateEmbedHash);
 			return;
 		}
-		var channel = (_discordSocketClient.GetGuild(_botConfig.GuildId)
-			.GetChannel(_botConfig.Channels.StatusCheckChannelId) as ITextChannel);
-		try {
-			var msg = await channel!.GetMessageAsync(_updateMessageId);
-			await channel!.ModifyMessageAsync(_updateMessageId, m =>
-			{
-				m.Content = Constants.StatusUpdateMessageTitle;
-			});
-		} catch (Exception) {
-			await channel!.DeleteMessagesAsync(await channel.GetMessagesAsync(10).FlattenAsync());
-			Thread.Sleep(1000);
 
-			var msg = await channel!.SendMessageAsync(Constants.StatusUpdateMessageTitle);
-			_updateMessageId = msg.Id;
+		try {
+			await channel.SendMessageAsync("᲼᲼\r\n", embed: messageEmbed);
+		} catch (Exception ex) {
+			_logger.Error(ex, "Cannot send status update");
 		}
-		await channel!.ModifyMessageAsync(_updateMessageId, m =>
-		{
-			m.Content = Constants.StatusUpdateMessageTitle;
-			m.Embed = messageEmbed;
-		});
-		_currentUpdateEmbedHash = messageEmbedHash;
 	}
 	
 }

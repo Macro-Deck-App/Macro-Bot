@@ -14,8 +14,8 @@ public class TimerService : ITimerService, IHostedService
     public event EventHandler? HourTimerElapsed;
     public event EventHandler? MinuteTimerElapsed;
 
-    private DateTime hourTimerLastElapsed = default;
-    private DateTime dailyTimerLastElapsed = default;
+    private DateTime _hourTimerLastElapsed = default;
+    private DateTime _dailyTimerLastElapsed = default;
 
     private readonly Timer _timer;
     
@@ -44,18 +44,18 @@ public class TimerService : ITimerService, IHostedService
     {
         _logger.Verbose("Minute timer elapsed");
         MinuteTimerElapsed?.Invoke(this, EventArgs.Empty);
-        if (DateTime.Now - hourTimerLastElapsed >= TimeSpan.FromMinutes(1))
+        if (DateTime.Now - _hourTimerLastElapsed >= TimeSpan.FromMinutes(1))
         {
             _logger.Verbose("Hour timer elapsed");
             HourTimerElapsed?.Invoke(this, EventArgs.Empty);
-            hourTimerLastElapsed = DateTime.Now;
+            _hourTimerLastElapsed = DateTime.Now;
         }
 
-        if (DateTime.Now.Hour == 5 && DateTime.Now - dailyTimerLastElapsed >= TimeSpan.FromHours(23))
+        if (DateTime.Now.Hour == 5 && DateTime.Now - _dailyTimerLastElapsed >= TimeSpan.FromHours(23))
         {
             _logger.Verbose("Daily timer elapsed");
             DailyTimerElapsed?.Invoke(this, EventArgs.Empty);
-            dailyTimerLastElapsed = DateTime.Now;
+            _dailyTimerLastElapsed = DateTime.Now;
         }
     }
 
