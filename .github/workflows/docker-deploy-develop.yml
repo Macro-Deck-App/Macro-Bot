@@ -6,7 +6,11 @@ on:
     branches: [ "develop" ]
       
 jobs:
-  build:
+  test:
+    uses: ./.github/workflows/build.yml
+    name: Build and test
+  deploy:
+    name: Build and deploy Docker image
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
