@@ -66,11 +66,11 @@ public class DiscordSink : ILogEventSink
 
         var text = adminRole is not null && logEvent.Level > LogEventLevel.Warning ? adminRole.Mention : null;
 
-        //Task.Run(() => SendSafeAsync(logChannel, text, embedBuilder.Build()));
+        Task.Run(() => SendSafeAsync(logChannel, text, embedBuilder.Build()));
 
         if (logEvent.Level >= LogEventLevel.Warning)
         {
-            //Task.Run(() => SendSafeAsync(errorChannel, text, embedBuilder.Build()));   
+            Task.Run(() => SendSafeAsync(errorChannel, text, embedBuilder.Build()));   
         }
     }
 
