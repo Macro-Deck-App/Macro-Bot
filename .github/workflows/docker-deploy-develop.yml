@@ -1,8 +1,9 @@
-name: Deploy Production
+name: Deploy Develop
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+  push:
+    branches: [ "develop" ]
       
 jobs:
   tests:
@@ -14,12 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: kzrnm/get-net-sdk-project-versions-action@v1
-      id: get-version
-      with:
-        proj-path: MacroBotApp/MacroBotApp.csproj
     - name: Build the Docker image
-      run: docker build . --file MacroBotApp/Dockerfile --tag suchbyte/macro-bot:${{steps.get-version.outputs.version}}
+      run: docker build . --file MacroBotApp/Dockerfile --tag suchbyte/macro-bot:dev_${{ github.sha }}
     - name: Log into registry ${{ env.REGISTRY }}
       uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
       with:
@@ -27,7 +24,7 @@ jobs:
         username: suchbyte
         password: ${{ secrets.DOCKER_PASSWORD }}
     - name: Push the Docker image
-      run: docker push suchbyte/macro-bot:${{steps.get-version.outputs.version}}
+      run: docker push suchbyte/macro-bot:dev_${{ github.sha }}
     - name: Updating the image on the server
       uses: appleboy/ssh-action@v0.1.7
       with:
@@ -37,4 +34,4 @@ jobs:
         port: ${{ secrets.DOCKER_HOST_PORT }}
         script: |
           cd "scripts/Macro Bot/"
-          ./update_production.sh ${{steps.get-version.outputs.version}}
+          ./update_develop.sh dev_${{ github.sha }}
