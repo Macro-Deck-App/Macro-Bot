@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
 using System.Net;
 using System.Text.Json;
+using Discord.WebSocket;
 using JetBrains.Annotations;
 using MacroBot.Config;
 using MacroBot.Models.Status;
@@ -18,27 +18,31 @@ public class StatusCheckService : IStatusCheckService, IHostedService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly TimerService _timerService;
     private readonly StatusCheckConfig _statusCheckConfig;
-    
+    private readonly DiscordSocketClient _discordSocketClient;
+
     public event EventHandler<StatusCheckFinishedEventArgs>? StatusCheckFinished;
     public event EventHandler? StatusOfItemChanged;
     public event EventHandler? ItemStatusInCollectionChanged;
 
     public IEnumerable<StatusCheckResult>? LastStatusCheckResults { get; private set; }
     public DateTime LastStatusCheck { get; private set; }
-    private bool lastCheckDone = true;
+    private bool _lastCheckDone = true;
 
     public StatusCheckService(IHttpClientFactory httpClientFactory,
         TimerService timerService,
-        StatusCheckConfig statusCheckConfig)
+        StatusCheckConfig statusCheckConfig,
+        DiscordSocketClient discordSocketClient)
     {
         _httpClientFactory = httpClientFactory;
         _timerService = timerService;
         _statusCheckConfig = statusCheckConfig;
+        _discordSocketClient = discordSocketClient;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _timerService.MinuteTimerElapsed += TimerServiceOnMinuteTimerElapsed;
+        _discordSocketClient.Ready += DiscordSocketClientOnReady;
         return Task.CompletedTask;
     }
 
@@ -48,6 +52,11 @@ public class StatusCheckService : IStatusCheckService, IHostedService
         return Task.CompletedTask;
     }
 
+    private async Task DiscordSocketClientOnReady()
+    {
+        await CheckAllAsync();
+    }
+    
     private async void TimerServiceOnMinuteTimerElapsed(object? sender, EventArgs e)
     {
         await CheckAllAsync();
@@ -55,11 +64,11 @@ public class StatusCheckService : IStatusCheckService, IHostedService
 
     private async Task CheckAllAsync()
     {
-        if (!lastCheckDone)
+        if (!_lastCheckDone)
         {
             return;
         }
-        lastCheckDone = false;
+        _lastCheckDone = false;
         _logger.Verbose("Starting status check...");
         var results = new List<StatusCheckResult>();
         var lastResults = LastStatusCheckResults?.ToArray();
@@ -102,7 +111,7 @@ public class StatusCheckService : IStatusCheckService, IHostedService
             ItemStatusInCollectionChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        lastCheckDone = true;
+        _lastCheckDone = true;
     }
 
     private async Task<StatusCheckResult> CheckAsync(StatusCheckConfig.StatusCheckItem statusCheckItem, StatusCheckResult? lastResult)
@@ -112,9 +121,9 @@ public class StatusCheckService : IStatusCheckService, IHostedService
             statusCheckItem.Name, 
             statusCheckItem.Url);
         using var httpClient = _httpClientFactory.CreateClient();
-        var stateChanged = false;
+        httpClient.Timeout = TimeSpan.FromSeconds(20);
         var onlineWithWarnings = false;
-        var online = false;
+        bool online;
         HttpResponseMessage? request = null;
         try
         {
@@ -125,7 +134,7 @@ public class StatusCheckService : IStatusCheckService, IHostedService
         {
             online = false;
         }
-        stateChanged = lastResult.HasValue && online != lastResult.Value.Online;
+        var stateChanged = lastResult.HasValue && online != lastResult.Value.Online;
         var stateChangedAt = stateChanged ? DateTime.Now : lastResult?.StateChangedAt;
         
         if (!statusCheckItem.StatusEndpoint)
