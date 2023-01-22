@@ -15,8 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Deploy started webhook
-      uses: fjogeleit/http-request-action@v1
+    - uses: fjogeleit/http-request-action@v1
       with:
         url: 'https://testbot.api.macro-deck.app/webhook/deploy'
         method: 'POST'
@@ -33,8 +32,7 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
     - name: Push the Docker image
       run: docker push suchbyte/macro-bot:dev_${{ github.sha }}
-    - name: Push successful webhook
-      uses: fjogeleit/http-request-action@v1
+    - uses: fjogeleit/http-request-action@v1
       with:
         url: 'https://testbot.api.macro-deck.app/webhook/deploy'
         method: 'POST'
