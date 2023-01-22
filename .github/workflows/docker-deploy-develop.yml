@@ -14,6 +14,12 @@ jobs:
     needs: [tests]
     runs-on: ubuntu-latest
     steps:
+    - uses: fjogeleit/http-request-action@v1
+      with:
+        url: 'https://testbot.api.macro-deck.app/webhook/deploy'
+        method: 'POST'
+        customHeaders: '{"Content-Type": "application/json", "Authorization": "Bearer ${{ secrets.TESTBOT_WEBHOOK_DEPLOY_KEY}}" }'
+        data: '{"title":"Deployment started","toEveryone":true,"embed":{"color":{"r":0,"g":1,"b":1},"description":"Deployment of the current develop branch started","fields":[{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
     - uses: actions/checkout@v3
     - name: Build the Docker image
       run: docker build . --file MacroBotApp/Dockerfile --tag suchbyte/macro-bot:dev_${{ github.sha }}
