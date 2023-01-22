@@ -335,12 +335,17 @@ public class DiscordService : IDiscordService, IHostedService
 			return;
 		}
 
-		var text = (webhookRequest.ToEveryone.HasValue && webhookRequest.ToEveryone.Value 
-			? "@everyone" 
-			: "")
-			  + "\r\n"
-		    + (!string.IsNullOrWhiteSpace(webhookRequest.Title) ? $"**{webhookRequest.Title}**\r\n" : "")
-			  + webhookRequest.Text;
+		var text = (string?)null;
+		if (!string.IsNullOrWhiteSpace(webhookRequest.Title) 
+		    || webhookRequest.ToEveryone.GetValueOrDefault())
+		{
+			text = (webhookRequest.ToEveryone.HasValue && webhookRequest.ToEveryone.Value 
+				       ? "@everyone" 
+				       : "")
+			       + "\r\n"
+			       + (!string.IsNullOrWhiteSpace(webhookRequest.Title) ? $"**{webhookRequest.Title}**\r\n" : "")
+			       + webhookRequest.Text;
+		}
 
 		var webhookRequestEmbed = webhookRequest.Embed;
 		EmbedBuilder? embed = null;
