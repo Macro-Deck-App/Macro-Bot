@@ -109,25 +109,25 @@ public class DiscordService : IDiscordService, IHostedService
 		}
 		
 		foreach (var extension in extensions) {
-			if (lastMsg.CleanContent.IndexOf(extension.name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
-			    lastMsg.CleanContent.IndexOf(extension.package_id, StringComparison.OrdinalIgnoreCase) < 0 &&
-			    thread.Name.IndexOf(extension.name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
-			    thread.Name.IndexOf(extension.package_id, StringComparison.OrdinalIgnoreCase) < 0) continue;
+			if (lastMsg.CleanContent.IndexOf(extension.Name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
+			    lastMsg.CleanContent.IndexOf(extension.PackageID, StringComparison.OrdinalIgnoreCase) < 0 &&
+			    thread.Name.IndexOf(extension.Name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
+			    thread.Name.IndexOf(extension.PackageID, StringComparison.OrdinalIgnoreCase) < 0) continue;
 
-			if ((prevthread == thread.Name && prevplugin == extension.package_id) || (plsinthisthread.Contains(extension.package_id))) return;
-			if (extension.type.IndexOf("plugin", StringComparison.OrdinalIgnoreCase) < 0) continue;
+			if ((prevthread == thread.Name && prevplugin == extension.PackageID) || (plsinthisthread.Contains(extension.PackageID))) return;
+			if (extension.Type.IndexOf("plugin", StringComparison.OrdinalIgnoreCase) < 0) continue;
 
-			plsinthisthread.Add(extension.package_id);
+			plsinthisthread.Add(extension.PackageID);
 			
 			var embed = new EmbedBuilder {
 				Title = $"Do you have a problem with a plugin?",
 				Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
 			};
 
-			embed.AddField("Name", $"{extension.name} ({extension.package_id})", true);
-			embed.AddField("Author", extension.author, true);
+			embed.AddField("Name", $"{extension.Name} ({extension.PackageID})", true);
+			embed.AddField("Author", extension.Author, true);
 			prevthread = thread.Name;
-			prevplugin = extension.package_id!;
+			prevplugin = extension.PackageID!;
 
 			var components = new ComponentBuilder()
 				.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
@@ -345,12 +345,16 @@ public class DiscordService : IDiscordService, IHostedService
 			memberNames.Add(member.Username.ToLower());
 		}
 
+		/*
+		// Currently Disabled because of rate limit issues //
 		var channel = guild.GetChannel(_botConfig.Channels.MemberScreeningChannelId);
 		var channelName = string.Empty;
 		var nameParts = channel.Name.Split("_");
 		for (var i = 0; i < nameParts.Length - 1; i++)
 			channelName += nameParts[i];
 		await channel.ModifyAsync(properties => { properties.Name = $"{channelName}_{memberCount}"; });
+		*/
+
 		return memberCount;
 	}
 

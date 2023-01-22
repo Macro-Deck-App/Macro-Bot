@@ -1,18 +1,23 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace MacroBot.Discord.Modules.OldExtensionStore {
     public class Plugin
     {
-        [JsonProperty(PropertyName = "package-id")]
-        public string package_id { get; set; }
-        public string type { get; set; }
-        public string name { get; set; }
-        public string version { get; set; }
-        public string author { get; set; }
-        [JsonProperty(PropertyName = "author-discord")]
-        public string author_discord { get; set; }
-        public string repository { get; set; }
-        [JsonProperty(PropertyName = "target-api")]
-        public string target_api { get; set; }
+        [JsonPropertyName("package-id")]
+        public string PackageID { get; set; }
+        [JsonPropertyName("type")]
+        public string Type { get; set; }
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+        [JsonPropertyName("version")]
+        public string Version { get; set; }
+        [JsonPropertyName("author")]
+        public string Author { get; set; }
+        [JsonPropertyName("author-discord")]
+        public string ADiscordID { get; set; }
+        [JsonPropertyName("repository")]
+        public string Repository { get; set; }
+        [JsonPropertyName("target-api")]
+        public string TargetAPI { get; set; }
     }
 }

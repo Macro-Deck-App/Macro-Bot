@@ -4,22 +4,22 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+using System.Text.Json;
 using Discord;
 
 namespace MacroBot.Discord.Modules.OldExtensionStore
 {
     public class PluginUtils
     {
-        public async Task<Plugin[]> GetPluginsAsync()
+        public async Task<List<Plugin>> GetPluginsAsync()
         {
-            HttpClient httpClient = new HttpClient();
-            var json = await httpClient.GetStringAsync("https://macrodeck.org/extensionstore/extensionstore.php?action=list&includeicons=false");
-            Plugin[] plugins = JsonConvert.DeserializeObject<Plugin[]>(json);
-            return plugins;
+            using (var httpClient = new HttpClient()) {
+                var json = await httpClient.GetFromJsonAsync<List<Plugin>>("https://macrodeck.org/extensionstore/extensionstore.php?action=list&includeicons=false");
+                return json;
+            }
         }
 
-        public List<Embed> SetPluginsAsEmbeds(Plugin[] plugins) {
+        public List<Embed> SetPluginsAsEmbeds(List<Plugin> plugins) {
             List<Embed> embeds = new();
             EmbedBuilder embedBuilder = new();
 
@@ -32,9 +32,9 @@ namespace MacroBot.Discord.Modules.OldExtensionStore
                     embedBuilder = new();
                     pl = 0;
                 }
-                embedBuilder.AddField($"[{plugin.type}] {plugin.package_id}", $"{(plugin.repository is not null
-                    ? $"[{plugin.name}]({plugin.repository})"
-                    : $"{plugin.name}")} by {plugin.author}", true);
+                embedBuilder.AddField($"[{plugin.Type}] {plugin.PackageID}", $"{(plugin.Repository is not null
+                    ? $"[{plugin.Name}]({plugin.Repository})"
+                    : $"{plugin.Name}")} by {plugin.Author}", true);
                 pl++;
             }
 
