@@ -11,8 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Webhook
-      uses: fjogeleit/http-request-action@v1
+    - uses: fjogeleit/http-request-action@v1
       with:
         url: 'https://testbot.api.macro-deck.app/webhook/deploy'
         method: 'POST'
