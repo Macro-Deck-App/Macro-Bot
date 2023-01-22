@@ -1,8 +1,7 @@
 name: Build and test
 
 on:
-  workflow_dispatch:
-  push:
+  [workflow_call, workflow_dispatch, push]
 
 jobs:
   build:
