@@ -206,7 +206,7 @@ public class DiscordService : IDiscordService, IHostedService
 
 		if ((message.MentionedEveryone 
 		     || message.MentionedRoles.Count > 0
-		     || message.MentionedUsers.Count > 0) 
+		     || (message.MentionedUsers.Count > 0 && message.Type != MessageType.Reply)) 
 		    && !messageByModerator)
 		{
 			await message.DeleteAsync();
