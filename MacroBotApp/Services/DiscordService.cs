@@ -27,14 +27,11 @@ public class DiscordService : IDiscordService, IHostedService
 	private readonly InteractionService _interactionService;
 	private readonly IHttpClientFactory _httpClientFactory;
 
-	private ulong _updateMessageId = 1;
-	private int _currentUpdateEmbedHash = 0;
-	
 	public bool DiscordReady { get; private set; }
 
-	private string prevthread = "";
-    private ulong? prevplauserid = 0;
-    private string prevplugin = "";
+	private string _prevThread = "";
+    private ulong? _prevPlaUserId = 0;
+    private string _prevPlugin = "";
 
     public DiscordService(BotConfig botConfig,
 	    DiscordSocketClient discordSocketClient,
@@ -105,7 +102,7 @@ public class DiscordService : IDiscordService, IHostedService
 		}
 		
 		foreach (var extension in extensions) {
-			if (prevthread == thread.Name)
+			if (_prevThread == thread.Name)
 			{
 				return;
 			}
@@ -122,9 +119,9 @@ public class DiscordService : IDiscordService, IHostedService
 
 			embed.AddField("Name", $"{extension.Name} ({extension.PackageId})", true);
 			embed.AddField("Author", extension.DSupportUserId is not null? $"<@{extension.DSupportUserId}>" : extension.Author, true);
-			prevthread = thread.Name;
-			prevplauserid = extension.DSupportUserId is not null ? ulong.Parse(extension.DSupportUserId) : null;
-			prevplugin = extension.PackageId!;
+			_prevThread = thread.Name;
+			_prevPlaUserId = extension.DSupportUserId is not null ? ulong.Parse(extension.DSupportUserId) : null;
+			_prevPlugin = extension.PackageId!;
 
 			var components = new ComponentBuilder()
 				.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
@@ -143,8 +140,8 @@ public class DiscordService : IDiscordService, IHostedService
 	    {
 		    case "plugin-problem-yes":
 			    await component.Message.DeleteAsync();
-			    await component.Channel.SendMessageAsync($"<@{prevplauserid}>, {component.User.Mention} has a problem on your plugin.");
-			    await (component.Channel as SocketThreadChannel)!.ModifyAsync(msg => msg.Name = @$"{component.Channel.Name} (Plugin Problem - {prevplugin})");
+			    await component.Channel.SendMessageAsync($"<@{_prevPlaUserId}>, {component.User.Mention} has a problem on your plugin.");
+			    await (component.Channel as SocketThreadChannel)!.ModifyAsync(msg => msg.Name = @$"{component.Channel.Name} (Plugin Problem - {_prevPlugin})");
 			    await (component.Channel as SocketThreadChannel)!.LeaveAsync();
 			    break;
 		    case "plugin-problem-no":
@@ -270,7 +267,7 @@ public class DiscordService : IDiscordService, IHostedService
 		{
 			return;
 		}
-		_logger.Information("{User}#{Discriminator} {Action} the server",
+		_logger.Verbose("{User}#{Discriminator} {Action} the server",
 			member.Username,
 			member.Discriminator,
 			joined
@@ -330,7 +327,7 @@ public class DiscordService : IDiscordService, IHostedService
 		{
 			return;
 		}
-		_logger.Information("Executing Webhook {WebhookId}", webhook.Id);
+		_logger.Verbose("Executing Webhook {WebhookId}", webhook.Id);
 		if (_discordSocketClient.GetGuild(_botConfig.GuildId)
 			    .GetChannel(webhook.ChannelId) is not ITextChannel channel)
 		{
@@ -340,7 +337,7 @@ public class DiscordService : IDiscordService, IHostedService
 
 		var text = (webhookRequest.ToEveryone.HasValue && webhookRequest.ToEveryone.Value 
 			? "@everyone" 
-			: ".")
+			: "")
 			  + "\r\n"
 		    + (!string.IsNullOrWhiteSpace(webhookRequest.Title) ? $"**{webhookRequest.Title}**\r\n" : "")
 			  + webhookRequest.Text;
@@ -356,6 +353,11 @@ public class DiscordService : IDiscordService, IHostedService
 			{
 				var color = webhookRequestEmbed.Color;
 				embed.WithColor(new Color(color.R, color.G, color.B));
+			}
+
+			if (!string.IsNullOrWhiteSpace(webhookRequestEmbed.Title))
+			{
+				embed.Title = webhookRequestEmbed.Title;
 			}
 			
 			if (!string.IsNullOrWhiteSpace(webhookRequestEmbed.Description))
