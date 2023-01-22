@@ -19,8 +19,9 @@ jobs:
       with:
         url: 'https://testbot.api.macro-deck.app/webhook/deploy'
         method: 'POST'
-        customHeaders: '{"Content-Type": "application/json", "Authorization": "Bearer ${{ secrets.TESTBOT_WEBHOOK_DEPLOY_KEY}}" }'
-        data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":1},"description":"Deployment started, building and deploying the image...","fields":[{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
+        bearerToken:  ${{ secrets.TESTBOT_WEBHOOK_DEPLOY_KEY }}
+        customHeaders: '{"Content-Type": "application/json" }'
+        data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":1},"description":"Deployment started, building and pushing the image...","fields":[{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
     - name: Build the Docker image
       run: docker build . --file MacroBotApp/Dockerfile --tag suchbyte/macro-bot:dev_${{ github.sha }}
     - name: Log into registry ${{ env.REGISTRY }}
@@ -35,8 +36,9 @@ jobs:
       with:
         url: 'https://testbot.api.macro-deck.app/webhook/deploy'
         method: 'POST'
-        customHeaders: '{"Content-Type": "application/json", "Authorization": "Bearer ${{ secrets.TESTBOT_WEBHOOK_DEPLOY_KEY}}" }'
-        data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":1},"description":"Deployment successful, updating the container now...","fields":[{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
+        bearerToken:  ${{ secrets.TESTBOT_WEBHOOK_DEPLOY_KEY }}
+        customHeaders: '{"Content-Type": "application/json" }'
+        data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":0},"description":"Push successful, updating the container now...","fields":[{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
     - name: Updating the image on the server
       uses: appleboy/ssh-action@v0.1.7
       with:
