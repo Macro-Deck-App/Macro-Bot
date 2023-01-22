@@ -340,7 +340,7 @@ public class DiscordService : IDiscordService, IHostedService
 
 		var text = (webhookRequest.ToEveryone.HasValue && webhookRequest.ToEveryone.Value 
 			? "@everyone" 
-			: "᲼᲼")
+			: ".")
 			  + "\r\n"
 		    + (!string.IsNullOrWhiteSpace(webhookRequest.Title) ? $"**{webhookRequest.Title}**\r\n" : "")
 			  + webhookRequest.Text;
@@ -405,17 +405,20 @@ public class DiscordService : IDiscordService, IHostedService
 		{
 			return;
 		}
-		var status = _statusCheckService.LastStatusCheckResults.ToArray();
-		var messageEmbed = DiscordStatusCheckMessageBuilder.Build(status);
+		var status = _statusCheckService.LastStatusCheckResults?.ToArray();
 
 		if (_discordSocketClient.GetGuild(_botConfig.GuildId)
-			    .GetChannel(_botConfig.Channels.StatusCheckChannelId) is not ITextChannel channel)
+			    .GetChannel(_botConfig.Channels.StatusCheckChannelId) is not ITextChannel channel 
+		    || status is null)
 		{
 			return;
 		}
+		
+		
+		var messageEmbed = DiscordStatusCheckMessageBuilder.Build(status);
 
 		try {
-			await channel.SendMessageAsync("᲼᲼\r\n", embed: messageEmbed);
+			await channel.SendMessageAsync(embed: messageEmbed);
 		} catch (Exception ex) {
 			_logger.Error(ex, "Cannot send status update");
 		}
