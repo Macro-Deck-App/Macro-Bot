@@ -165,17 +165,20 @@ public class DiscordService : IDiscordService, IHostedService
 	    DiscordReady = true;
 	    _logger.Information("Bot ready");
 	    await _interactionService.RegisterCommandsGloballyAsync();
-		await UpdateMemberCount();
+	    var guild = _discordSocketClient.GetGuild(_botConfig.GuildId);
+	    if (guild?.GetChannel(_botConfig.Channels.MemberScreeningChannelId) is ITextChannel channel)
+	    {
+		    var usersCount = GetUsersCount(guild);
+		    await UpdateMemberScreeningChannelName(channel, usersCount);
+	    }
     }
 
 	private async Task UserJoined (SocketGuildUser member) {
-		_logger.Information("{User} joined the server", member.Nickname);
 		await MemberMovement(member, true);
 	}
 
 	private async Task UserLeft (SocketGuild guild, SocketUser user)
 	{
-		_logger.Information("{User} left the server", user.Username);
 		if (user is SocketGuildUser guildUser)
 		{
 			await MemberMovement(guildUser, false);
@@ -260,15 +263,29 @@ public class DiscordService : IDiscordService, IHostedService
 		}
 	}
 
-	private async Task MemberMovement (SocketGuildUser member, bool joined) {
+	private async Task MemberMovement(IGuildUser member, bool joined)
+	{
+		var guild = _discordSocketClient.GetGuild(_botConfig.GuildId);
+		if (guild?.GetChannel(_botConfig.Channels.MemberScreeningChannelId) is not ITextChannel channel)
+		{
+			return;
+		}
+		_logger.Information("{User}#{Discriminator} {Action} the server",
+			member.Username,
+			member.Discriminator,
+			joined
+				? "joined"
+				: "left");
+
+		var usersCount = GetUsersCount(guild);
+		var botsCount = GetBotsCount(guild);
+		await UpdateMemberScreeningChannelName(channel, usersCount);
 		EmbedBuilder embed = new() {
-			Color = joined ? new Color(191, 63, 127) : new Color(191, 127, 63),
-			Description = $"Latest member count: **{await UpdateMemberCount()}**",
+			Color = joined ? Color.Green : Color.Red,
+			Description = $"Latest member count: **{usersCount}** ({botsCount} bots)",
 			ThumbnailUrl = member.GetAvatarUrl(),
-			Title = $"__**{member.Username}#{member.Discriminator} {(joined ? "joined" : "left")} the server!**__",
-			Footer = new EmbedFooterBuilder().WithText("Develeon64").WithIconUrl(member.Guild.GetUser(298215920709664768).GetAvatarUrl()),
+			Title = $"__**{member.Username}#{member.Discriminator} {(joined ? "joined" : "left")} the server!**__"
 		};
-		embed.WithAuthor(_discordSocketClient.CurrentUser);
 		embed.WithCurrentTimestamp();
 
 		embed.AddField("__ID__", member.Id, member.Nickname != null);
@@ -278,28 +295,33 @@ public class DiscordService : IDiscordService, IHostedService
 		}
 		embed.AddField("__Joined__", $"<t:{member.JoinedAt?.ToUnixTimeSeconds()}:R>", true);
 		embed.AddField("__Created__", $"<t:{member.CreatedAt.ToUnixTimeSeconds()}:R>", true);
-
-		await (member.Guild.GetChannel(_botConfig.Channels.MemberScreeningChannelId) as SocketTextChannel).SendMessageAsync(embed: embed.Build());
+		await channel.SendMessageAsync(embed: embed.Build());
 	}
 
-	private async Task<int> UpdateMemberCount () {
-		var guild = _discordSocketClient.GetGuild(_botConfig.GuildId);
-		var memberCount = 0;
-		List<string> memberNames = new();
-		foreach (var member in guild.Users)
+	private async Task UpdateMemberScreeningChannelName (ITextChannel channel, int userCount)
+	{
+		// Temporarily disabled because of a rate limit
+		return;
+		if (channel is not SocketGuildChannel socketGuildChannel)
 		{
-			if (member.IsBot || memberNames.Contains(member.Username.ToLower())) continue;
-			memberCount++;
-			memberNames.Add(member.Username.ToLower());
+			return;
 		}
+		await socketGuildChannel.ModifyAsync(properties =>
+		{
+			properties.Name = $"{userCount}_users";
+		});
+	}
 
-		var channel = guild.GetChannel(_botConfig.Channels.MemberScreeningChannelId);
-		var channelName = string.Empty;
-		var nameParts = channel.Name.Split("_");
-		for (var i = 0; i < nameParts.Length - 1; i++)
-			channelName += nameParts[i];
-		await channel.ModifyAsync(properties => { properties.Name = $"{channelName}_{memberCount}"; });
-		return memberCount;
+	private int GetUsersCount(SocketGuild guild)
+	{
+		var userCount = guild.Users.ToArray().Length;
+		return userCount;
+	}
+
+	private int GetBotsCount(SocketGuild guild)
+	{
+		var botCount = guild.Users.Where(x => x.IsBot).ToArray().Length;
+		return botCount;
 	}
 
 	public async Task BroadcastWebhookAsync(WebhookItem webhook, WebhookRequest webhookRequest)
