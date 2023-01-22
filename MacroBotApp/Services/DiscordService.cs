@@ -351,7 +351,7 @@ public class DiscordService : IDiscordService, IHostedService
 		EmbedBuilder? embed = null;
 		if (webhookRequestEmbed is not null)
 		{
-			_logger.Information("Webhook {WebhookId} contains an embed", webhook.Id);
+			_logger.Verbose("Webhook {WebhookId} contains an embed", webhook.Id);
 			embed = new EmbedBuilder();
 
 			if (webhookRequestEmbed.Color is not null)
@@ -398,7 +398,7 @@ public class DiscordService : IDiscordService, IHostedService
 		try
 		{
 			await channel.SendMessageAsync(text: text, embed: embed?.Build());
-			_logger.Information("Webhook {WebhookId} executed", webhook.Id);
+			_logger.Verbose("Webhook {WebhookId} executed", webhook.Id);
 		}
 		catch (Exception ex)
 		{
