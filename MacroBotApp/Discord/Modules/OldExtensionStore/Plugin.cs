@@ -4,7 +4,7 @@ namespace MacroBot.Discord.Modules.OldExtensionStore {
     public class Plugin
     {
         [JsonPropertyName("package-id")]
-        public string PackageID { get; set; }
+        public string PackageId { get; set; }
         [JsonPropertyName("type")]
         public string Type { get; set; }
         [JsonPropertyName("name")]

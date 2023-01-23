@@ -106,24 +106,24 @@ public class DiscordService : IDiscordService, IHostedService
 		
 		foreach (var extension in extensions) {
 			if (lastMsg.CleanContent.IndexOf(extension.Name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
-			    lastMsg.CleanContent.IndexOf(extension.PackageID, StringComparison.OrdinalIgnoreCase) < 0 &&
+			    lastMsg.CleanContent.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0 &&
 			    thread.Name.IndexOf(extension.Name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
-			    thread.Name.IndexOf(extension.PackageID, StringComparison.OrdinalIgnoreCase) < 0) continue;
+			    thread.Name.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0) continue;
 
-			if ((prevthread == thread.Name && prevplugin == extension.PackageID) || (plsinthisthread.Contains(extension.PackageID))) return;
+			if ((prevthread == thread.Name && prevplugin == extension.PackageId) || (plsinthisthread.Contains(extension.PackageId))) return;
 			if (extension.Type.IndexOf("plugin", StringComparison.OrdinalIgnoreCase) < 0) continue;
 
-			plsinthisthread.Add(extension.PackageID);
+			plsinthisthread.Add(extension.PackageId);
 			
 			var embed = new EmbedBuilder {
 				Title = $"Do you have a problem with a plugin?",
 				Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
 			};
 
-			embed.AddField("Name", $"{extension.Name} ({extension.PackageID})", true);
+			embed.AddField("Name", $"{extension.Name} ({extension.PackageId})", true);
 			embed.AddField("Author", extension.Author, true);
 			prevthread = thread.Name;
-			prevplugin = extension.PackageID!;
+			prevplugin = extension.PackageId!;
 
 			var components = new ComponentBuilder()
 				.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)

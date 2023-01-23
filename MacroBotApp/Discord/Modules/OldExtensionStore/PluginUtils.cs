@@ -13,10 +13,9 @@ namespace MacroBot.Discord.Modules.OldExtensionStore
     {
         public async Task<List<Plugin>> GetPluginsAsync()
         {
-            using (var httpClient = new HttpClient()) {
-                var json = await httpClient.GetFromJsonAsync<List<Plugin>>("https://macrodeck.org/extensionstore/extensionstore.php?action=list&includeicons=false");
-                return json;
-            }
+            using var httpClient = new HttpClient();
+            var json = await httpClient.GetFromJsonAsync<List<Plugin>>("https://macrodeck.org/extensionstore/extensionstore.php?action=list&includeicons=false");
+            return json;
         }
 
         public List<Embed> SetPluginsAsEmbeds(List<Plugin> plugins) {
@@ -32,7 +31,7 @@ namespace MacroBot.Discord.Modules.OldExtensionStore
                     embedBuilder = new();
                     pl = 0;
                 }
-                embedBuilder.AddField($"[{plugin.Type}] {plugin.PackageID}", $"{(plugin.Repository is not null
+                embedBuilder.AddField($"[{plugin.Type}] {plugin.PackageId}", $"{(plugin.Repository is not null
                     ? $"[{plugin.Name}]({plugin.Repository})"
                     : $"{plugin.Name}")} by {plugin.Author}", true);
                 pl++;
