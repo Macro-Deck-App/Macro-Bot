@@ -1,4 +1,5 @@
-﻿namespace MacroBot.Config;
+﻿using System.Text.Json;
+namespace MacroBot.Config;
 
 public class BotConfig : LoadableConfig<BotConfig>
 {
