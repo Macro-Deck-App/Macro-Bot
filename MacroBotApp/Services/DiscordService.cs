@@ -253,8 +253,6 @@ public class DiscordService : IDiscordService, IHostedService
 		var imageChannels = _botConfig.Channels.ImageOnlyChannels;
 
 		var anyMentionsOnMsg = message.MentionedUsers.Any(u => message.Content.Contains($"<@{u.Id}>"));
-		_logger.Information(anyMentionsOnMsg.ToString());
-		_logger.Information(message.Content);
 
 		if ((message.MentionedEveryone 
 		     || message.MentionedRoles.Count > 0
