@@ -36,8 +36,6 @@ public static class DiscordStatusCheckMessageBuilder
             description += $"⚠️ {nowOnlineWithWarnings.Select(x => $"**{x.Name}**").Join(", ", " and ")} may not work as expected\r\n";
         }
 
-        description += "᲼᲼\r\n"; // Add empty line
-        
         embed.WithDescription(description);
         
         embed.WithColor(statusCheckResults.All(x => x is { Online: true, OnlineWithWarnings: false }) 
