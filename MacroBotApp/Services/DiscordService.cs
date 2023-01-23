@@ -258,7 +258,7 @@ public class DiscordService : IDiscordService, IHostedService
 		     || message.MentionedRoles.Count > 0
 		     || (message.MentionedUsers.Count > 0 && (anyMentionsOnMsg || message.Type != MessageType.Reply))
 		    && !(messageByModerator || member.GetPermissions(message.Channel as IGuildChannel).ManageMessages)
-			&& !(message.MentionedUsers.Count == 1 && message.Content.Contains($"<@{message.Author.Id}>")))
+			&& !(message.MentionedUsers.Count == 1 && message.Content.Contains($"<@{message.Author.Id}>"))))
 		{
 			await message.DeleteAsync();
 			_logger.Information(
