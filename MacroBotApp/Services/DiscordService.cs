@@ -256,8 +256,8 @@ public class DiscordService : IDiscordService, IHostedService
 
 		if ((message.MentionedEveryone 
 		     || message.MentionedRoles.Count > 0
-		     || (message.MentionedUsers.Count > 0 && anyMentionsOnMsg) ) 
-		    && !(messageByModerator || member.GetPermissions(message.Channel as IGuildChannel).ManageMessages )
+		     || (message.MentionedUsers.Count > 0 && (anyMentionsOnMsg || message.Type != MessageType.Reply))
+		    && !(messageByModerator || member.GetPermissions(message.Channel as IGuildChannel).ManageMessages)
 			&& !(message.MentionedUsers.Count == 1 && message.Content.Contains($"<@{message.Author.Id}>")))
 		{
 			await message.DeleteAsync();
@@ -389,18 +389,23 @@ public class DiscordService : IDiscordService, IHostedService
 			return;
 		}
 
-		var text = (webhookRequest.ToEveryone.HasValue && webhookRequest.ToEveryone.Value 
-			? "@everyone" 
-			: "")
-			  + "\r\n"
-		    + (!string.IsNullOrWhiteSpace(webhookRequest.Title) ? $"**{webhookRequest.Title}**\r\n" : "")
-			  + webhookRequest.Text;
+		var text = (string?)null;
+		if (!string.IsNullOrWhiteSpace(webhookRequest.Title) 
+		    || webhookRequest.ToEveryone.GetValueOrDefault())
+		{
+			text = (webhookRequest.ToEveryone.HasValue && webhookRequest.ToEveryone.Value 
+				       ? "@everyone" 
+				       : "")
+			       + "\r\n"
+			       + (!string.IsNullOrWhiteSpace(webhookRequest.Title) ? $"**{webhookRequest.Title}**\r\n" : "")
+			       + webhookRequest.Text;
+		}
 
 		var webhookRequestEmbed = webhookRequest.Embed;
 		EmbedBuilder? embed = null;
 		if (webhookRequestEmbed is not null)
 		{
-			_logger.Information("Webhook {WebhookId} contains an embed", webhook.Id);
+			_logger.Verbose("Webhook {WebhookId} contains an embed", webhook.Id);
 			embed = new EmbedBuilder();
 
 			if (webhookRequestEmbed.Color is not null)
@@ -447,7 +452,7 @@ public class DiscordService : IDiscordService, IHostedService
 		try
 		{
 			await channel.SendMessageAsync(text: text, embed: embed?.Build());
-			_logger.Information("Webhook {WebhookId} executed", webhook.Id);
+			_logger.Verbose("Webhook {WebhookId} executed", webhook.Id);
 		}
 		catch (Exception ex)
 		{
