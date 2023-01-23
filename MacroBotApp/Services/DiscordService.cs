@@ -252,10 +252,15 @@ public class DiscordService : IDiscordService, IHostedService
 		var messageByModerator = member.Roles.Contains(member.Guild.GetRole(_botConfig.Roles.ModeratorRoleId));
 		var imageChannels = _botConfig.Channels.ImageOnlyChannels;
 
+		var anyMentionsOnMsg = message.MentionedUsers.Any(u => message.Content.Contains($"<@{u.Id}>"));
+		_logger.Information(anyMentionsOnMsg.ToString());
+		_logger.Information(message.Content);
+
 		if ((message.MentionedEveryone 
 		     || message.MentionedRoles.Count > 0
-		     || message.MentionedUsers.Count > 0) 
-		    && !(messageByModerator || member.GetPermissions(message.Channel as IGuildChannel).ManageMessages))
+		     || (message.MentionedUsers.Count > 0 && anyMentionsOnMsg) ) 
+		    && !(messageByModerator || member.GetPermissions(message.Channel as IGuildChannel).ManageMessages )
+			&& !(message.MentionedUsers.Count == 1 && message.Content.Contains($"<@{message.Author.Id}>")))
 		{
 			await message.DeleteAsync();
 			_logger.Information(
