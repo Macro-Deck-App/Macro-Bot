@@ -12,7 +12,7 @@ namespace MacroBot.Discord.Modules.OldExtensionStore
         [SlashCommand("list", "Show a list of plugins")]
         public async Task PluginList()
         {
-            await DeferAsync();
+            await DeferAsync(ephemeral: true);
 
             PluginUtils pluginUtils = new PluginUtils();
             var embed = pluginUtils.SetPluginsAsEmbeds(await pluginUtils.GetPluginsAsync());
