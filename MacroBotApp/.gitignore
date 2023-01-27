@@ -1,7 +1,8 @@
-﻿Config/global.json
+Config/global.json
 /bin
 /obj
 .idea
 .vs
 .vscode
 /__testConfigs__/
+Properies/launchSettings.json

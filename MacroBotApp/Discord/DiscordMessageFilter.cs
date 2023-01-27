@@ -3,7 +3,7 @@ using Serilog;
 
 namespace MacroBot.Discord;
 
-public class DiscordMessageFilter
+public static class DiscordMessageFilter
 {
     
     /// <summary>
@@ -13,12 +13,8 @@ public class DiscordMessageFilter
     /// <returns></returns>
     public static bool FilterForImageChannels(SocketMessage message)
     {
-        if (message.Attachments.Count == 0)
-        {
-            return false;
-        }
-        Log.Information(string.Join(",", message.Attachments.Select(x => x.ContentType)));
-        Log.Information(string.Join(",", message.Attachments.Select(x => x.ContentType.ToLower().Contains("image"))));
-        return message.Attachments.All(x => x.ContentType.ToLower().Contains("image"));
+        return message.Attachments.Count != 0 
+               && message.Attachments.All(x => x.ContentType.ToLower().Contains("image") 
+                                               || x.ContentType.ToLower().Contains("video"));
     }
 }

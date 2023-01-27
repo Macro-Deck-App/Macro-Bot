@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using JetBrains.Annotations;
 using MacroBot.Config;
 using MacroBot.Discord;
+using MacroBot.Discord.Modules.OldExtensionStore;
 using MacroBot.Extensions;
 using MacroBot.Models.Extensions;
 using MacroBot.Models.Status;
@@ -29,9 +30,10 @@ public class DiscordService : IDiscordService, IHostedService
 
 	public bool DiscordReady { get; private set; }
 
-	private string _prevThread = "";
-    private ulong? _prevPlaUserId = 0;
-    private string _prevPlugin = "";
+	private string prevthread = "";
+    private ulong? prevplauserid = 0;
+    private string prevplugin = "";
+	private List<string> plsinthisthread = new();
 
     public DiscordService(BotConfig botConfig,
 	    DiscordSocketClient discordSocketClient,
@@ -90,6 +92,51 @@ public class DiscordService : IDiscordService, IHostedService
 	    await _discordSocketClient.StartAsync();
     }
 
+	private async Task ThreadCreated(SocketThreadChannel thread) {
+		plsinthisthread = new();
+		var msg = await thread.GetMessagesAsync(2).FlattenAsync();
+		var lastMsg = msg.Last();
+		PluginUtils pluginUtils = new PluginUtils();
+        var extensions = await pluginUtils.GetPluginsAsync();
+
+		if (extensions is null)
+		{
+			return;
+		}
+		
+		foreach (var extension in extensions) {
+			if (lastMsg.CleanContent.IndexOf(extension.Name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
+			    lastMsg.CleanContent.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0 &&
+			    thread.Name.IndexOf(extension.Name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
+			    thread.Name.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0) continue;
+
+			if ((prevthread == thread.Name && prevplugin == extension.PackageId) || (plsinthisthread.Contains(extension.PackageId))) return;
+			if (extension.Type.IndexOf("plugin", StringComparison.OrdinalIgnoreCase) < 0) continue;
+
+			plsinthisthread.Add(extension.PackageId);
+			
+			var embed = new EmbedBuilder {
+				Title = $"Do you have a problem with a plugin?",
+				Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
+			};
+
+			embed.AddField("Name", $"{extension.Name} ({extension.PackageId})", true);
+			embed.AddField("Author", extension.Author, true);
+			prevthread = thread.Name;
+			prevplugin = extension.PackageId!;
+
+			var components = new ComponentBuilder()
+				.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
+				.WithButton("No", "plugin-problem-no", ButtonStyle.Danger);
+
+			_discordSocketClient.ButtonExecuted -= DiscordSocketClientOnButtonExecuted;
+			_discordSocketClient.ButtonExecuted += DiscordSocketClientOnButtonExecuted;
+
+			await thread.SendMessageAsync(embed: embed.Build(), components: components.Build());
+		}
+	}
+
+	/*
     private async Task ThreadCreated(SocketThreadChannel thread) {
 		var msg = await thread.GetMessagesAsync(2).FlattenAsync();
 		var lastMsg = msg.Last();
@@ -133,6 +180,7 @@ public class DiscordService : IDiscordService, IHostedService
 			await thread.SendMessageAsync(embed: embed.Build(), components: components.Build());
 		}
 	}
+	*/
 
     private async Task DiscordSocketClientOnButtonExecuted(SocketMessageComponent component)
     {
@@ -140,19 +188,19 @@ public class DiscordService : IDiscordService, IHostedService
 	    {
 		    case "plugin-problem-yes":
 			    await component.Message.DeleteAsync();
-			    await component.Channel.SendMessageAsync($"<@{_prevPlaUserId}>, {component.User.Mention} has a problem on your plugin.");
-			    await (component.Channel as SocketThreadChannel)!.ModifyAsync(msg => msg.Name = @$"{component.Channel.Name} (Plugin Problem - {_prevPlugin})");
+			   // await component.Channel.SendMessageAsync($"{component.User.Mention} has a problem on your plugin."); // <@{prevplauserid}>, 
+			    await (component.Channel as SocketThreadChannel)!.ModifyAsync(msg => msg.Name = @$"{component.Channel.Name} (Plugin Problem - {prevplugin})");
 			    await (component.Channel as SocketThreadChannel)!.LeaveAsync();
+				plsinthisthread = new();
 			    break;
 		    case "plugin-problem-no":
-		    {
 			    await component.Message.DeleteAsync();
 			    var msg = await component.Channel.SendMessageAsync("Got it. Thank you for the clarification.");
 			    await Task.Delay(5000);
 			    await msg.DeleteAsync();
 			    await (component.Channel as SocketThreadChannel)!.LeaveAsync();
+				plsinthisthread = new();
 			    break;
-		    }
 		    default:
 			    return;
 	    }
@@ -204,10 +252,13 @@ public class DiscordService : IDiscordService, IHostedService
 		var messageByModerator = member.Roles.Contains(member.Guild.GetRole(_botConfig.Roles.ModeratorRoleId));
 		var imageChannels = _botConfig.Channels.ImageOnlyChannels;
 
+		var anyMentionsOnMsg = message.MentionedUsers.Any(u => message.Content.Contains($"<@{u.Id}>"));
+
 		if ((message.MentionedEveryone 
 		     || message.MentionedRoles.Count > 0
-		     || message.MentionedUsers.Count > 0) 
-		    && !messageByModerator)
+		     || (message.MentionedUsers.Count > 0 && (anyMentionsOnMsg || message.Type != MessageType.Reply))
+		    && !(messageByModerator || member.GetPermissions(message.Channel as IGuildChannel).ManageMessages)
+			&& !(message.MentionedUsers.Count == 1 && message.Content.Contains($"<@{message.Author.Id}>"))))
 		{
 			await message.DeleteAsync();
 			_logger.Information(
@@ -218,7 +269,10 @@ public class DiscordService : IDiscordService, IHostedService
 				message.CleanContent);
 			try
 			{
-				await member.SendMessageAsync("You are not allowed to mention users/roles/everyone");
+				await member.SendMessageAsync(embed: new EmbedBuilder() {
+					Title = "Hello there!",
+					Description = $"It looks like you mentioned either a user, a role or @everyone! It is not allowed on the {(message.Channel as IGuildChannel)!.Guild.Name} server. Your message is below."
+				}.AddField("Message", message.CleanContent).Build());
 			}
 			catch (Exception ex)
 			{
@@ -335,18 +389,23 @@ public class DiscordService : IDiscordService, IHostedService
 			return;
 		}
 
-		var text = (webhookRequest.ToEveryone.HasValue && webhookRequest.ToEveryone.Value 
-			? "@everyone" 
-			: "")
-			  + "\r\n"
-		    + (!string.IsNullOrWhiteSpace(webhookRequest.Title) ? $"**{webhookRequest.Title}**\r\n" : "")
-			  + webhookRequest.Text;
+		var text = (string?)null;
+		if (!string.IsNullOrWhiteSpace(webhookRequest.Title) 
+		    || webhookRequest.ToEveryone.GetValueOrDefault())
+		{
+			text = (webhookRequest.ToEveryone.HasValue && webhookRequest.ToEveryone.Value 
+				       ? "@everyone" 
+				       : "")
+			       + "\r\n"
+			       + (!string.IsNullOrWhiteSpace(webhookRequest.Title) ? $"**{webhookRequest.Title}**\r\n" : "")
+			       + webhookRequest.Text;
+		}
 
 		var webhookRequestEmbed = webhookRequest.Embed;
 		EmbedBuilder? embed = null;
 		if (webhookRequestEmbed is not null)
 		{
-			_logger.Information("Webhook {WebhookId} contains an embed", webhook.Id);
+			_logger.Verbose("Webhook {WebhookId} contains an embed", webhook.Id);
 			embed = new EmbedBuilder();
 
 			if (webhookRequestEmbed.Color is not null)
@@ -393,7 +452,7 @@ public class DiscordService : IDiscordService, IHostedService
 		try
 		{
 			await channel.SendMessageAsync(text: text, embed: embed?.Build());
-			_logger.Information("Webhook {WebhookId} executed", webhook.Id);
+			_logger.Verbose("Webhook {WebhookId} executed", webhook.Id);
 		}
 		catch (Exception ex)
 		{

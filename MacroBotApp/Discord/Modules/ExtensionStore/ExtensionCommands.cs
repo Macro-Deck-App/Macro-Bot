@@ -5,10 +5,13 @@ using JetBrains.Annotations;
 using MacroBot.Config;
 namespace MacroBot.Discord.Modules.ExtensionStore;
 
+// Temporarely disabled
+
 [Group("extensions", "Extension Store Commands")]
 [UsedImplicitly]
 public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext> {
     
+    /*
     private readonly BotConfig _botConfig;
     private readonly CommandsConfig _commandsConfig;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -31,15 +34,13 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
         var embed = await ExtensionMessageBuilder.BuildSearchExtensionAsync(_httpClientFactory, search);
         await FollowupAsync(embed: embed, ephemeral: true);
     }
-
-    // Temporarely disabled
     
-   /* [SlashCommand("browse", "Get all plugins")]
+    [SlashCommand("browse", "Get all plugins")]
     public async Task GetPlugins() {
         await DeferAsync(ephemeral: true);
         var embed = await ExtensionMessageBuilder.BuildAllExtensionsAsync(_httpClientFactory);
         await FollowupAsync(embed: embed, ephemeral: true);
-    }*/
+    }
 
     private async Task ClientOnButtonExecuted(SocketMessageComponent msg)
     {
@@ -51,7 +52,6 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
         {
             return;
         }
-        await smc.DeferAsync(ephemeral: true);
 
         var content = smc.Message.CleanContent;
         var id = smc.Data.CustomId;
@@ -69,6 +69,8 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
                 return;
         }
 
+        await smc.DeferAsync(ephemeral: true);
+
         var embed = new EmbedBuilder()
             .WithTitle("Macro Deck Extensions")
             .WithDescription("This is the list of Macro Deck Extensions.")
@@ -85,6 +87,7 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
             msg.Components = builder.Build();
         });
     }
+    */
 }
 
 
