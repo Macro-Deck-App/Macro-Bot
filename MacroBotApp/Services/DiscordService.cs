@@ -208,7 +208,6 @@ public class DiscordService : IDiscordService, IHostedService
     
     private async Task Ready () {
 	    DiscordReady = true;
-	    _logger.Information("Bot ready");
 	    await _interactionService.RegisterCommandsGloballyAsync();
 	    var guild = _discordSocketClient.GetGuild(_botConfig.GuildId);
 	    if (guild?.GetChannel(_botConfig.Channels.MemberScreeningChannelId) is ITextChannel channel)
