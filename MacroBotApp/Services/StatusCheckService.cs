@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Text.Json;
 using Discord.WebSocket;
@@ -41,14 +42,14 @@ public class StatusCheckService : IStatusCheckService, IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _timerService.MinuteTimerElapsed += TimerServiceOnMinuteTimerElapsed;
+        _timerService.FiveMinuteTimerElapsed += TimerServiceOnTimerElapsed;
         _discordSocketClient.Ready += DiscordSocketClientOnReady;
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        _timerService.MinuteTimerElapsed -= TimerServiceOnMinuteTimerElapsed;
+        _timerService.FiveMinuteTimerElapsed -= TimerServiceOnTimerElapsed;
         return Task.CompletedTask;
     }
 
@@ -57,7 +58,7 @@ public class StatusCheckService : IStatusCheckService, IHostedService
         await CheckAllAsync();
     }
     
-    private async void TimerServiceOnMinuteTimerElapsed(object? sender, EventArgs e)
+    private async void TimerServiceOnTimerElapsed(object? sender, EventArgs e)
     {
         await CheckAllAsync();
     }
@@ -70,27 +71,21 @@ public class StatusCheckService : IStatusCheckService, IHostedService
         }
         _lastCheckDone = false;
         _logger.Verbose("Starting status check...");
-        var results = new List<StatusCheckResult>();
+        var results = new ConcurrentBag<StatusCheckResult>();
         var lastResults = LastStatusCheckResults?.ToArray();
-        foreach (var statusCheckItem in _statusCheckConfig.StatusCheckItems)
+        ParallelOptions parallelOptions = new()
+        {
+            MaxDegreeOfParallelism = 3
+        };
+        await Parallel.ForEachAsync(_statusCheckConfig.StatusCheckItems, parallelOptions, async (statusCheckItem, token) =>
         {
             var lastResult = lastResults?.FirstOrDefault(x => x.Name.Equals(statusCheckItem.Name));
             var result = await CheckAsync(statusCheckItem, lastResult);
-            if (result.StateChanged)
-            {
-                StatusOfItemChanged?.Invoke(result, EventArgs.Empty);
-                if (!result.Online)
-                {
-                    _logger.Fatal("{Url} is offline! StatusCode: {StatusCode}", statusCheckItem.Url, result.StatusCode);
-                } else if (result.OnlineWithWarnings)
-                {
-                    _logger.Error("{Url} is online with warnings! StatusCode: {StatusCode}", statusCheckItem.Url, result.StatusCode);
-                }
-            }
+            
             results.Add(result);
-        }
+        });
 
-        results = new List<StatusCheckResult>(results.OrderByDescending(x => x.Name));
+        results = new ConcurrentBag<StatusCheckResult>(results.OrderByDescending(x => x.Name));
 
         _logger.Verbose(
             "Status check done. {NoOnline}/{Total} online {NoWarnings} with warnings",
@@ -121,7 +116,7 @@ public class StatusCheckService : IStatusCheckService, IHostedService
             statusCheckItem.Name, 
             statusCheckItem.Url);
         using var httpClient = _httpClientFactory.CreateClient();
-        httpClient.Timeout = TimeSpan.FromSeconds(20);
+        httpClient.Timeout = TimeSpan.FromSeconds(60);
         var onlineWithWarnings = false;
         bool online;
         HttpResponseMessage? request = null;
