@@ -11,6 +11,7 @@ using Discord.WebSocket;
 using JetBrains.Annotations;
 using MacroBot.Config;
 using MacroBot.Discord;
+using MacroBot.Discord.Modules.OldExtensionStore;
 using MacroBot.Extensions;
 using MacroBot.Models.Extensions;
 using MacroBot.Models.Status;
@@ -107,7 +108,6 @@ public class DiscordService : IDiscordService, IHostedService
 	    var msg = await thread.GetMessagesAsync(2).FlattenAsync();
 	    if (msg.FirstOrDefault().Author.IsBot) return;
 	    var lastMessage = msg.Last();
-
 	    using var httpClient = _httpClientFactory.CreateClient();
 	    var exts = await httpClient.GetFromJsonAsync<ExtensionResponse>("https://test.extensionstore.api.macro-deck.app/rest/v2/extensions?ItemsPerPage=1000");
 
@@ -135,7 +135,7 @@ public class DiscordService : IDiscordService, IHostedService
 
 	    Console.WriteLine(String.Join(", ", extensionsList.Select(m => m.Author)));
 	    if (extensionsList.Count <= 0) return;
-
+      
 	    await thread.SendMessageAsync(embed: await ExtensionMessageBuilder.BuildProblemExtensionAsync(extensionsList),
 		    components: await ExtensionMessageBuilder.BuildProblemExtensionInteractionAsync(extensionsList));
     }
@@ -185,7 +185,6 @@ public class DiscordService : IDiscordService, IHostedService
 
     private async Task Ready () {
 	    DiscordReady = true;
-	    _logger.Information("Bot ready");
 	    await _interactionService.RegisterCommandsGloballyAsync();
 	    var guild = _discordSocketClient.GetGuild(_botConfig.GuildId);
 	    if (guild?.GetChannel(_botConfig.Channels.MemberScreeningChannelId) is ITextChannel channel)
@@ -230,7 +229,7 @@ public class DiscordService : IDiscordService, IHostedService
 		var messageByCommunityDeveloper =
 			user.Roles.Contains(user.Guild.GetRole(_botConfig.Roles.CommunityDeveloperRoleId));
 		var imageChannels = _botConfig.Channels.ImageOnlyChannels;
-
+    
 		if ((message.MentionedEveryone
 		     || message.MentionedRoles.Count > 0
 		     || message.MentionedUsers.Count > 0)

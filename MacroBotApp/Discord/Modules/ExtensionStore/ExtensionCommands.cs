@@ -5,6 +5,8 @@ using JetBrains.Annotations;
 using MacroBot.Config;
 namespace MacroBot.Discord.Modules.ExtensionStore;
 
+// Temporarely disabled
+
 [Group("extensions", "Extension Store Commands")]
 [UsedImplicitly]
 public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext> {
@@ -60,9 +62,7 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         await smc.DeferAsync(ephemeral: true);
-
         var extEmbed = await ExtensionMessageBuilder.BuildAllExtensionsAsync(_httpClientFactory, i);
-
         var component = new ComponentBuilder()
             .WithButton(emote: new Emoji("◀️"), customId: "plugin-list-page-back", disabled: (i is 1))
             .WithButton(string.Format("{0} / {1}", i, extEmbed.MaxPages), customId: "placeholder", style: ButtonStyle.Secondary, disabled: true)

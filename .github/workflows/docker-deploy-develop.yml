@@ -21,11 +21,11 @@ jobs:
         method: 'POST'
         bearerToken:  ${{ secrets.TESTBOT_WEBHOOK_DEPLOY_KEY }}
         customHeaders: '{"Content-Type": "application/json" }'
-        data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":1},"description":"Deployment started, building and pushing the image...","fields":[{"name":"Commit message","value":"${{ github.event.head_commit.message }}.","inline":false},{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
+        data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":1},"description":"Deployment started, building and pushing the image...","fields":[{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
     - name: Build the Docker image
       run: docker build . --file MacroBotApp/Dockerfile --tag suchbyte/macro-bot:dev_${{ github.sha }}
     - name: Log into registry
-      uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
+      uses: docker/login-action@219c305e1ce92a755f3aa4ba17387c95df31e987
       with:
         registry: docker.io
         username: suchbyte
@@ -38,9 +38,9 @@ jobs:
         method: 'POST'
         bearerToken:  ${{ secrets.TESTBOT_WEBHOOK_DEPLOY_KEY }}
         customHeaders: '{"Content-Type": "application/json" }'
-        data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":0},"description":"Push successful, updating the container now...","fields":[{"name":"Commit message","value":"${{ github.event.head_commit.message }}.","inline":false},{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
+        data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":0},"description":"Push successful, updating the container now...","fields":[{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
     - name: Updating the image on the server
-      uses: appleboy/ssh-action@v0.1.7
+      uses: appleboy/ssh-action@v0.1.8
       with:
         host: ${{ secrets.DOCKER_HOST }}
         username: ${{ secrets.GITHUBWORKFLOWS_USER }}

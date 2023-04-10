@@ -13,6 +13,8 @@ public class TimerService : ITimerService, IHostedService
     public event EventHandler? DailyTimerElapsed;
     public event EventHandler? HourTimerElapsed;
     public event EventHandler? MinuteTimerElapsed;
+    public event EventHandler? FiveMinuteTimerElapsed;
+
 
     private DateTime _hourTimerLastElapsed = default;
     private DateTime _dailyTimerLastElapsed = default;
@@ -44,7 +46,13 @@ public class TimerService : ITimerService, IHostedService
     {
         _logger.Verbose("Minute timer elapsed");
         MinuteTimerElapsed?.Invoke(this, EventArgs.Empty);
-        if (DateTime.Now - _hourTimerLastElapsed >= TimeSpan.FromMinutes(1))
+        if (DateTime.Now - _hourTimerLastElapsed >= TimeSpan.FromMinutes(5))
+        {
+            _logger.Verbose("5 Minute timer elapsed");
+            HourTimerElapsed?.Invoke(this, EventArgs.Empty);
+            _hourTimerLastElapsed = DateTime.Now;
+        }
+        if (DateTime.Now - _hourTimerLastElapsed >= TimeSpan.FromHours(1))
         {
             _logger.Verbose("Hour timer elapsed");
             HourTimerElapsed?.Invoke(this, EventArgs.Empty);
