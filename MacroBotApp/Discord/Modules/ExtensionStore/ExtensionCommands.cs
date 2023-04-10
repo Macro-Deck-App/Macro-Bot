@@ -5,43 +5,33 @@ using JetBrains.Annotations;
 using MacroBot.Config;
 namespace MacroBot.Discord.Modules.ExtensionStore;
 
-// Temporarely disabled
-
 [Group("extensions", "Extension Store Commands")]
 [UsedImplicitly]
 public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext> {
-    
-    /*
     private readonly BotConfig _botConfig;
     private readonly CommandsConfig _commandsConfig;
     private readonly IHttpClientFactory _httpClientFactory;
-    
-    
-    private List<List<EmbedFieldBuilder>> _allPluginFields = new();
 
     public ExtensionCommands(BotConfig botConfig, 
         CommandsConfig commandsConfig, 
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        DiscordSocketClient client)
     {
         _botConfig = botConfig;
         _commandsConfig = commandsConfig;
         _httpClientFactory = httpClientFactory;
     }
 
-    [SlashCommand("get", "Get a plugin")]
-    public async Task GetPlugin([Summary(description: "Extension Name or Package ID")] string search) {
+    [SlashCommand("search", "Search plugins")]
+    public async Task SearchPlugin([Summary(description: "Extension Name or Package ID")] string search) {
         await DeferAsync(ephemeral: true);
         var embed = await ExtensionMessageBuilder.BuildSearchExtensionAsync(_httpClientFactory, search);
         await FollowupAsync(embed: embed, ephemeral: true);
     }
     
-    [SlashCommand("browse", "Get all plugins")]
-    public async Task GetPlugins() {
-        await DeferAsync(ephemeral: true);
-        var embed = await ExtensionMessageBuilder.BuildAllExtensionsAsync(_httpClientFactory);
-        await FollowupAsync(embed: embed, ephemeral: true);
-    }
-
+    // This is currently disabled due to Discord API limitations.
+    // In the current Discord API version, you can't edit Ephemeral messages.
+    /*
     private async Task ClientOnButtonExecuted(SocketMessageComponent msg)
     {
         await PlBtnExecuted(msg, Context.User);
@@ -71,20 +61,17 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
 
         await smc.DeferAsync(ephemeral: true);
 
-        var embed = new EmbedBuilder()
-            .WithTitle("Macro Deck Extensions")
-            .WithDescription("This is the list of Macro Deck Extensions.")
-            .WithFields(_allPluginFields[i - 1]);
+        var extEmbed = await ExtensionMessageBuilder.BuildAllExtensionsAsync(_httpClientFactory, i);
 
-        var builder = new ComponentBuilder()
-            .WithButton("<", "plugin-list-page-back", ButtonStyle.Success, disabled: (i is 1))
-            .WithButton($"{i} / {_allPluginFields.Count}", "page", ButtonStyle.Secondary, disabled: true)
-            .WithButton(">", "plugin-list-page-forward", ButtonStyle.Success, disabled: (i == _allPluginFields.Count));
+        var component = new ComponentBuilder()
+            .WithButton(emote: new Emoji("◀️"), customId: "plugin-list-page-back", disabled: (i is 1))
+            .WithButton(string.Format("{0} / {1}", i, extEmbed.MaxPages), customId: "placeholder", style: ButtonStyle.Secondary, disabled: true)
+            .WithButton(emote: new Emoji("▶️"), customId: "plugin-l
+        await smc.Message.ModifyAsync(msg => {ist-page-forward", disabled: (i >= extEmbed.MaxPages));
 
-        await smc.Message.ModifyAsync(msg => {
             msg.Content = $"{i}";
-            msg.Embed = embed.Build();
-            msg.Components = builder.Build();
+            msg.Embed = extEmbed.Page;
+            msg.Components = component.Build();
         });
     }
     */

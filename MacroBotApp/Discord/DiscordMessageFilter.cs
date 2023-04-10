@@ -1,11 +1,11 @@
 using Discord.WebSocket;
+using MacroBot.Config;
 using Serilog;
 
 namespace MacroBot.Discord;
 
 public static class DiscordMessageFilter
 {
-    
     /// <summary>
     /// Returns true if the message contains at least one image
     /// </summary>

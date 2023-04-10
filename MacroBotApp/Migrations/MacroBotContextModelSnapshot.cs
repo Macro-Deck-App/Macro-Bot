@@ -17,6 +17,36 @@ namespace MacroBot.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.2");
 
+            modelBuilder.Entity("MacroBot.DataAccess.Entities.ReportEntity", b =>
+                {
+                    b.Property<ulong>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("user");
+
+                    b.Property<ulong>("ByUser")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("byuser");
+
+                    b.Property<ulong?>("Message")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("message");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("reason");
+
+                    b.Property<string>("ReportID")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("reportid");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("reports", (string)null);
+                });
+
             modelBuilder.Entity("MacroBot.DataAccess.Entities.TagEntity", b =>
                 {
                     b.Property<int>("Id")

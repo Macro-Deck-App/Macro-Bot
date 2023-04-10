@@ -15,4 +15,12 @@ public class Extension {
     public string GithubRepository { get; set; }
     [JsonPropertyName("dSupportUserId")]
     public string? DSupportUserId { get; set; }
+    [JsonPropertyName("totalDownloads")]
+    public int Downloads { get; set; }
+    [JsonPropertyName("description")]
+    public string Description { get; set; }
+    [JsonPropertyName("category")]
+    public string Category { get; set; }
+    [JsonPropertyName("extensionFiles")]
+    public List<ExtensionFiles> ExtensionFiles { get; set; }
 }
