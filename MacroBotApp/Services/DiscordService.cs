@@ -132,8 +132,7 @@ public class DiscordService : IDiscordService, IHostedService
 			    }
 		    }
 	    }
-
-	    Console.WriteLine(String.Join(", ", extensionsList.Select(m => m.Author)));
+	    
 	    if (extensionsList.Count <= 0) return;
       
 	    await thread.SendMessageAsync(embed: await ExtensionMessageBuilder.BuildProblemExtensionAsync(extensionsList),
@@ -162,21 +161,34 @@ public class DiscordService : IDiscordService, IHostedService
 	    switch (component.Data.CustomId)
 	    {
 		    case "ProblemExtensionInteraction":
-			    EmbedBuilder embed = new EmbedBuilder()
+			    try
 			    {
-					Title = "This thread has problems on these extensions or icon packs."
-			    };
-			    foreach (var str in component.Data.Values)
-			    {
-				    var extension =
-					    await httpClient.
-						    GetFromJsonAsync<Extension>(string.Format("https://test.extensionstore.api.macro-deck.app/rest/v2/extensions/{0}", HttpUtility.UrlEncode(str)));
-				    
-				    var a = (extension.DSupportUserId is null) ? extension.Author : String.Format("<@{UserId}>", extension.DSupportUserId);
-				    var desc = (extension.Description.IsNullOrWhiteSpace()) ? "" : $"\r\n{extension.Description}";  
-				    embed.AddField(extension.Name, $"by {a}{desc}", true);
+				    EmbedBuilder embed = new EmbedBuilder()
+				    {
+					    Title = "This thread has problems on these extensions or icon packs."
+				    };
+				    foreach (var str in component.Data.Values)
+				    {
+					    var extension =
+						    await httpClient.GetFromJsonAsync<Extension>(string.Format(
+							    "https://test.extensionstore.api.macro-deck.app/rest/v2/extensions/{0}",
+							    HttpUtility.UrlEncode(str)));
+
+					    var a = (extension.DSupportUserId is null)
+						    ? extension.Author
+						    : String.Format("<@{UserId}>", extension.DSupportUserId);
+					    var desc = (extension.Description.IsNullOrWhiteSpace()) ? "" : $"\r\n{extension.Description}";
+					    embed.AddField(extension.Name, $"by {a}{desc}", true);
+				    }
+
+				    await component.Channel.SendMessageAsync(embed: embed.Build());
+				    await component.Message.DeleteAsync();
 			    }
-			    await component.Channel.SendMessageAsync(embed: embed.Build());
+			    catch (Exception e)
+			    {
+				    _logger.Warning(e, "Can't create embed!");
+			    }
+
 			    break;
 		    default:
 			    return;

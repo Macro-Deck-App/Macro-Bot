@@ -51,8 +51,6 @@ public class ExtensionMessageBuilder
             {
                 var a = (ext.DSupportUserId is null) ? ext.Author : String.Format("<@{UserId}>", ext.DSupportUserId);
                 selectMenu.AddOption(ext.Name, ext.PackageId, $"by {a}");
-                
-                Console.WriteLine(ext.Name);
             }
             catch (Exception e)
             {

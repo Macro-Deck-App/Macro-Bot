@@ -21,6 +21,4 @@ public class Extension {
     public string Description { get; set; }
     [JsonPropertyName("category")]
     public string Category { get; set; }
-    [JsonPropertyName("extensionFiles")]
-    public List<ExtensionFiles> ExtensionFiles { get; set; }
 }

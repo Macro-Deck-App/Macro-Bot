@@ -42,7 +42,6 @@ public class TranslateCommands : InteractionModuleBase<SocketInteractionContext>
         };
         request.Headers.Add("Authorization", "Basic " + svcCredentials);
         var result = await httpClient.SendAsync(request);
-        Console.WriteLine(await result.Content.ReadAsStringAsync());
         var translated = JsonSerializer.Deserialize<Translated>(await result.Content.ReadAsStringAsync());
 
         await FollowupAsync(embed: new EmbedBuilder()
@@ -72,7 +71,6 @@ public class TranslateCommands : InteractionModuleBase<SocketInteractionContext>
         };
         request.Headers.Add("Authorization", "Basic " + svcCredentials);
         var result = await httpClient.SendAsync(request);
-        Console.WriteLine(await result.Content.ReadAsStringAsync());
         var translated = JsonSerializer.Deserialize<Translated>(await result.Content.ReadAsStringAsync());
 
         await FollowupAsync(embed: new EmbedBuilder()
