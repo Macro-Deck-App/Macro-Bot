@@ -1,5 +1,6 @@
 using System.Web;
 using Discord;
+using MacroBot.Config;
 using MacroBot.Extensions;
 using MacroBot.Models.Extensions;
 using Serilog;
@@ -63,11 +64,11 @@ public class ExtensionMessageBuilder
         return component.Build();
     }
     
-    public static async Task<Embed> BuildSearchExtensionAsync(IHttpClientFactory httpClientFactory, string query)
+    public static async Task<Embed> BuildSearchExtensionAsync(IHttpClientFactory httpClientFactory, ExtensionDetectionConfig extDetectionConfig, string query)
     {
         using var httpClient = httpClientFactory.CreateClient();
         var extensions =
-            await httpClient.GetFromJsonAsync<ExtensionResponse>(string.Format("https://test.extensionstore.api.macro-deck.app/rest/v2/extensions/search/{0}", HttpUtility.UrlEncode(query)));
+            await httpClient.GetFromJsonAsync<ExtensionResponse>(string.Format("{0}/{1}", extDetectionConfig.SearchExtensionsUrl, HttpUtility.UrlEncode(query)));
         
         var embed = new EmbedBuilder {
             Title = String.Format((extensions.TotalItemsCount > 0) ? "Extension Results of '{0}'" : "Could not find extension '{0}'", query)
@@ -82,7 +83,7 @@ public class ExtensionMessageBuilder
                 field.WithValue(String.Format(
                     "{0}\r\n" +
                     "by {1}",
-                    (ext.GithubRepository is not null)? string.Format("[{0}]({1})", ext.Name, ext.GithubRepository) : ext.Name,
+                    ext.GithubRepository.IsNullOrWhiteSpace() ? string.Format("[{0}]({1})", ext.Name, ext.GithubRepository) : ext.Name,
                     (ext.DSupportUserId is not null)? string.Format("<@{0}>", ext.DSupportUserId) : ext.Author
                 ));
 

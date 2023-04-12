@@ -36,7 +36,7 @@ public class TranslateCommands : InteractionModuleBase<SocketInteractionContext>
         string password = _commandsConfig.Translate.Password;
         string svcCredentials = Convert.ToBase64String(ASCIIEncoding.ASCII.GetBytes(username + ":" + password));
         dict.Add("target", target);
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://translate.api.macro-deck.app/translate")
+        var request = new HttpRequestMessage(HttpMethod.Post, _commandsConfig.Translate.Url)
         {
         	Content = new FormUrlEncodedContent(dict)
         };

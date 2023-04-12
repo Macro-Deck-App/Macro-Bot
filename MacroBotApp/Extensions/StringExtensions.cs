@@ -10,7 +10,7 @@ public static class StringExtensions
     }
 
     public static bool IsNullOrWhiteSpace(this string? value) {
-        return String.IsNullOrWhiteSpace(value);
+        return String.IsNullOrWhiteSpace(value) && String.IsNullOrEmpty(value);
     }
 
     public static string Remove(this string value, string toRemove)

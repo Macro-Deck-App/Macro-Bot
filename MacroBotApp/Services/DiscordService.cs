@@ -11,7 +11,6 @@ using Discord.WebSocket;
 using JetBrains.Annotations;
 using MacroBot.Config;
 using MacroBot.Discord;
-using MacroBot.Discord.Modules.OldExtensionStore;
 using MacroBot.Extensions;
 using MacroBot.Models.Extensions;
 using MacroBot.Models.Status;
@@ -31,6 +30,7 @@ public class DiscordService : IDiscordService, IHostedService
 	
 	private readonly BotConfig _botConfig;
 	private readonly CommandsConfig _commandsConfig;
+	private readonly ExtensionDetectionConfig _extDetectionConfig;
 	private readonly DiscordSocketClient _discordSocketClient;
 	private readonly IServiceProvider _serviceProvider;
 	private readonly IStatusCheckService _statusCheckService;
@@ -42,6 +42,7 @@ public class DiscordService : IDiscordService, IHostedService
 	public bool DiscordReady { get; private set; }
 	public DiscordService(BotConfig botConfig,
 		CommandsConfig commandsConfig,
+		ExtensionDetectionConfig extDetectionConfig,
 	    DiscordSocketClient discordSocketClient,
 	    IServiceProvider serviceProvider,
 	    IStatusCheckService statusCheckService,
@@ -50,6 +51,7 @@ public class DiscordService : IDiscordService, IHostedService
     {
 	    _botConfig = botConfig;
 	    _commandsConfig = commandsConfig;
+	    _extDetectionConfig = extDetectionConfig;
 	    _discordSocketClient = discordSocketClient;
 	    _serviceProvider = serviceProvider;
 	    _statusCheckService = statusCheckService;
@@ -109,7 +111,7 @@ public class DiscordService : IDiscordService, IHostedService
 	    if (msg.FirstOrDefault().Author.IsBot) return;
 	    var lastMessage = msg.Last();
 	    using var httpClient = _httpClientFactory.CreateClient();
-	    var exts = await httpClient.GetFromJsonAsync<ExtensionResponse>("https://test.extensionstore.api.macro-deck.app/rest/v2/extensions?ItemsPerPage=1000");
+	    var exts = await httpClient.GetFromJsonAsync<ExtensionResponse>(String.Format("{0}?ItemsPerPage={1}", _extDetectionConfig.AllExtensionsUrl, _extDetectionConfig.ExtensionsPerPage));
 
 	    List<AllExtensions> extensionsList = new List<AllExtensions>();
 	    if (exts.TotalItemsCount > 0)
@@ -171,8 +173,8 @@ public class DiscordService : IDiscordService, IHostedService
 				    {
 					    var extension =
 						    await httpClient.GetFromJsonAsync<Extension>(string.Format(
-							    "https://test.extensionstore.api.macro-deck.app/rest/v2/extensions/{0}",
-							    HttpUtility.UrlEncode(str)));
+							    "{0}/{1}",
+							    _extDetectionConfig.AllExtensionsUrl, HttpUtility.UrlEncode(str)));
 
 					    var a = (extension.DSupportUserId is null)
 						    ? extension.Author
@@ -322,7 +324,7 @@ public class DiscordService : IDiscordService, IHostedService
 		string password = _commandsConfig.Translate.Password;
 		string svcCredentials = Convert.ToBase64String(ASCIIEncoding.ASCII.GetBytes(username + ":" + password));
 		dict.Add("target", "en");
-		var request = new HttpRequestMessage(HttpMethod.Post, "https://translate.api.macro-deck.app/translate")
+		var request = new HttpRequestMessage(HttpMethod.Post, _commandsConfig.Translate.Url)
 		{
 			Content = new FormUrlEncodedContent(dict)
 		};

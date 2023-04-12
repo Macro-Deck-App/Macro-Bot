@@ -12,22 +12,25 @@ namespace MacroBot.Discord.Modules.ExtensionStore;
 public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext> {
     private readonly BotConfig _botConfig;
     private readonly CommandsConfig _commandsConfig;
+    private readonly ExtensionDetectionConfig _extDetectionConfig;
     private readonly IHttpClientFactory _httpClientFactory;
 
     public ExtensionCommands(BotConfig botConfig, 
         CommandsConfig commandsConfig, 
+        ExtensionDetectionConfig extDetectionConfig,
         IHttpClientFactory httpClientFactory,
         DiscordSocketClient client)
     {
         _botConfig = botConfig;
         _commandsConfig = commandsConfig;
+        _extDetectionConfig = extDetectionConfig;
         _httpClientFactory = httpClientFactory;
     }
 
     [SlashCommand("search", "Search plugins")]
     public async Task SearchPlugin([Summary(description: "Extension Name or Package ID")] string search) {
         await DeferAsync(ephemeral: true);
-        var embed = await ExtensionMessageBuilder.BuildSearchExtensionAsync(_httpClientFactory, search);
+        var embed = await ExtensionMessageBuilder.BuildSearchExtensionAsync(_httpClientFactory, _extDetectionConfig, search);
         await FollowupAsync(embed: embed, ephemeral: true);
     }
     
