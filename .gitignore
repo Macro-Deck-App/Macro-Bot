@@ -376,3 +376,8 @@ MigrationBackup/
 FodyWeavers.xsd
 .vscode/launch.json
 .vscode/tasks.json
+
+# VS Code auto-generated files and JetBrains Rider auto-generated files
+.idea
+.vs
+.vscode
