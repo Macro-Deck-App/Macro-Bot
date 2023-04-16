@@ -1,11 +1,16 @@
-﻿using Discord;
+﻿using System.Globalization;
+using Discord;
+using System.Text;
+using System.Web;
+using System.Text.Json;
+using AutoMapper.Execution;
+using MacroBot.Models.Translate;
 using Discord.Interactions;
 using Discord.Net;
 using Discord.WebSocket;
 using JetBrains.Annotations;
 using MacroBot.Config;
 using MacroBot.Discord;
-using MacroBot.Discord.Modules.OldExtensionStore;
 using MacroBot.Extensions;
 using MacroBot.Models.Extensions;
 using MacroBot.Models.Status;
@@ -13,6 +18,8 @@ using MacroBot.Models.Webhook;
 using MacroBot.ServiceInterfaces;
 using Serilog;
 using ILogger = Serilog.ILogger;
+using MacroBot.Discord.Modules.ExtensionStore;
+using Octokit;
 
 namespace MacroBot.Services;
 
@@ -22,20 +29,20 @@ public class DiscordService : IDiscordService, IHostedService
 	private readonly ILogger _logger = Log.ForContext<DiscordService>();
 	
 	private readonly BotConfig _botConfig;
+	private readonly CommandsConfig _commandsConfig;
+	private readonly ExtensionDetectionConfig _extDetectionConfig;
 	private readonly DiscordSocketClient _discordSocketClient;
 	private readonly IServiceProvider _serviceProvider;
 	private readonly IStatusCheckService _statusCheckService;
 	private readonly InteractionService _interactionService;
 	private readonly IHttpClientFactory _httpClientFactory;
+	
+	private ulong _previousThreadId;
 
 	public bool DiscordReady { get; private set; }
-
-	private string prevthread = "";
-    private ulong? prevplauserid = 0;
-    private string prevplugin = "";
-	private List<string> plsinthisthread = new();
-
-    public DiscordService(BotConfig botConfig,
+	public DiscordService(BotConfig botConfig,
+		CommandsConfig commandsConfig,
+		ExtensionDetectionConfig extDetectionConfig,
 	    DiscordSocketClient discordSocketClient,
 	    IServiceProvider serviceProvider,
 	    IStatusCheckService statusCheckService,
@@ -43,6 +50,8 @@ public class DiscordService : IDiscordService, IHostedService
 	    IHttpClientFactory httpClientFactory)
     {
 	    _botConfig = botConfig;
+	    _commandsConfig = commandsConfig;
+	    _extDetectionConfig = extDetectionConfig;
 	    _discordSocketClient = discordSocketClient;
 	    _serviceProvider = serviceProvider;
 	    _statusCheckService = statusCheckService;
@@ -86,126 +95,108 @@ public class DiscordService : IDiscordService, IHostedService
 	    _discordSocketClient.UserJoined += UserJoined;
 	    _discordSocketClient.UserLeft += UserLeft;
 	    _discordSocketClient.ThreadCreated += async (thread) => await ThreadCreated(thread);
+	    _discordSocketClient.SelectMenuExecuted += DiscordSocketClientOnSelectMenuExecuted;
+	    _discordSocketClient.ButtonExecuted += DiscordSocketClientOnButtonExecuted;
 
 	    await _serviceProvider.GetRequiredService<CommandHandler>().InitializeAsync();
 	    await _discordSocketClient.LoginAsync(TokenType.Bot, _botConfig.Token);
 	    await _discordSocketClient.StartAsync();
     }
 
-	private async Task ThreadCreated(SocketThreadChannel thread) {
-		plsinthisthread = new();
-		var msg = await thread.GetMessagesAsync(2).FlattenAsync();
-		var lastMsg = msg.Last();
-		PluginUtils pluginUtils = new PluginUtils();
-        var extensions = await pluginUtils.GetPluginsAsync();
+    private async Task ThreadCreated(SocketThreadChannel thread)
+    {
+	    if (thread.Id == _previousThreadId) return;
+	    _previousThreadId = thread.Id;
+	    var msg = await thread.GetMessagesAsync(2).FlattenAsync();
+	    if (msg.FirstOrDefault().Author.IsBot) return;
+	    var lastMessage = msg.Last();
+	    using var httpClient = _httpClientFactory.CreateClient();
+	    var exts = await httpClient.GetFromJsonAsync<ExtensionResponse>(String.Format("{0}?ItemsPerPage={1}", _extDetectionConfig.AllExtensionsUrl, _extDetectionConfig.ExtensionsPerPage));
 
-		if (extensions is null)
-		{
-			return;
-		}
-		
-		foreach (var extension in extensions) {
-			if (lastMsg.CleanContent.IndexOf(extension.Name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
-			    lastMsg.CleanContent.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0 &&
-			    thread.Name.IndexOf(extension.Name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
-			    thread.Name.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0) continue;
-
-			if ((prevthread == thread.Name && prevplugin == extension.PackageId) || (plsinthisthread.Contains(extension.PackageId))) return;
-			if (extension.Type.IndexOf("plugin", StringComparison.OrdinalIgnoreCase) < 0) continue;
-
-			plsinthisthread.Add(extension.PackageId);
-			
-			var embed = new EmbedBuilder {
-				Title = $"Do you have a problem with a plugin?",
-				Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
-			};
-
-			embed.AddField("Name", $"{extension.Name} ({extension.PackageId})", true);
-			embed.AddField("Author", extension.Author, true);
-			prevthread = thread.Name;
-			prevplugin = extension.PackageId!;
-
-			var components = new ComponentBuilder()
-				.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
-				.WithButton("No", "plugin-problem-no", ButtonStyle.Danger);
-
-			_discordSocketClient.ButtonExecuted -= DiscordSocketClientOnButtonExecuted;
-			_discordSocketClient.ButtonExecuted += DiscordSocketClientOnButtonExecuted;
-
-			await thread.SendMessageAsync(embed: embed.Build(), components: components.Build());
-		}
-	}
-
-	/*
-    private async Task ThreadCreated(SocketThreadChannel thread) {
-		var msg = await thread.GetMessagesAsync(2).FlattenAsync();
-		var lastMsg = msg.Last();
-		using var httpClient = _httpClientFactory.CreateClient();
-		var extensions = await httpClient.GetFromJsonAsync<List<Extension>>("https://extensionstore.api.macro-deck.app/Extensions");
-
-		if (extensions is null)
-		{
-			return;
-		}
-		
-		foreach (var extension in extensions) {
-			if (_prevThread == thread.Name)
-			{
-				return;
-			}
-
-			if (lastMsg.CleanContent.IndexOf(extension.Name, StringComparison.OrdinalIgnoreCase) < 0 &&
-			    lastMsg.CleanContent.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0 &&
-			    thread.Name.IndexOf(extension.Name, StringComparison.OrdinalIgnoreCase) < 0 &&
-			    thread.Name.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0) continue;
-			
-			var embed = new EmbedBuilder {
-				Title = $"Do you have a problem with a plugin?",
-				Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
-			};
-
-			embed.AddField("Name", $"{extension.Name} ({extension.PackageId})", true);
-			embed.AddField("Author", extension.DSupportUserId is not null? $"<@{extension.DSupportUserId}>" : extension.Author, true);
-			_prevThread = thread.Name;
-			_prevPlaUserId = extension.DSupportUserId is not null ? ulong.Parse(extension.DSupportUserId) : null;
-			_prevPlugin = extension.PackageId!;
-
-			var components = new ComponentBuilder()
-				.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
-				.WithButton("No", "plugin-problem-no", ButtonStyle.Danger);
-
-			_discordSocketClient.ButtonExecuted -= DiscordSocketClientOnButtonExecuted;
-			_discordSocketClient.ButtonExecuted += DiscordSocketClientOnButtonExecuted;
-
-			await thread.SendMessageAsync(embed: embed.Build(), components: components.Build());
-		}
-	}
-	*/
+	    List<AllExtensions> extensionsList = new List<AllExtensions>();
+	    if (exts.TotalItemsCount > 0)
+	    {
+		    foreach (var extension in exts.Data)
+		    {
+			    var splitName = extension.Name.Split(" ");
+			    var contentSplit = lastMessage.CleanContent.Remove("Plugin").Remove("plugin").Replace("\r\n", " ")
+				    .Split(" ");
+			    var nameSplit = thread.Name.Remove("Plugin").Remove("plugin").Replace("\r\n", " ")
+				    .Split(" ");
+			    foreach (var sN in splitName)
+			    {
+				    if (contentSplit.Contains(sN, StringComparer.CurrentCultureIgnoreCase) ||
+				        nameSplit.Contains(sN, StringComparer.CurrentCultureIgnoreCase))
+				    {
+					    extensionsList.Add(extension);
+					    break;
+				    }
+			    }
+		    }
+	    }
+	    
+	    if (extensionsList.Count <= 0) return;
+      
+	    await thread.SendMessageAsync(embed: await ExtensionMessageBuilder.BuildProblemExtensionAsync(extensionsList),
+		    components: await ExtensionMessageBuilder.BuildProblemExtensionInteractionAsync(extensionsList));
+    }
 
     private async Task DiscordSocketClientOnButtonExecuted(SocketMessageComponent component)
     {
 	    switch (component.Data.CustomId)
 	    {
-		    case "plugin-problem-yes":
+		    case "ProblemExtensionButtonNo":
+			    await component.DeferAsync();
 			    await component.Message.DeleteAsync();
-			   // await component.Channel.SendMessageAsync($"{component.User.Mention} has a problem on your plugin."); // <@{prevplauserid}>, 
-			    await (component.Channel as SocketThreadChannel)!.ModifyAsync(msg => msg.Name = @$"{component.Channel.Name} (Plugin Problem - {prevplugin})");
-			    await (component.Channel as SocketThreadChannel)!.LeaveAsync();
-				plsinthisthread = new();
-			    break;
-		    case "plugin-problem-no":
-			    await component.Message.DeleteAsync();
-			    var msg = await component.Channel.SendMessageAsync("Got it. Thank you for the clarification.");
+			    var msg = await component.Channel.SendMessageAsync("Thanks for the clarification.");
 			    await Task.Delay(5000);
 			    await msg.DeleteAsync();
-			    await (component.Channel as SocketThreadChannel)!.LeaveAsync();
-				plsinthisthread = new();
 			    break;
 		    default:
 			    return;
 	    }
     }
-    
+
+    private async Task DiscordSocketClientOnSelectMenuExecuted(SocketMessageComponent component)
+    {
+	    using var httpClient = _httpClientFactory.CreateClient();
+	    switch (component.Data.CustomId)
+	    {
+		    case "ProblemExtensionInteraction":
+			    try
+			    {
+				    EmbedBuilder embed = new EmbedBuilder()
+				    {
+					    Title = "This thread has problems on these extensions or icon packs."
+				    };
+				    foreach (var str in component.Data.Values)
+				    {
+					    var extension =
+						    await httpClient.GetFromJsonAsync<Extension>(string.Format(
+							    "{0}/{1}",
+							    _extDetectionConfig.AllExtensionsUrl, HttpUtility.UrlEncode(str)));
+
+					    var a = (extension.DSupportUserId is null)
+						    ? extension.Author
+						    : String.Format("<@{UserId}>", extension.DSupportUserId);
+					    var desc = (extension.Description.IsNullOrWhiteSpace()) ? "" : $"\r\n{extension.Description}";
+					    embed.AddField(extension.Name, $"by {a}{desc}", true);
+				    }
+
+				    await component.Channel.SendMessageAsync(embed: embed.Build());
+				    await component.Message.DeleteAsync();
+			    }
+			    catch (Exception e)
+			    {
+				    _logger.Warning(e, "Can't create embed!");
+			    }
+
+			    break;
+		    default:
+			    return;
+	    }
+    }
+
     private async Task Ready () {
 	    DiscordReady = true;
 	    await _interactionService.RegisterCommandsGloballyAsync();
@@ -229,13 +220,11 @@ public class DiscordService : IDiscordService, IHostedService
 		}
 	}
 
-	private async Task MessageReceived (SocketMessage message) {
-		if (message.Author is not SocketGuildUser member || member.IsBot)
-		{
-			return;
-		}
+	private async Task MessageReceived(SocketMessage message)
+	{
+		if (message.Author is not SocketGuildUser user || user.IsBot) return;
 
-		var protectedChannels = new []
+		var protectedChannels = new[]
 		{
 			_botConfig.Channels.LogChannelId,
 			_botConfig.Channels.MemberScreeningChannelId,
@@ -247,69 +236,131 @@ public class DiscordService : IDiscordService, IHostedService
 			await message.DeleteAsync();
 			return;
 		}
-		
-		var messageByModerator = member.Roles.Contains(member.Guild.GetRole(_botConfig.Roles.ModeratorRoleId));
+
+		var messageByAdministrator = user.Roles.Contains(user.Guild.GetRole(_botConfig.Roles.AdministratorRoleId));
+		var messageByModerator = user.Roles.Contains(user.Guild.GetRole(_botConfig.Roles.ModeratorRoleId));
+		var messageByDevTeamMember = user.Roles.Contains(user.Guild.GetRole(_botConfig.Roles.DevTeamRoleId));
+		var messageByCommunityDeveloper =
+			user.Roles.Contains(user.Guild.GetRole(_botConfig.Roles.CommunityDeveloperRoleId));
 		var imageChannels = _botConfig.Channels.ImageOnlyChannels;
-
-		var anyMentionsOnMsg = message.MentionedUsers.Any(u => message.Content.Contains($"<@{u.Id}>"));
-
-		if ((message.MentionedEveryone 
+    
+		if ((message.MentionedEveryone
 		     || message.MentionedRoles.Count > 0
-		     || (message.MentionedUsers.Count > 0 && (anyMentionsOnMsg || message.Type != MessageType.Reply))
-		    && !(messageByModerator || member.GetPermissions(message.Channel as IGuildChannel).ManageMessages)
-			&& !(message.MentionedUsers.Count == 1 && message.Content.Contains($"<@{message.Author.Id}>"))))
+		     || message.MentionedUsers.Count > 0)
+		    && !messageByAdministrator
+		    && !messageByModerator
+		    && !messageByDevTeamMember
+		    && !(messageByCommunityDeveloper && message.Channel.Id == _botConfig.Channels.PluginAnnouncementsChannelId)
+		    && message.Type != MessageType.Reply
+		    && !(message.MentionedUsers.Count == 1 && message.Content.Contains($"<@{message.Author.Id}>")))
 		{
 			await message.DeleteAsync();
+
 			_logger.Information(
-				"Message containing users/roles/everyone from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted. Message: {Message}",
-				message.Author.Username,
-				message.Author.Discriminator,
-				message.Channel.Name,
-				message.CleanContent);
+				"Message that contains either a user, a role, everyone or here is detected.\r\n" +
+				"By {User} in {Channel}, Message:\r\n{Content}",
+				user.DisplayName, message.Channel, message.Content);
+
 			try
 			{
-				await member.SendMessageAsync(embed: new EmbedBuilder() {
-					Title = "Hello there!",
-					Description = $"It looks like you mentioned either a user, a role or @everyone! It is not allowed on the {(message.Channel as IGuildChannel)!.Guild.Name} server. Your message is below."
-				}.AddField("Message", message.CleanContent).Build());
+				await user.SendMessageAsync(embed: new EmbedBuilder()
+				{
+					Title = "Hey there!",
+					Description =
+						$"It looks like you mentioned someone, a role, or @everyone! It is not allowed on the {(message.Channel as IGuildChannel).Guild.Name} server."
+				}.AddField("Message", message.Content).Build());
 			}
-			catch (Exception ex)
+			catch (Exception e)
 			{
-				_logger.Error(ex, "Cannot send message to {User}", message.Author.Username);
+				_logger.Error(e, "Can't send a message to {User}. Maybe DMs disabled?", message.Author.Username);
+			}
+		}
+		else if (imageChannels.Contains(message.Channel.Id) && !DiscordMessageFilter.FilterForImageChannels(message))
+		{
+			await message.DeleteAsync();
+			if (imageChannels.Contains(message.Channel.Id) && !DiscordMessageFilter.FilterForImageChannels(message))
+			{
+				await message.DeleteAsync();
+
+				try
+				{
+					var embed = new EmbedBuilder()
+					{
+						Color = new Color(63, 127, 191),
+						Description = message.CleanContent.Replace("<", "\\<").Replace("*", "\\*").Replace("_", "\\_")
+							.Replace("`", "\\`").Replace(":", "\\:"),
+						Timestamp = message.Timestamp,
+						Title = "__Your Post__",
+					};
+					embed.WithAuthor(user.Guild.Name, user.Guild.IconUrl);
+
+					await user.SendMessageAsync(
+						text:
+						$"The channel ${message.Channel} is only meant for images.\nHere is your text, so that you don't need to rewrite it into another channel:",
+						embed: embed.Build());
+					_logger.Information(
+						"Message without image from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted! DM with their text was successfully sent",
+						message.Author.Username,
+						message.Author.Discriminator,
+						message.Channel.Name);
+
+				}
+				catch (HttpException)
+				{
+					_logger.Information(
+						"Message without image from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted! DM with their text was not sent",
+						message.Author.Username,
+						message.Author.Discriminator,
+						message.Channel.Name);
+				}
 			}
 		}
 
-		if (imageChannels.Contains(message.Channel.Id) && !DiscordMessageFilter.FilterForImageChannels(message)) {
-			await message.DeleteAsync();
+		using var httpClient = _httpClientFactory.CreateClient();
+		var dict = new Dictionary<string, string>();
+		dict.Add("q", message.Content);
+		dict.Add("source", "auto");
+		string username = _commandsConfig.Translate.UserName;
+		string password = _commandsConfig.Translate.Password;
+		string svcCredentials = Convert.ToBase64String(ASCIIEncoding.ASCII.GetBytes(username + ":" + password));
+		dict.Add("target", "en");
+		var request = new HttpRequestMessage(HttpMethod.Post, _commandsConfig.Translate.Url)
+		{
+			Content = new FormUrlEncodedContent(dict)
+		};
+		request.Headers.Add("Authorization", "Basic " + svcCredentials);
+		var result = await httpClient.SendAsync(request);
+		var translated = JsonSerializer.Deserialize<Translated>(await result.Content.ReadAsStringAsync());
 
-			try {
-				var embed = new EmbedBuilder() {
-					Color = new Color(63, 127, 191),
-					Description = message.CleanContent.Replace("<", "\\<").Replace("*", "\\*").Replace("_", "\\_").Replace("`", "\\`").Replace(":", "\\:"),
-					Timestamp = message.Timestamp,
-					Title = "__Your Post__",
-				};
-				embed.WithAuthor(member.Guild.Name, member.Guild.IconUrl);
+		if (translated.DetectedLanguage.Language != "en")
+		{
+			string displayName = "";
+			CultureInfo[] cultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
+			foreach (var culture in cultures)
+			{
+				// Exclude custom cultures.
+				if ((culture.CultureTypes & CultureTypes.UserCustomCulture) == CultureTypes.UserCustomCulture)
+					continue;
 
-				await member.SendMessageAsync(
-					text:
-					$"The channel ${message.Channel} is only meant for images.\nHere is your text, so that you don't need to rewrite it into another channel:",
-					embed: embed.Build());
-				_logger.Information(
-					"Message without image from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted! DM with their text was successfully sent",
-					message.Author.Username,
-					message.Author.Discriminator,
-					message.Channel.Name);
+				// Exclude all three-letter codes.
+				if (culture.TwoLetterISOLanguageName.Length == 3)
+					continue;
 
+				if (culture.TwoLetterISOLanguageName.Contains(translated.DetectedLanguage.Language,
+					    StringComparison.CurrentCultureIgnoreCase))
+				{
+					displayName = culture.DisplayName;
+					break;
+				}
 			}
-			catch (HttpException) {
-				_logger.Information(
-					"Message without image from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted! DM with their text was not sent",
-					message.Author.Username,
-					message.Author.Discriminator,
-					message.Channel.Name);
-			}
 
+			message.Channel.SendMessageAsync(user.Mention, embed: new EmbedBuilder()
+				{
+					Title = "Macro Bot Translate System",
+					Description = "We detected that your message is not on English, so we translated it!"
+				}.AddField("Detected Language", displayName, true)
+				.AddField("Confidence", translated.DetectedLanguage.Confidence, true)
+				.AddField("Text", translated.TranslatedText).Build());
 		}
 	}
 

@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace MacroBot.Models.Extensions;
 
-public class Extension {
+public class AllExtensions {
     [JsonPropertyName("packageId")]
     public string PackageId { get; set; }
     [JsonPropertyName("extensionType")]
@@ -19,6 +19,4 @@ public class Extension {
     public int Downloads { get; set; }
     [JsonPropertyName("description")]
     public string Description { get; set; }
-    [JsonPropertyName("category")]
-    public string Category { get; set; }
 }

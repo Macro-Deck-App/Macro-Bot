@@ -8,5 +8,14 @@ public class CommandsConfig : LoadableConfig<CommandsConfig>
 	{
 		public ulong[] PermissionManageTags { get; set; }
 	}
+
+	public TranslateConfig Translate { get; set; } = new();
+
+	public class TranslateConfig
+	{
+		public string UserName { get; set; }
+		public string Password { get; set; }
+		public string Url { get; set; }
+	}
 }
 
