@@ -1,7 +1,4 @@
-using System.Web;
 using Discord;
-using MacroBot.Config;
-using MacroBot.Extensions;
 using MacroBot.Models.Extensions;
 using Serilog;
 using ILogger = Serilog.ILogger;
@@ -12,91 +9,79 @@ public class ExtensionMessageBuilder
 {
     private static readonly ILogger _logger = Log.ForContext<ExtensionMessageBuilder>();
 
-    public static async Task<Embed> BuildProblemExtensionAsync(List<AllExtensions> extensionsList)
-    {
-        var embed = new EmbedBuilder {
-            Title = $"Do you have problems with {((extensionsList.Count <= 1)? "this plugin or icon pack" : "these plugins or icon packs")}?",
-            Description = "Macro Bot detected on your thread name or thread first post a name of a plugin or icon pack."
-        };
-        
-        foreach (var ext in extensionsList)
-        {
-            try
-            {
-                var a = (ext.DSupportUserId is null) ? ext.Author : String.Format("<@{UserId}>", ext.DSupportUserId);
-                embed.AddField(ext.Name, $"by {a}", true);
-            }
-            catch (Exception e)
-            {
-                _logger.Error(e, "Can't add embed field");
-            }
-        }
-
-        return embed.Build();
-    }
-
-    public static async Task<MessageComponent> BuildProblemExtensionInteractionAsync(List<AllExtensions> extensionsList)
-    {
-        var component = new ComponentBuilder();
-        var selectMenu = new SelectMenuBuilder()
-        {
-            CustomId = "ProblemExtensionInteraction",
-            MaxValues = extensionsList.Count,
-            Placeholder = "Select one or more...",
-            MinValues = 1
-        };
-
-        foreach (var ext in extensionsList)
-        {
-            try
-            {
-                var a = (ext.DSupportUserId is null) ? ext.Author : String.Format("<@{UserId}>", ext.DSupportUserId);
-                selectMenu.AddOption(ext.Name, ext.PackageId, $"by {a}");
-            }
-            catch (Exception e)
-            {
-                _logger.Error(e, "Can't add component");
-            }
-        }
-
-        component.WithSelectMenu(selectMenu);
-        component.WithButton("No, thanks.", "ProblemExtensionButtonNo", ButtonStyle.Secondary);
-        return component.Build();
-    }
-    
-    public static async Task<Embed> BuildSearchExtensionAsync(IHttpClientFactory httpClientFactory, ExtensionDetectionConfig extDetectionConfig, string query)
+    public static async Task<Embed> BuildAllExtensionsAsync(IHttpClientFactory httpClientFactory)
     {
         using var httpClient = httpClientFactory.CreateClient();
         var extensions =
-            await httpClient.GetFromJsonAsync<ExtensionResponse>(string.Format("{0}/{1}", extDetectionConfig.SearchExtensionsUrl, HttpUtility.UrlEncode(query)));
+            await httpClient.GetFromJsonAsync<List<Extension>>("https://extensionstore.api.macro-deck.app/Extensions");
+
+        _logger.Information("Loaded {NoExtensions} extensions", extensions?.Count);
+        
+        var embed = new EmbedBuilder()
+            .WithTitle("Macro Deck Extensions")
+            .WithDescription("This is the list of Macro Deck Extensions.");
+        var fields = new List<EmbedFieldBuilder>();
+        foreach (var ext in extensions)
+        {
+            EmbedFieldBuilder field = new();
+            field.WithName($"[{ext.ExtensionType}] {ext.PackageId}");
+            field.WithValue(
+                $"{(ext.GithubRepository is not null 
+                    ? $"[{ext.Name}]({ext.GithubRepository})" 
+                    : ext.Name)} by {(!string.IsNullOrWhiteSpace(ext.DSupportUserId)
+                    ? $"<@{ext.DSupportUserId}>" 
+                    : ext.Author)}\r\n");
+            field.WithIsInline(true);
+            fields.Add(field);
+        }
+        embed.WithFields(fields[0]);
+        return embed.Build();
+    }
+
+    public static async Task<Embed> BuildSearchExtensionAsync(IHttpClientFactory httpClientFactory, string query)
+    {
+        using var httpClient = httpClientFactory.CreateClient();
+        var extension = await httpClient.GetFromJsonAsync<Extension>(
+            $"https://extensionstore.api.macro-deck.app/Extensions/{query}");
+
+        if (extension is null)
+        {
+            var extensions =
+                await httpClient.GetFromJsonAsync<List<Extension>>("https://extensionstore.api.macro-deck.app/Extensions");
+
+            if (extensions != null)
+            {
+                extension = await extensions.ToAsyncEnumerable().FirstOrDefaultAsync(e =>
+                    e.Name?.IndexOf(query, StringComparison.OrdinalIgnoreCase) < 0 &&
+                    e.PackageId?.IndexOf(query, StringComparison.OrdinalIgnoreCase) < 0);
+            }
+        }
         
         var embed = new EmbedBuilder {
-            Title = String.Format((extensions.TotalItemsCount > 0) ? "Extension Results of '{0}'" : "Could not find extension '{0}'", query)
+            Title = extension?.Name ?? "Not found"
         };
 
-        if (extensions.TotalItemsCount > 0)
+        if (extension is not null && !string.IsNullOrWhiteSpace(extension.PackageId))
         {
-            foreach (var ext in extensions?.Data)
-            {
-                EmbedFieldBuilder field = new();
-                field.WithName(String.Format("[{0}] {1}", ext.ExtensionType, ext.PackageId));
-                field.WithValue(String.Format(
-                    "{0}\r\n" +
-                    "by {1}",
-                    ext.GithubRepository.IsNullOrWhiteSpace() ? string.Format("[{0}]({1})", ext.Name, ext.GithubRepository) : ext.Name,
-                    (ext.DSupportUserId is not null)? string.Format("<@{0}>", ext.DSupportUserId) : ext.Author
-                ));
+            embed.WithThumbnailUrl($"https://extensionstore.api.macro-deck.app/Extensions/Icon/{extension.PackageId}");
+            embed.WithUrl(extension.GithubRepository);
+            
+            embed.AddField("Package ID", extension.PackageId);
+            embed.AddField("Author", !string.IsNullOrWhiteSpace(extension.DSupportUserId)
+                ? $"<@{extension.DSupportUserId}> ({extension.Author})"
+                : extension.Author, true);
+            
+            var extensionFile = await httpClient.GetFromJsonAsync<ExtensionFile>(
+                $"https://extensionstore.api.macro-deck.app/ExtensionsFiles/{extension.PackageId}@latest");
 
-                embed.AddField(field);
+            if (extensionFile is not null)
+            {
+                embed.AddField("Latest version", extensionFile.Version, true);
+                embed.AddField("Min API version", extensionFile.MinApiVersion, true);
             }
-        } else {
-            embed.WithDescription(
-                "We could not find it! You can try these:\r\n"+
-                " - Check the name! Maybe there is a typo?\r\n"+
-                " - Tell one of the Macro Deck 2 dev team member."
-            );
         }
 
         return embed.Build();
     }
+    
 }

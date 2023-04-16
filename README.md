@@ -17,13 +17,6 @@
 
 - **Macro-Deck Service Status system:**  
   Shows when a Macro Deck service went offline or online.
-
-- **Translate System:**  
-  Translates* a message from other languages to English.  
-  *\* not accurately*
-
-- **Extension System:**  
-  Shows Macro Deck 2 Plugins and Icon Packs in the Extension Store.
   
 ## Written by:
 - [@Develeon64](https://github.com/Develeon64)

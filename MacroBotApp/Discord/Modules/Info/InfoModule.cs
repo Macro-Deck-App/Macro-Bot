@@ -3,9 +3,6 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using System.Reflection;
 using JetBrains.Annotations;
-using MacroBot.Services;
-using Serilog;
-using ILogger = Serilog.ILogger;
 
 namespace MacroBot.Discord.Modules.Info;
 
@@ -13,8 +10,6 @@ namespace MacroBot.Discord.Modules.Info;
 [UsedImplicitly]
 public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
 {
-    private readonly ILogger _logger = Log.ForContext<DiscordService>();
-    
     [SlashCommand("bot", "Show information about the bot")]
     public async Task bot()
     {
@@ -116,36 +111,57 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("guild", "Show information about the guild (same as /info server)")]
     public async Task GuildInfo()
     {
-        await DeferAsync(ephemeral:true);
+        EmbedBuilder embed = new()
+        {
+            Title = Context.Guild.Name,
+            Description = "Here you can find the information of this server."
+        };
+        embed.WithThumbnailUrl(Context.Guild.IconUrl);
+        embed.AddField("Owner", "<@" + Context.Guild.OwnerId + ">");
+        string member;
+        var epm = false;
+        if (Context.Guild.MemberCount > 25)
+        {
+            member = Context.Guild.MemberCount.ToString();
+            epm = true;
+        }
+        else
+        {
+            member = string.Join(", ", Context.Guild.Users.Select(u => u.Mention));
+            epm = false;
+        }
+        embed.AddField("Members", member, epm);
+        string text;
+        if (Context.Guild.TextChannels.Count > 10)
+        {
+            text = Context.Guild.TextChannels.Count.ToString();
+        }
+        else if (Context.Guild.TextChannels.Count < 1)
+        {
+            text = "__**No text channels found**__";
+        }
+        else
+        {
+            text = string.Join(", ", Context.Guild.TextChannels.Select(u => u.Mention));
+        }
+        embed.AddField("Text Channels", string.Join(", ", Context.Guild.TextChannels.Select(u => u.Mention)), true);
+        string voice;
+        if (Context.Guild.VoiceChannels.Count > 10) 
+        {
+            voice = Context.Guild.VoiceChannels.Count.ToString();
+        }
+        else if (Context.Guild.VoiceChannels.Count < 1)
+        {
+            voice = "__**No voice channels found**__";
+        }
+        else
+        {
+            voice = string.Join(", ", Context.Guild.VoiceChannels.Select(u => u.Mention));
+        }
+        embed.AddField("Voice Channels", voice, true);
+        embed.WithFooter($"ID: {Context.Guild.Id}");
 
-        try
-        {
-            EmbedBuilder embed = new()
-            {
-                Title = Context.Guild.Name,
-                Description = "Here you can find the information of this server."
-            };
-            embed.WithThumbnailUrl(Context.Guild.IconUrl);
-            embed.AddField("Owner", "<@" + Context.Guild.OwnerId + ">", true);
-            embed.AddField("Members", Context.Guild.MemberCount, true);
-            embed.AddField("Text Channels", Context.Guild.TextChannels.Count, true);
-            embed.AddField("Voice Channels", Context.Guild.VoiceChannels.Count, true);
-            embed.AddField("Roles", Context.Guild.Roles.Count, true);
-            embed.AddField("Default Channel", Context.Guild.DefaultChannel.Mention, true);
-            embed.AddField("Description", Context.Guild.Description ?? "No description");
-            GuildFeature[] enumValues = Enum.GetValues(typeof(GuildFeature))
-                .Cast<GuildFeature>()
-                .Where(f => Context.Guild.Features.Value.HasFlag(f))
-                .ToArray();
-            embed.AddField("Features", String.Join(",\r\n", enumValues.Select(e => e.ToString())));
-            embed.WithFooter($"ID: {Context.Guild.Id}");
-            
-            await FollowupAsync(embed: embed.Build(), ephemeral: true);
-        }
-        catch (Exception e)
-        {
-            _logger.Error(e, "Can't create embed!");
-        }
+        await RespondAsync(embed: embed.Build(), ephemeral: true);
     }
 
     [SlashCommand("server", "Show information about the server (same as /info guild)")]
