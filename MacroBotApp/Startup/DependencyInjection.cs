@@ -22,7 +22,6 @@ public static class DependencyInjection
         var commandsConfig = await CommandsConfig.LoadAsync(Paths.CommandsConfigPath);
         var statusCheckConfig = await StatusCheckConfig.LoadAsync(Paths.StatusCheckConfigPath);
         var webhooksConfig = await WebhooksConfig.LoadAsync(Paths.WebhooksPath);
-        var extDetectionConfig = await ExtensionDetectionConfig.LoadAsync(Paths.ExtensionDetectionConfigPath);
 		
         DiscordSocketConfig discordSocketConfig = new() {
             AlwaysDownloadUsers = true,
@@ -46,7 +45,6 @@ public static class DependencyInjection
         services.AddSingleton(discordSocketConfig);
         services.AddSingleton(statusCheckConfig);
         services.AddSingleton(webhooksConfig);
-        services.AddSingleton(extDetectionConfig);
         services.AddSingleton<DiscordSocketClient>();
         services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(), interactionServiceConfig));
         services.AddSingleton<CommandHandler>();
