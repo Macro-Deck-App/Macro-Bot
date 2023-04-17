@@ -25,7 +25,7 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file MacroBotApp/Dockerfile --tag suchbyte/macro-bot:dev_${{ github.sha }}
     - name: Log into registry
-      uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+      uses: docker/login-action@40891eba8c2bcd1309b07ba8b11232f313e86779
       with:
         registry: docker.io
         username: suchbyte
