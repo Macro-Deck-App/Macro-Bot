@@ -1,4 +1,3 @@
-using MacroBot.Authentication;
 using MacroBot.Config;
 using MacroBot.Models.BuyMeACoffee;
 using MacroBot.Models.Webhook;
@@ -33,16 +32,6 @@ public class BuyMeACoffeeController : ControllerBase
             return NotFound();
         }
         
-        var authResult = Request.CheckAuthentication(webhook);
-
-        switch (authResult)
-        {
-            case AuthenticationResult.Unauthorized:
-                return StatusCode(StatusCodes.Status401Unauthorized);
-            case AuthenticationResult.Forbidden: 
-                return StatusCode(StatusCodes.Status403Forbidden);
-        }
-
         var supporterName = donationCreatedRequest.Data?.SupporterName ?? "anonymous";
         var amount = donationCreatedRequest.Data?.Amount?.ToString("#0.00") ?? "hidden";
         var currency = donationCreatedRequest.Data?.Currency ?? string.Empty;
