@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MacroBot.Controllers;
 
 [ApiController]
-[Route("/buymeaocoffee")]
+[Route("/buymeacoffee")]
 public class BuyMeACoffeeController : ControllerBase
 {
     private readonly IDiscordService _discordService;
@@ -20,7 +20,7 @@ public class BuyMeACoffeeController : ControllerBase
         _webhooksConfig = webhooksConfig;
     }
 
-    [HttpGet("/donationcreated")]
+    [HttpGet("donationcreated")]
     public async Task<IActionResult> DonationCreated([FromQuery] BuyMeACoffeeDonationCreatedRequest donationCreatedRequest)
     {
         if (donationCreatedRequest.Data?.Succeeded is false)
