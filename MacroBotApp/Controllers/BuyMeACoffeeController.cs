@@ -19,7 +19,7 @@ public class BuyMeACoffeeController : ControllerBase
         _webhooksConfig = webhooksConfig;
     }
 
-    [HttpGet("donationcreated")]
+    [HttpPost("donationcreated")]
     public async Task<IActionResult> DonationCreated([FromQuery] BuyMeACoffeeDonationCreatedRequest donationCreatedRequest)
     {
         if (donationCreatedRequest.Data?.Succeeded is false)
