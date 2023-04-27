@@ -46,7 +46,9 @@ public class BuyMeACoffeeController : ControllerBase
         var supporterName = donationCreatedRequest.Data?.SupporterName ?? "anonymous";
         var amount = donationCreatedRequest.Data?.Amount?.ToString("#0.00") ?? "hidden";
         var currency = donationCreatedRequest.Data?.Currency ?? string.Empty;
-        var message = donationCreatedRequest.Data?.SupportNote;
+        var message = donationCreatedRequest.Data?.NoteHidden == true
+            ? donationCreatedRequest.Data?.SupportNote
+            : string.Empty;
 
         var webHookRequest = new WebhookRequest
         {
