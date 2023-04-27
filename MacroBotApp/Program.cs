@@ -4,7 +4,8 @@ using Serilog;
 
 namespace MacroBot;
 
-public static class Program {
+public static class Program
+{
 	public static async Task Main(string[] args)
 	{
 		AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;

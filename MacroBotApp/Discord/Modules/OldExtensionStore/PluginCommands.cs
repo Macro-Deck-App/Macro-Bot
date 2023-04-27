@@ -1,7 +1,5 @@
 using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
-using System.Reflection;
 
 namespace MacroBot.Discord.Modules.OldExtensionStore
 {
@@ -18,7 +16,8 @@ namespace MacroBot.Discord.Modules.OldExtensionStore
             var embed = pluginUtils.SetPluginsAsEmbeds(await pluginUtils.GetPluginsAsync());
             List<Embed[]> embeds = embed.Chunk(10).ToList();
 
-            foreach (Embed[] embeds1 in embeds) {
+            foreach (Embed[] embeds1 in embeds)
+            {
                 await FollowupAsync(embeds: embeds1);
             }
         }

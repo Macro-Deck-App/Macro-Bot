@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-namespace MacroBot.Config;
+﻿namespace MacroBot.Config;
 
 public class BotConfig : LoadableConfig<BotConfig>
 {
@@ -8,12 +7,14 @@ public class BotConfig : LoadableConfig<BotConfig>
 	public RolesConfig Roles { get; set; } = new();
 	public ChannelsConfig Channels { get; set; } = new();
 	
-	public class RolesConfig {
+	public class RolesConfig
+	{
 		public ulong ModeratorRoleId { get; set; }
 		public ulong AdministratorRoleId { get; set; }
 	}
 
-	public class ChannelsConfig {
+	public class ChannelsConfig
+	{
 		public ulong LogChannelId { get; set; }
 		public ulong ErrorLogChannelId { get; set; }
 		public ulong MemberScreeningChannelId { get; set; }

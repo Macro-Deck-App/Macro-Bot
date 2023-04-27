@@ -1,5 +1,4 @@
 using Discord.WebSocket;
-using Serilog;
 
 namespace MacroBot.Discord;
 

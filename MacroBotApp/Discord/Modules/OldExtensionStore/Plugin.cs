@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 
-namespace MacroBot.Discord.Modules.OldExtensionStore {
+namespace MacroBot.Discord.Modules.OldExtensionStore
+{
     public class Plugin
     {
         [JsonPropertyName("package-id")]

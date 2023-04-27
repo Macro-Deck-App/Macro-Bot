@@ -1,6 +1,4 @@
-using MacroBot.Controllers;
 using MacroBot.Models.Webhook;
-using Microsoft.AspNetCore.Mvc;
 
 namespace MacroBot.Authentication;
 

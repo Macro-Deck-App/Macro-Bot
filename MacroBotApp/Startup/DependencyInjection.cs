@@ -23,7 +23,8 @@ public static class DependencyInjection
         var statusCheckConfig = await StatusCheckConfig.LoadAsync(Paths.StatusCheckConfigPath);
         var webhooksConfig = await WebhooksConfig.LoadAsync(Paths.WebhooksPath);
 		
-        DiscordSocketConfig discordSocketConfig = new() {
+        DiscordSocketConfig discordSocketConfig = new()
+        {
             AlwaysDownloadUsers = true,
             MaxWaitBetweenGuildAvailablesBeforeReady = (int)new TimeSpan(0, 0, 15).TotalMilliseconds,
             MessageCacheSize = 100,
