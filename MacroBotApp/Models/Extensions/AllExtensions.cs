@@ -2,7 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace MacroBot.Models.Extensions;
 
-public class AllExtensions {
+public class AllExtensions
+{
     [JsonPropertyName("packageId")]
     public string PackageId { get; set; }
     [JsonPropertyName("extensionType")]

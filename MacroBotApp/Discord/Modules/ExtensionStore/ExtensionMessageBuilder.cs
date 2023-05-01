@@ -10,11 +10,12 @@ namespace MacroBot.Discord.Modules.ExtensionStore;
 
 public class ExtensionMessageBuilder
 {
-    private static readonly ILogger _logger = Log.ForContext<ExtensionMessageBuilder>();
+    private static readonly ILogger Logger = Log.ForContext<ExtensionMessageBuilder>();
 
-    public static async Task<Embed> BuildProblemExtensionAsync(List<AllExtensions> extensionsList)
+    public static Embed BuildProblemExtensionAsync(List<AllExtensions> extensionsList)
     {
-        var embed = new EmbedBuilder {
+        var embed = new EmbedBuilder
+        {
             Title = $"Do you have problems with {((extensionsList.Count <= 1)? "this plugin or icon pack" : "these plugins or icon packs")}?",
             Description = "Macro Bot detected on your thread name or thread first post a name of a plugin or icon pack."
         };
@@ -23,19 +24,19 @@ public class ExtensionMessageBuilder
         {
             try
             {
-                var a = (ext.DSupportUserId is null) ? ext.Author : String.Format("<@{UserId}>", ext.DSupportUserId);
+                var a = (ext.DSupportUserId is null) ? ext.Author : string.Format("<@{UserId}>", ext.DSupportUserId);
                 embed.AddField(ext.Name, $"by {a}", true);
             }
             catch (Exception e)
             {
-                _logger.Error(e, "Can't add embed field");
+                Logger.Error(e, "Can't add embed field");
             }
         }
 
         return embed.Build();
     }
 
-    public static async Task<MessageComponent> BuildProblemExtensionInteractionAsync(List<AllExtensions> extensionsList)
+    public static MessageComponent BuildProblemExtensionInteractionAsync(List<AllExtensions> extensionsList)
     {
         var component = new ComponentBuilder();
         var selectMenu = new SelectMenuBuilder()
@@ -50,12 +51,12 @@ public class ExtensionMessageBuilder
         {
             try
             {
-                var a = (ext.DSupportUserId is null) ? ext.Author : String.Format("<@{UserId}>", ext.DSupportUserId);
+                var a = (ext.DSupportUserId is null) ? ext.Author : string.Format("<@{UserId}>", ext.DSupportUserId);
                 selectMenu.AddOption(ext.Name, ext.PackageId, $"by {a}");
             }
             catch (Exception e)
             {
-                _logger.Error(e, "Can't add component");
+                Logger.Error(e, "Can't add component");
             }
         }
 
@@ -64,33 +65,47 @@ public class ExtensionMessageBuilder
         return component.Build();
     }
     
-    public static async Task<Embed> BuildSearchExtensionAsync(IHttpClientFactory httpClientFactory, ExtensionDetectionConfig extDetectionConfig, string query)
+    public static async Task<Embed> BuildSearchExtensionAsync(IHttpClientFactory httpClientFactory,
+        ExtensionDetectionConfig extDetectionConfig,
+        string query)
     {
         using var httpClient = httpClientFactory.CreateClient();
         var extensions =
-            await httpClient.GetFromJsonAsync<ExtensionResponse>(string.Format("{0}/{1}", extDetectionConfig.SearchExtensionsUrl, HttpUtility.UrlEncode(query)));
-        
+            await httpClient.GetFromJsonAsync<ExtensionResponse>(
+                $"{extDetectionConfig.SearchExtensionsUrl}/{HttpUtility.UrlEncode(query)}");
+
         var embed = new EmbedBuilder
         {
-            Title = String.Format((extensions.TotalItemsCount > 0) ? "Extension Results of '{0}'" : "Could not find extension '{0}'", query)
+            Title = string.Format(
+                extensions != null && extensions.TotalItemsCount > 0
+                    ? "Extension Results of '{0}'"
+                    : "Could not find extension '{0}'", query)
         };
 
-        if (extensions.TotalItemsCount > 0)
+        if (extensions != null && extensions.TotalItemsCount > 0)
         {
-            foreach (var ext in extensions?.Data)
+            if (extensions.Data == null)
+            {
+                return embed.Build();
+            }
+            foreach (var ext in extensions.Data)
             {
                 EmbedFieldBuilder field = new();
-                field.WithName(String.Format("[{0}] {1}", ext.ExtensionType, ext.PackageId));
+                field.WithName($"[{ext.ExtensionType}] {ext.PackageId}");
                 field.WithValue(String.Format(
                     "{0}\r\n" +
                     "by {1}",
-                    ext.GithubRepository.IsNullOrWhiteSpace() ? string.Format("[{0}]({1})", ext.Name, ext.GithubRepository) : ext.Name,
-                    (ext.DSupportUserId is not null)? string.Format("<@{0}>", ext.DSupportUserId) : ext.Author
+                    ext.GithubRepository.IsNullOrWhiteSpace()
+                        ? $"[{ext.Name}]({ext.GithubRepository})"
+                        : ext.Name,
+                    ext.DSupportUserId is not null ? $"<@{ext.DSupportUserId}>" : ext.Author
                 ));
 
                 embed.AddField(field);
             }
-        } else {
+        }
+        else
+        {
             embed.WithDescription(
                 "We could not find it! You can try these:\r\n"+
                 " - Check the name! Maybe there is a typo?\r\n"+

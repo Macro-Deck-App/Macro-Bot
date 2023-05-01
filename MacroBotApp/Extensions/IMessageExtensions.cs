@@ -1,13 +1,3 @@
-using System.Reflection;
-using Discord;
-using Discord.Interactions;
-using Discord.WebSocket;
-using Serilog;
-using System.Text;
-using System.Web;
-using MacroBot.Models.Translate;
-using ILogger = Serilog.ILogger;
-
 namespace MacroBot.Extensions;
 
 public static class IMessageExtensions

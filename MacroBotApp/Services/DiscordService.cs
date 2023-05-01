@@ -3,7 +3,6 @@ using Discord;
 using System.Text;
 using System.Web;
 using System.Text.Json;
-using AutoMapper.Execution;
 using MacroBot.Models.Translate;
 using Discord.Interactions;
 using Discord.Net;
@@ -17,7 +16,7 @@ using MacroBot.ServiceInterfaces;
 using Serilog;
 using ILogger = Serilog.ILogger;
 using MacroBot.Discord.Modules.ExtensionStore;
-using Octokit;
+using MacroBot.Models.Extensions;
 
 namespace MacroBot.Services;
 
@@ -103,40 +102,53 @@ public class DiscordService : IDiscordService, IHostedService
 
     private async Task ThreadCreated(SocketThreadChannel thread)
     {
-	    if (thread.Id == _previousThreadId) return;
-	    _previousThreadId = thread.Id;
-	    var msg = await thread.GetMessagesAsync(2).FlattenAsync();
-	    if (msg.FirstOrDefault().Author.IsBot) return;
-	    var lastMessage = msg.Last();
-	    using var httpClient = _httpClientFactory.CreateClient();
-	    var exts = await httpClient.GetFromJsonAsync<ExtensionResponse>(String.Format("{0}?ItemsPerPage={1}", _extDetectionConfig.AllExtensionsUrl, _extDetectionConfig.ExtensionsPerPage));
-
-	    List<AllExtensions> extensionsList = new List<AllExtensions>();
-	    if (exts.TotalItemsCount > 0)
+	    if (thread.Id == _previousThreadId)
 	    {
-		    foreach (var extension in exts.Data)
+		    return;
+	    }
+	    _previousThreadId = thread.Id;
+	    
+	    var messages = await thread.GetMessagesAsync(2).FlattenAsync();
+	    messages = messages?.ToArray();
+
+	    var firstMessage = messages?.FirstOrDefault();
+	    if (firstMessage == null || firstMessage.Author.IsBot)
+	    {
+		    return;
+	    }
+	    
+	    var lastMessage = messages?.Last();
+	    
+	    using var httpClient = _httpClientFactory.CreateClient();
+	    var extensions = await httpClient.GetFromJsonAsync<ExtensionResponse>(
+		    $"{_extDetectionConfig.AllExtensionsUrl}?ItemsPerPage={_extDetectionConfig.ExtensionsPerPage}");
+
+	    var extensionsList = new List<AllExtensions>();
+	    if (extensions?.TotalItemsCount > 0 && extensions.Data != null)
+	    {
+		    foreach (var extension in extensions.Data)
 		    {
 			    var splitName = extension.Name.Split(" ");
-			    var contentSplit = lastMessage.CleanContent.Remove("Plugin").Remove("plugin").Replace("\r\n", " ")
+			    var contentSplit = lastMessage?.CleanContent.Remove("Plugin").Remove("plugin").Replace("\r\n", " ")
 				    .Split(" ");
 			    var nameSplit = thread.Name.Remove("Plugin").Remove("plugin").Replace("\r\n", " ")
 				    .Split(" ");
-			    foreach (var sN in splitName)
+			    if (splitName.Any(sN => contentSplit != null &&
+			                            contentSplit.Contains(sN, StringComparer.CurrentCultureIgnoreCase)
+			                            || nameSplit.Contains(sN, StringComparer.CurrentCultureIgnoreCase)))
 			    {
-				    if (contentSplit.Contains(sN, StringComparer.CurrentCultureIgnoreCase) ||
-				        nameSplit.Contains(sN, StringComparer.CurrentCultureIgnoreCase))
-				    {
-					    extensionsList.Add(extension);
-					    break;
-				    }
+				    extensionsList.Add(extension);
 			    }
 		    }
 	    }
-	    
-	    if (extensionsList.Count <= 0) return;
+
+	    if (extensionsList.Count <= 0)
+	    {
+		    return;
+	    }
       
-	    await thread.SendMessageAsync(embed: await ExtensionMessageBuilder.BuildProblemExtensionAsync(extensionsList),
-		    components: await ExtensionMessageBuilder.BuildProblemExtensionInteractionAsync(extensionsList));
+	    await thread.SendMessageAsync(embed: ExtensionMessageBuilder.BuildProblemExtensionAsync(extensionsList),
+		    components: ExtensionMessageBuilder.BuildProblemExtensionInteractionAsync(extensionsList));
     }
 
     private async Task DiscordSocketClientOnButtonExecuted(SocketMessageComponent component)
@@ -170,11 +182,10 @@ public class DiscordService : IDiscordService, IHostedService
 				    foreach (var str in component.Data.Values)
 				    {
 					    var extension =
-						    await httpClient.GetFromJsonAsync<Extension>(string.Format(
-							    "{0}/{1}",
-							    _extDetectionConfig.AllExtensionsUrl, HttpUtility.UrlEncode(str)));
+						    await httpClient.GetFromJsonAsync<Extension>(
+							    $"{_extDetectionConfig.AllExtensionsUrl}/{HttpUtility.UrlEncode(str)}");
 
-					    var a = (extension.DSupportUserId is null)
+					    var a = extension.DSupportUserId is null
 						    ? extension.Author
 						    : String.Format("<@{UserId}>", extension.DSupportUserId);
 					    var desc = (extension.Description.IsNullOrWhiteSpace()) ? "" : $"\r\n{extension.Description}";

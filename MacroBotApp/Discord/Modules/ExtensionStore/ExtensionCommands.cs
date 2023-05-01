@@ -1,5 +1,7 @@
 using Discord.Interactions;
+using Discord.WebSocket;
 using JetBrains.Annotations;
+using MacroBot.Config;
 
 namespace MacroBot.Discord.Modules.ExtensionStore;
 
@@ -27,7 +29,8 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("search", "Search plugins")]
-    public async Task SearchPlugin([Summary(description: "Extension Name or Package ID")] string search) {
+    public async Task SearchPlugin([Summary(description: "Extension Name or Package ID")] string search)
+    {
         await DeferAsync(ephemeral: true);
         var embed = await ExtensionMessageBuilder.BuildSearchExtensionAsync(_httpClientFactory, _extDetectionConfig, search);
         await FollowupAsync(embed: embed, ephemeral: true);

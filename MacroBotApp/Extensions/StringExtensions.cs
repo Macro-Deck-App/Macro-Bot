@@ -9,8 +9,9 @@ public static class StringExtensions
             : value;
     }
 
-    public static bool IsNullOrWhiteSpace(this string? value) {
-        return String.IsNullOrWhiteSpace(value) && String.IsNullOrEmpty(value);
+    public static bool IsNullOrWhiteSpace(this string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) && string.IsNullOrEmpty(value);
     }
 
     public static string Remove(this string value, string toRemove)

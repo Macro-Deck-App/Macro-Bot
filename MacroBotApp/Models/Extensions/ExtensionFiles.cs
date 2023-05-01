@@ -10,7 +10,5 @@ public class ExtensionFiles
     [JsonPropertyName("uploadDateTime")]
     private string _uploadDateTime { get; set; }
     [JsonIgnore]
-    public long UploadDateTime {
-        get { return DateTimeOffset.Parse(_uploadDateTime).ToUnixTimeMilliseconds(); }
-    }
+    public long UploadDateTime => DateTimeOffset.Parse(_uploadDateTime).ToUnixTimeMilliseconds();
 }

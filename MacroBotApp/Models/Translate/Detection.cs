@@ -2,7 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace MacroBot.Models.Translate;
 
-public class Detection {
+public class Detection
+{
     [JsonPropertyName("confidence")]
     public float Confidence { get; set; }
     [JsonPropertyName("language")]
