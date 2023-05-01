@@ -1,5 +1,5 @@
 ﻿using MacroBot.Extensions;
-using MacroBot.Startup;
+using MacroBot.StartupConfig;
 using Serilog;
 
 namespace MacroBot;
@@ -11,19 +11,24 @@ public static class Program
 		AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 		Paths.EnsureDirectoriesCreated();
 		
-		var builder = WebApplication.CreateBuilder(args);
-		await builder.Services.ConfigureServicesAsync();
-		builder.ConfigureSerilog();
-		var app = builder.Build();
+		var environment = Environment.GetEnvironmentVariable("ENVIRONMENT");
+		var port = 80;
+		if (string.IsNullOrWhiteSpace(environment))
+		{
+			port = 9000;
+		}
 		
-		app.ConfigureSwagger();
-		app.UseCors(x => x
-				.AllowAnyMethod()
-				.AllowAnyHeader()
-				.SetIsOriginAllowed(_ => true) // allow any origin
-				.AllowCredentials())
-			.UseCookiePolicy();
-		app.MapControllers();
+		var app = Host.CreateDefaultBuilder(args)
+			.ConfigureSerilog()
+			.ConfigureWebHostDefaults(hostBuilder =>
+			{
+				hostBuilder.UseStartup<Startup>();
+				hostBuilder.ConfigureKestrel(options =>
+				{
+					options.ListenAnyIP(port);
+				});
+			}).Build();
+
 		await app.MigrateDatabaseAsync();
 		await app.RunAsync();
 	}

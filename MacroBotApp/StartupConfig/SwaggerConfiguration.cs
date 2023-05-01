@@ -1,6 +1,6 @@
 using Microsoft.OpenApi.Models;
 
-namespace MacroBot.Startup;
+namespace MacroBot.StartupConfig;
 
 public static class SwaggerConfiguration
 {

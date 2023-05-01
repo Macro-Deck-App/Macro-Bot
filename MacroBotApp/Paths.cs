@@ -2,7 +2,7 @@ namespace MacroBot;
 
 public static class Paths
 {
-    public static string MainDirectory
+    private static string MainDirectory
     {
         get
         {
@@ -15,11 +15,11 @@ public static class Paths
         }
     }
 
-    public static string WebhooksPath = Path.Combine(MainDirectory, "Webhooks.json");
-    public static string BotConfigPath = Path.Combine(MainDirectory, "BotConfig.json");
-    public static string CommandsConfigPath = Path.Combine(MainDirectory, "Commands.json");
-    public static string StatusCheckConfigPath = Path.Combine(MainDirectory, "StatusCheck.json");
-    public static string DatabasePath = Path.Combine(MainDirectory, "Database.db");
+    public static readonly string WebhooksPath = Path.Combine(MainDirectory, "Webhooks.json");
+    public static readonly string BotConfigPath = Path.Combine(MainDirectory, "BotConfig.json");
+    public static readonly string CommandsConfigPath = Path.Combine(MainDirectory, "Commands.json");
+    public static readonly string StatusCheckConfigPath = Path.Combine(MainDirectory, "StatusCheck.json");
+    public static readonly string DatabasePath = Path.Combine(MainDirectory, "Database.db");
 
     public static void EnsureDirectoriesCreated()
     {
