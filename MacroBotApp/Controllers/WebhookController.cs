@@ -25,7 +25,7 @@ public class WebhookController : ControllerBase
     }
     
     [HttpPost("{webhookId}")]
-    public IActionResult RunAsync(string webhookId, 
+    public async Task<IActionResult> RunAsync(string webhookId, 
         [FromBody] WebhookRequest webhookRequest)
     {
         var webhook = _webhooksConfig.Webhooks.FirstOrDefault(x => x.Id.Equals(webhookId));
@@ -44,7 +44,7 @@ public class WebhookController : ControllerBase
                 return StatusCode(StatusCodes.Status403Forbidden);
             case AuthenticationResult.Authorized:
             default:
-                _discordService.BroadcastWebhookAsync(webhook, webhookRequest);
+                await _discordService.BroadcastWebhookAsync(webhook, webhookRequest);
                 return Ok();
         }
     }

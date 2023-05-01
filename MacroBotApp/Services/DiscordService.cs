@@ -12,8 +12,6 @@ using JetBrains.Annotations;
 using MacroBot.Config;
 using MacroBot.Discord;
 using MacroBot.Extensions;
-using MacroBot.Models.Extensions;
-using MacroBot.Models.Status;
 using MacroBot.Models.Webhook;
 using MacroBot.ServiceInterfaces;
 using Serilog;
@@ -197,7 +195,8 @@ public class DiscordService : IDiscordService, IHostedService
 	    }
     }
 
-    private async Task Ready () {
+    private async Task Ready ()
+    {
 	    DiscordReady = true;
 	    await _interactionService.RegisterCommandsGloballyAsync();
 	    var guild = _discordSocketClient.GetGuild(_botConfig.GuildId);
@@ -208,7 +207,8 @@ public class DiscordService : IDiscordService, IHostedService
 	    }
     }
 
-	private async Task UserJoined (SocketGuildUser member) {
+	private async Task UserJoined (SocketGuildUser member)
+	{
 		await MemberMovement(member, true);
 	}
 
@@ -263,7 +263,7 @@ public class DiscordService : IDiscordService, IHostedService
 
 			try
 			{
-				await user.SendMessageAsync(embed: new EmbedBuilder()
+				await user.SendMessageAsync(embed: new EmbedBuilder
 				{
 					Title = "Hey there!",
 					Description =
@@ -381,7 +381,8 @@ public class DiscordService : IDiscordService, IHostedService
 		var usersCount = GetUsersCount(guild);
 		var botsCount = GetBotsCount(guild);
 		await UpdateMemberScreeningChannelName(channel, usersCount);
-		EmbedBuilder embed = new() {
+		EmbedBuilder embed = new()
+		{
 			Color = joined ? Color.Green : Color.Red,
 			Description = $"Latest member count: **{usersCount}** ({botsCount} bots)",
 			ThumbnailUrl = member.GetAvatarUrl(),
@@ -390,7 +391,8 @@ public class DiscordService : IDiscordService, IHostedService
 		embed.WithCurrentTimestamp();
 
 		embed.AddField("__ID__", member.Id, member.Nickname != null);
-		if (member.Nickname != null) {
+		if (member.Nickname != null)
+		{
 			embed.AddField("__Nickname__", member.Nickname, true);
 			embed.AddBlankField(true);
 		}
@@ -528,9 +530,12 @@ public class DiscordService : IDiscordService, IHostedService
 		
 		var messageEmbed = DiscordStatusCheckMessageBuilder.Build(status);
 
-		try {
+		try
+		{
 			await channel.SendMessageAsync(embed: messageEmbed);
-		} catch (Exception ex) {
+		}
+		catch (Exception ex)
+		{
 			_logger.Error(ex, "Cannot send status update");
 		}
 	}

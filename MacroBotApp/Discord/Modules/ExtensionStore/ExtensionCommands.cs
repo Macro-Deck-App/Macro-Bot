@@ -1,15 +1,14 @@
-using Discord;
 using Discord.Interactions;
-using Discord.WebSocket;
 using JetBrains.Annotations;
-using MacroBot.Config;
+
 namespace MacroBot.Discord.Modules.ExtensionStore;
 
 // Temporarely disabled
 
 [Group("extensions", "Extension Store Commands")]
 [UsedImplicitly]
-public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext> {
+public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
+{
     private readonly BotConfig _botConfig;
     private readonly CommandsConfig _commandsConfig;
     private readonly ExtensionDetectionConfig _extDetectionConfig;

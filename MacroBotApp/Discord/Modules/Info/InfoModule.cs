@@ -16,7 +16,7 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
     private readonly ILogger _logger = Log.ForContext<DiscordService>();
     
     [SlashCommand("bot", "Show information about the bot")]
-    public async Task bot()
+    public async Task Bot()
     {
         EmbedBuilder embed = new()
         {
@@ -35,7 +35,10 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
     }
 
     [UserCommand("Show user information")]
-    public async Task userInfoUC(SocketGuildUser user) { await userInfo(user); }
+    public async Task userInfoUC(SocketGuildUser user)
+    {
+        await userInfo(user);
+    }
 
     [SlashCommand("user", "Show information about a user")]
     public async Task userInfo([Summary(description: "Shows information about the user")] SocketGuildUser user, bool asUser = false)
@@ -48,29 +51,45 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
             embed.WithThumbnailUrl(Context.Client.GetUser(user.Id).GetAvatarUrl());
             embed.AddField("Status", Context.Client.GetUser(user.Id).Status, true);
             var acts = "";
-            try {  
-                foreach (var activities in user.Activities) {
-                    if (activities is SpotifyGame spot) {
+            try
+            {  
+                foreach (var activities in user.Activities)
+                {
+                    if (activities is SpotifyGame spot)
+                    {
                         acts += $"[Spotify] [**{spot.TrackTitle}**]({spot.TrackUrl}) {string.Join(", ", spot.Artists)} ({spot.Elapsed.Value.ToString(@"hh\:mm\:ss")} / {spot.Duration.Value.ToString(@"hh\:mm\:ss")})\r\n";
                     }
-                    else if (activities is CustomStatusGame customStatus) {
+                    else if (activities is CustomStatusGame customStatus)
+                    {
                         acts += $"[{customStatus.Name}] **{customStatus.Emote.Name} {customStatus.Details}**\r\n";
                     }
-                    else if (activities is RichGame richGame) {
+                    else if (activities is RichGame richGame)
+                    {
                         acts += $"[{richGame.Name}]{(!string.IsNullOrEmpty(richGame.Details)? $" **{richGame.Details}**" : " No details")}\r\n";
                     }
-                    else {
+                    else
+                    {
                         acts += $"[{activities.Type}] **{activities.Name}** {(!string.IsNullOrEmpty(activities.Details)? $" {activities.Details}" : " No details")}\r\n";
                     }
                 }
-            } catch {}
+            }
+            catch
+            {
+                // ignored
+            }
+
             embed.AddField("Activities", (acts == "")? "None" : acts);
             embed.AddField("Roles", string.Join(", ", Context.Guild.GetUser(user.Id).Roles.Select(r => r.Mention)), true);
             embed.AddField("Creation Date", $"<t:{Context.Client.GetUser(user.Id).CreatedAt.ToUnixTimeSeconds()}>");
             embed.AddField("Join Date", $"<t:{Context.Guild.GetUser(user.Id).JoinedAt.Value.ToUnixTimeSeconds()}>");
-            try {
+            try
+            {
                 embed.AddField("Active Clients", String.Join(", ", user.ActiveClients));
-            } catch {}
+            }
+            catch
+            {
+                // ignored
+            }
             embed.WithFooter("ID: " + Context.Client.GetUser(user.Id).Id);
         }
         else

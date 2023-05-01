@@ -70,7 +70,8 @@ public class ExtensionMessageBuilder
         var extensions =
             await httpClient.GetFromJsonAsync<ExtensionResponse>(string.Format("{0}/{1}", extDetectionConfig.SearchExtensionsUrl, HttpUtility.UrlEncode(query)));
         
-        var embed = new EmbedBuilder {
+        var embed = new EmbedBuilder
+        {
             Title = String.Format((extensions.TotalItemsCount > 0) ? "Extension Results of '{0}'" : "Could not find extension '{0}'", query)
         };
 

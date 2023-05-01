@@ -6,5 +6,4 @@ namespace MacroBot.Controllers;
 [Route("/statistics")]
 public class ServerStatisticsController
 {
-    
 }

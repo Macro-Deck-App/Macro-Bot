@@ -24,7 +24,8 @@ public static class DependencyInjection
         var webhooksConfig = await WebhooksConfig.LoadAsync(Paths.WebhooksPath);
         var extDetectionConfig = await ExtensionDetectionConfig.LoadAsync(Paths.ExtensionDetectionConfigPath);
 		
-        DiscordSocketConfig discordSocketConfig = new() {
+        DiscordSocketConfig discordSocketConfig = new()
+        {
             AlwaysDownloadUsers = true,
             MaxWaitBetweenGuildAvailablesBeforeReady = (int)new TimeSpan(0, 0, 15).TotalMilliseconds,
             MessageCacheSize = 100,
