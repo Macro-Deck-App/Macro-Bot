@@ -3,17 +3,17 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 
-namespace MacroBot.Startup;
+namespace MacroBot.StartupConfig;
 
 public static class LoggingConfiguration
 {
-    public static void ConfigureSerilog(this WebApplicationBuilder webApplicationBuilder)
+    public static IHostBuilder ConfigureSerilog(this IHostBuilder hostBuilder)
     {
-        webApplicationBuilder.Host.UseSerilog((_, services, configuration) => 
+        return hostBuilder.UseSerilog((_, services, configuration) =>
             configuration
                 .MinimumLevel.Verbose()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Debug)
-                .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Debug) 
+                .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Debug)
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
                 .WriteTo.DiscordSink(services));
     }
