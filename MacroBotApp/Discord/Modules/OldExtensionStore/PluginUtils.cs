@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using System.Text.Json;
-using Discord;
+﻿using Discord;
 
 namespace MacroBot.Discord.Modules.OldExtensionStore
 {
@@ -18,13 +11,16 @@ namespace MacroBot.Discord.Modules.OldExtensionStore
             return json;
         }
 
-        public List<Embed> SetPluginsAsEmbeds(List<Plugin> plugins) {
+        public List<Embed> SetPluginsAsEmbeds(List<Plugin> plugins)
+        {
             List<Embed> embeds = new();
             EmbedBuilder embedBuilder = new();
 
             int pl = 0;
-            foreach (Plugin plugin in plugins) {
-                if (pl >= 14) {
+            foreach (Plugin plugin in plugins)
+            {
+                if (pl >= 14)
+                {
                     embedBuilder.WithTitle("Macro Deck Plugins and Icon Packs");
                     embedBuilder.WithFooter($"Page {embeds.Count() + 1}");
                     embeds.Add(embedBuilder.Build());

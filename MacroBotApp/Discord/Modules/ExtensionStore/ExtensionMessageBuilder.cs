@@ -57,7 +57,8 @@ public class ExtensionMessageBuilder
             }
         }
         
-        var embed = new EmbedBuilder {
+        var embed = new EmbedBuilder
+        {
             Title = extension?.Name ?? "Not found"
         };
 

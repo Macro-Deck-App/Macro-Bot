@@ -1,6 +1,7 @@
 ﻿namespace MacroBot.Discord.Modules.Tagging;
 
-public class Tag {
+public class Tag
+{
 	public ulong Author { get; set; }
 	public ulong Guild { get; set; }
 	public string Name { get; set; }

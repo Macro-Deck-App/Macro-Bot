@@ -10,20 +10,18 @@ using MacroBot.Discord.Modules.Tagging;
 using MacroBot.Extensions;
 using MacroBot.ServiceInterfaces;
 using MacroBot.Services;
+using MacroBot.StartupConfig;
 
-namespace MacroBot.Startup;
+namespace MacroBot;
 
-public static class DependencyInjection
+public class Startup
 {
-    public static async Task ConfigureServicesAsync(this IServiceCollection services)
+    public void ConfigureServices(IServiceCollection services)
     {
-        // ReSharper disable once HeapView.ClosureAllocation
-        var botConfig = await BotConfig.LoadAsync(Paths.BotConfigPath);
-        var commandsConfig = await CommandsConfig.LoadAsync(Paths.CommandsConfigPath);
-        var statusCheckConfig = await StatusCheckConfig.LoadAsync(Paths.StatusCheckConfigPath);
-        var webhooksConfig = await WebhooksConfig.LoadAsync(Paths.WebhooksPath);
+        LoadRegisterConfigs(services);
 		
-        DiscordSocketConfig discordSocketConfig = new() {
+        DiscordSocketConfig discordSocketConfig = new()
+        {
             AlwaysDownloadUsers = true,
             MaxWaitBetweenGuildAvailablesBeforeReady = (int)new TimeSpan(0, 0, 15).TotalMilliseconds,
             MessageCacheSize = 100,
@@ -40,11 +38,7 @@ public static class DependencyInjection
         services.AddAutoMapper(typeof(TagMapping));
         services.AddTransient<ITagRepository, TagRepository>();
         services.AddTransient<TaggingUtils>();
-        services.AddSingleton(botConfig);
-        services.AddSingleton(commandsConfig);
         services.AddSingleton(discordSocketConfig);
-        services.AddSingleton(statusCheckConfig);
-        services.AddSingleton(webhooksConfig);
         services.AddSingleton<DiscordSocketClient>();
         services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(), interactionServiceConfig));
         services.AddSingleton<CommandHandler>();
@@ -54,5 +48,39 @@ public static class DependencyInjection
         services.AddHttpClient();
         services.AddSwagger();
         services.AddControllers();
+    }
+    
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        app.UseCors("AllowAny");
+        app.UseFileServer();
+        app.UseWebSockets(new WebSocketOptions
+        {
+            KeepAliveInterval = TimeSpan.FromMinutes(2)
+        });
+        app.UseRouting();
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+        });
+        app.ConfigureSwagger();
+    }
+    
+    private static void LoadRegisterConfigs(IServiceCollection services)
+    {
+        Task.Run(async () =>
+        {
+            var buyMeACoffeeConfig = await BuyMeACoffeeConfig.LoadAsync(Paths.BuyMeACoffeeConfigPath);
+            var botConfig = await BotConfig.LoadAsync(Paths.BotConfigPath);
+            var commandsConfig = await CommandsConfig.LoadAsync(Paths.CommandsConfigPath);
+            var statusCheckConfig = await StatusCheckConfig.LoadAsync(Paths.StatusCheckConfigPath);
+            var webhooksConfig = await WebhooksConfig.LoadAsync(Paths.WebhooksPath);
+
+            services.AddSingleton(buyMeACoffeeConfig);
+            services.AddSingleton(statusCheckConfig);
+            services.AddSingleton(webhooksConfig);
+            services.AddSingleton(botConfig);
+            services.AddSingleton(commandsConfig);
+        }).Wait();
     }
 }

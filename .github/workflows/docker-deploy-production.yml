@@ -21,7 +21,7 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file MacroBotApp/Dockerfile --tag suchbyte/macro-bot:${{steps.get-version.outputs.version}}
     - name: Log into registry ${{ env.REGISTRY }}
-      uses: docker/login-action@219c305e1ce92a755f3aa4ba17387c95df31e987
+      uses: docker/login-action@40891eba8c2bcd1309b07ba8b11232f313e86779
       with:
         registry: docker.io
         username: suchbyte
@@ -29,7 +29,7 @@ jobs:
     - name: Push the Docker image
       run: docker push suchbyte/macro-bot:${{steps.get-version.outputs.version}}
     - name: Updating the image on the server
-      uses: appleboy/ssh-action@v0.1.8
+      uses: appleboy/ssh-action@v0.1.10
       with:
         host: ${{ secrets.DOCKER_HOST }}
         username: ${{ secrets.GITHUBWORKFLOWS_USER }}

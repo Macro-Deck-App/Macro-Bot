@@ -7,8 +7,6 @@ using MacroBot.Config;
 using MacroBot.Discord;
 using MacroBot.Discord.Modules.OldExtensionStore;
 using MacroBot.Extensions;
-using MacroBot.Models.Extensions;
-using MacroBot.Models.Status;
 using MacroBot.Models.Webhook;
 using MacroBot.ServiceInterfaces;
 using Serilog;
@@ -92,7 +90,8 @@ public class DiscordService : IDiscordService, IHostedService
 	    await _discordSocketClient.StartAsync();
     }
 
-	private async Task ThreadCreated(SocketThreadChannel thread) {
+	private async Task ThreadCreated(SocketThreadChannel thread)
+	{
 		plsinthisthread = new();
 		var msg = await thread.GetMessagesAsync(2).FlattenAsync();
 		var lastMsg = msg.Last();
@@ -104,7 +103,8 @@ public class DiscordService : IDiscordService, IHostedService
 			return;
 		}
 		
-		foreach (var extension in extensions) {
+		foreach (var extension in extensions)
+		{
 			if (lastMsg.CleanContent.IndexOf(extension.Name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
 			    lastMsg.CleanContent.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0 &&
 			    thread.Name.IndexOf(extension.Name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
@@ -115,7 +115,8 @@ public class DiscordService : IDiscordService, IHostedService
 
 			plsinthisthread.Add(extension.PackageId);
 			
-			var embed = new EmbedBuilder {
+			var embed = new EmbedBuilder
+			{
 				Title = $"Do you have a problem with a plugin?",
 				Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
 			};
@@ -206,7 +207,8 @@ public class DiscordService : IDiscordService, IHostedService
 	    }
     }
     
-    private async Task Ready () {
+    private async Task Ready ()
+    {
 	    DiscordReady = true;
 	    await _interactionService.RegisterCommandsGloballyAsync();
 	    var guild = _discordSocketClient.GetGuild(_botConfig.GuildId);
@@ -217,7 +219,8 @@ public class DiscordService : IDiscordService, IHostedService
 	    }
     }
 
-	private async Task UserJoined (SocketGuildUser member) {
+	private async Task UserJoined (SocketGuildUser member)
+	{
 		await MemberMovement(member, true);
 	}
 
@@ -229,7 +232,8 @@ public class DiscordService : IDiscordService, IHostedService
 		}
 	}
 
-	private async Task MessageReceived (SocketMessage message) {
+	private async Task MessageReceived (SocketMessage message)
+	{
 		if (message.Author is not SocketGuildUser member || member.IsBot)
 		{
 			return;
@@ -268,7 +272,8 @@ public class DiscordService : IDiscordService, IHostedService
 				message.CleanContent);
 			try
 			{
-				await member.SendMessageAsync(embed: new EmbedBuilder() {
+				await member.SendMessageAsync(embed: new EmbedBuilder
+				{
 					Title = "Hello there!",
 					Description = $"It looks like you mentioned either a user, a role or @everyone! It is not allowed on the {(message.Channel as IGuildChannel)!.Guild.Name} server. Your message is below."
 				}.AddField("Message", message.CleanContent).Build());
@@ -279,11 +284,14 @@ public class DiscordService : IDiscordService, IHostedService
 			}
 		}
 
-		if (imageChannels.Contains(message.Channel.Id) && !DiscordMessageFilter.FilterForImageChannels(message)) {
+		if (imageChannels.Contains(message.Channel.Id) && !DiscordMessageFilter.FilterForImageChannels(message))
+		{
 			await message.DeleteAsync();
 
-			try {
-				var embed = new EmbedBuilder() {
+			try
+			{
+				var embed = new EmbedBuilder
+				{
 					Color = new Color(63, 127, 191),
 					Description = message.CleanContent.Replace("<", "\\<").Replace("*", "\\*").Replace("_", "\\_").Replace("`", "\\`").Replace(":", "\\:"),
 					Timestamp = message.Timestamp,
@@ -302,7 +310,8 @@ public class DiscordService : IDiscordService, IHostedService
 					message.Channel.Name);
 
 			}
-			catch (HttpException) {
+			catch (HttpException)
+			{
 				_logger.Information(
 					"Message without image from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted! DM with their text was not sent",
 					message.Author.Username,
@@ -330,7 +339,8 @@ public class DiscordService : IDiscordService, IHostedService
 		var usersCount = GetUsersCount(guild);
 		var botsCount = GetBotsCount(guild);
 		await UpdateMemberScreeningChannelName(channel, usersCount);
-		EmbedBuilder embed = new() {
+		EmbedBuilder embed = new()
+		{
 			Color = joined ? Color.Green : Color.Red,
 			Description = $"Latest member count: **{usersCount}** ({botsCount} bots)",
 			ThumbnailUrl = member.GetAvatarUrl(),
@@ -339,7 +349,8 @@ public class DiscordService : IDiscordService, IHostedService
 		embed.WithCurrentTimestamp();
 
 		embed.AddField("__ID__", member.Id, member.Nickname != null);
-		if (member.Nickname != null) {
+		if (member.Nickname != null)
+		{
 			embed.AddField("__Nickname__", member.Nickname, true);
 			embed.AddBlankField(true);
 		}
@@ -477,9 +488,12 @@ public class DiscordService : IDiscordService, IHostedService
 		
 		var messageEmbed = DiscordStatusCheckMessageBuilder.Build(status);
 
-		try {
+		try
+		{
 			await channel.SendMessageAsync(embed: messageEmbed);
-		} catch (Exception ex) {
+		}
+		catch (Exception ex)
+		{
 			_logger.Error(ex, "Cannot send status update");
 		}
 	}

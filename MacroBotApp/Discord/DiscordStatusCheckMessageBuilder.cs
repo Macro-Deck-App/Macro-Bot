@@ -1,7 +1,6 @@
 using Discord;
 using MacroBot.Extensions;
 using MacroBot.Models.Status;
-using Serilog;
 
 namespace MacroBot.Discord;
 
