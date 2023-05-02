@@ -20,6 +20,7 @@ public static class Paths
     public static readonly string CommandsConfigPath = Path.Combine(MainDirectory, "Commands.json");
     public static readonly string StatusCheckConfigPath = Path.Combine(MainDirectory, "StatusCheck.json");
     public static readonly string DatabasePath = Path.Combine(MainDirectory, "Database.db");
+    public static readonly string BuyMeACoffeeConfigPath = Path.Combine(MainDirectory, "BuyMeACoffee.json");
 
     public static void EnsureDirectoriesCreated()
     {

@@ -14,13 +14,11 @@ public class BuyMeACoffeeDonationCreatedData
     public string? Currency { get; set; }
     
     [JsonPropertyName("note_hidden")]
-    public bool NoteHidden {get; set; }
+    public string? NoteHidden {get; set; }
     
     [JsonPropertyName("support_note")]
     public string? SupportNote { get; set; }
     
     [JsonPropertyName("supporter_name")]
     public string? SupporterName { get; set; }
-
-    public bool Succeeded => Status?.Equals("succeeded", StringComparison.InvariantCultureIgnoreCase) ?? false;
 }
