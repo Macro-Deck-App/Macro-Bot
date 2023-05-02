@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MacroBot.Controllers;
 
 [ApiController]
-[Route("/buymeaocoffee")]
+[Route("/buymeacoffee")]
 public class BuyMeACoffeeController : ControllerBase
 {
     private readonly IDiscordService _discordService;
