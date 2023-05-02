@@ -26,6 +26,7 @@ public static class Program
 				hostBuilder.ConfigureKestrel(options =>
 				{
 					options.ListenAnyIP(port);
+					options.AllowSynchronousIO = true;
 				});
 			}).Build();
 

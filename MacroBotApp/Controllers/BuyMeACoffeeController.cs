@@ -1,3 +1,4 @@
+using MacroBot.Authentication;
 using MacroBot.Config;
 using MacroBot.Models.BuyMeACoffee;
 using MacroBot.Models.Webhook;
@@ -7,37 +8,28 @@ using Microsoft.AspNetCore.Mvc;
 namespace MacroBot.Controllers;
 
 [ApiController]
-[Route("/buymeacoffee")]
+[Route("/buymeaocoffee")]
 public class BuyMeACoffeeController : ControllerBase
 {
     private readonly IDiscordService _discordService;
-    private readonly WebhooksConfig _webhooksConfig;
+    private readonly BuyMeACoffeeConfig _buyMeACoffeeConfig;
 
-    public BuyMeACoffeeController(IDiscordService discordService, WebhooksConfig webhooksConfig)
+    public BuyMeACoffeeController(IDiscordService discordService, BuyMeACoffeeConfig buyMeACoffeeConfig)
     {
         _discordService = discordService;
-        _webhooksConfig = webhooksConfig;
+        _buyMeACoffeeConfig = buyMeACoffeeConfig;
     }
 
     [HttpPost("donationcreated")]
-    public async Task<IActionResult> DonationCreated([FromQuery] BuyMeACoffeeDonationCreatedRequest donationCreatedRequest)
+    [BuyMeACoffeeWebhook]
+    public async Task<IActionResult> DonationCreated([FromBody] BuyMeACoffeeDonationCreatedRequest donationCreatedRequest)
     {
-        if (donationCreatedRequest.Data?.Succeeded is false)
-        {
-            return BadRequest();
-        }
-        var webhook = _webhooksConfig.Webhooks.FirstOrDefault(x => x.Id.Equals("buymeacoffee"));
-        if (webhook == null)
-        {
-            return NotFound();
-        }
-        
-        var supporterName = donationCreatedRequest.Data?.SupporterName ?? "anonymous";
-        var amount = donationCreatedRequest.Data?.Amount?.ToString("#0.00") ?? "hidden";
+        var supporterName = donationCreatedRequest.Data?.SupporterName ?? "Anonymous";
+        var amount = donationCreatedRequest.Data?.Amount?.ToString("#0.00") ?? "Hidden";
         var currency = donationCreatedRequest.Data?.Currency ?? string.Empty;
-        var message = donationCreatedRequest.Data?.NoteHidden == true
+        var message = donationCreatedRequest.Data?.NoteHidden == "true"
             ? donationCreatedRequest.Data?.SupportNote
-            : string.Empty;
+            : null;
 
         var webHookRequest = new WebhookRequest
         {
@@ -84,6 +76,12 @@ public class BuyMeACoffeeController : ControllerBase
             Value = "https://buymeacoffee.com/suchbyte",
             Inline = false
         });
+
+        var webhook = new WebhookItem
+        {
+            Id = "BuyMeACoffee",
+            ChannelId = _buyMeACoffeeConfig.ChannelId
+        };
 
         await _discordService.BroadcastWebhookAsync(webhook, webHookRequest);
         return Ok();
