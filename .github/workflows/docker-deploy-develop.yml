@@ -16,6 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: fjogeleit/http-request-action@v1
+      continue-on-error: true
       with:
         url: 'https://testbot.api.macro-deck.app/webhook/deploy'
         method: 'POST'
@@ -33,6 +34,7 @@ jobs:
     - name: Push the Docker image
       run: docker push suchbyte/macro-bot:dev_${{ github.sha }}
     - uses: fjogeleit/http-request-action@v1
+      continue-on-error: true
       with:
         url: 'https://testbot.api.macro-deck.app/webhook/deploy'
         method: 'POST'
