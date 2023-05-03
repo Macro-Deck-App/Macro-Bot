@@ -8,6 +8,8 @@ using MacroBot.DataAccess.Repositories;
 using MacroBot.DataAccess.RepositoryInterfaces;
 using MacroBot.Discord.Modules.Tagging;
 using MacroBot.Extensions;
+using MacroBot.Manager;
+using MacroBot.ManagerInterfaces;
 using MacroBot.ServiceInterfaces;
 using MacroBot.Services;
 using MacroBot.StartupConfig;
@@ -45,6 +47,7 @@ public class Startup
         services.AddInjectableHostedService<IDiscordService, DiscordService>();
         services.AddInjectableHostedService<IStatusCheckService, StatusCheckService>();
         services.AddInjectableHostedService<ITimerService, TimerService>();
+        services.AddScoped<IKoFiManager, KoFiManager>();
         services.AddHttpClient();
         services.AddSwagger();
         services.AddControllers();
@@ -70,13 +73,13 @@ public class Startup
     {
         Task.Run(async () =>
         {
-            var buyMeACoffeeConfig = await BuyMeACoffeeConfig.LoadAsync(Paths.BuyMeACoffeeConfigPath);
+            var koFiConfig = await KoFiConfig.LoadAsync(Paths.KoFiConfigPath);
             var botConfig = await BotConfig.LoadAsync(Paths.BotConfigPath);
             var commandsConfig = await CommandsConfig.LoadAsync(Paths.CommandsConfigPath);
             var statusCheckConfig = await StatusCheckConfig.LoadAsync(Paths.StatusCheckConfigPath);
             var webhooksConfig = await WebhooksConfig.LoadAsync(Paths.WebhooksPath);
 
-            services.AddSingleton(buyMeACoffeeConfig);
+            services.AddSingleton(koFiConfig);
             services.AddSingleton(statusCheckConfig);
             services.AddSingleton(webhooksConfig);
             services.AddSingleton(botConfig);
