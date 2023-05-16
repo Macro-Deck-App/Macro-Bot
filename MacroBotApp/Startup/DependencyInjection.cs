@@ -6,6 +6,7 @@ using MacroBot.DataAccess;
 using MacroBot.DataAccess.AutoMapper;
 using MacroBot.DataAccess.Repositories;
 using MacroBot.DataAccess.RepositoryInterfaces;
+using MacroBot.Discord.Modules.Reports;
 using MacroBot.Discord.Modules.Tagging;
 using MacroBot.Extensions;
 using MacroBot.ServiceInterfaces;
@@ -23,13 +24,13 @@ public static class DependencyInjection
         var statusCheckConfig = await StatusCheckConfig.LoadAsync(Paths.StatusCheckConfigPath);
         var webhooksConfig = await WebhooksConfig.LoadAsync(Paths.WebhooksPath);
         var extDetectionConfig = await ExtensionDetectionConfig.LoadAsync(Paths.ExtensionDetectionConfigPath);
-		
+
         DiscordSocketConfig discordSocketConfig = new()
         {
             AlwaysDownloadUsers = true,
             MaxWaitBetweenGuildAvailablesBeforeReady = (int)new TimeSpan(0, 0, 15).TotalMilliseconds,
             MessageCacheSize = 100,
-            GatewayIntents = GatewayIntents.All,
+            GatewayIntents = GatewayIntents.All
         };
 
         InteractionServiceConfig interactionServiceConfig = new()
@@ -37,11 +38,13 @@ public static class DependencyInjection
             AutoServiceScopes = true,
             DefaultRunMode = RunMode.Async
         };
-        
+
         services.AddDbContext<MacroBotContext>();
         services.AddAutoMapper(typeof(TagMapping));
         services.AddTransient<ITagRepository, TagRepository>();
         services.AddTransient<TaggingUtils>();
+        services.AddTransient<IReportRepository, ReportRepository>();
+        services.AddTransient<ReportUtils>();
         services.AddSingleton(botConfig);
         services.AddSingleton(commandsConfig);
         services.AddSingleton(discordSocketConfig);
@@ -49,7 +52,8 @@ public static class DependencyInjection
         services.AddSingleton(webhooksConfig);
         services.AddSingleton(extDetectionConfig);
         services.AddSingleton<DiscordSocketClient>();
-        services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(), interactionServiceConfig));
+        services.AddSingleton(x =>
+            new InteractionService(x.GetRequiredService<DiscordSocketClient>(), interactionServiceConfig));
         services.AddSingleton<CommandHandler>();
         services.AddInjectableHostedService<IDiscordService, DiscordService>();
         services.AddInjectableHostedService<IStatusCheckService, StatusCheckService>();

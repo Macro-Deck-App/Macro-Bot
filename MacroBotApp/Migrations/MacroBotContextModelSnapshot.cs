@@ -15,34 +15,42 @@ namespace MacroBot.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "7.0.2");
+            modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
 
             modelBuilder.Entity("MacroBot.DataAccess.Entities.ReportEntity", b =>
                 {
-                    b.Property<ulong>("UserId")
-                        .ValueGeneratedOnAdd()
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("id");
+
+                    b.Property<ulong?>("Channel")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("content");
+
+                    b.Property<ulong>("Guild")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("guild");
+
+                    b.Property<ulong?>("Message")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Reported")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("reported");
+
+                    b.Property<ulong>("Reporter")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("reporter");
+
+                    b.Property<ulong>("User")
                         .HasColumnType("INTEGER")
                         .HasColumnName("user");
 
-                    b.Property<ulong>("ByUser")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("byuser");
-
-                    b.Property<ulong?>("Message")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("message");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("reason");
-
-                    b.Property<string>("ReportID")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("reportid");
-
-                    b.HasKey("UserId");
+                    b.HasKey("Id");
 
                     b.ToTable("reports", (string)null);
                 });

@@ -14,11 +14,9 @@ public static class DiscordSocketClientExtensions
         var logger = Log.ForContext<DiscordSocketClient>();
         client.Log += delegate(LogMessage message)
         {
-            if (message.Message is null || 
+            if (message.Message is null ||
                 message.Exception?.InnerException is null)
-            {
                 return Task.CompletedTask;
-            }
 
             switch (message.Severity)
             {
@@ -34,23 +32,23 @@ public static class DiscordSocketClientExtensions
                     break;
                 case LogSeverity.Warning:
                     logger.Warning(
-                        message.Message, 
+                        message.Message,
                         message.Exception.InnerException);
                     break;
                 case LogSeverity.Info:
                     logger.Information(
-                        message.Message, 
+                        message.Message,
                         message.Exception.InnerException);
                     break;
                 case LogSeverity.Verbose:
                     logger.Verbose(
-                        message.Message, 
+                        message.Message,
                         message.Exception.InnerException);
                     break;
                 case LogSeverity.Debug:
                 default:
                     logger.Debug(
-                        message.Message, 
+                        message.Message,
                         message.Exception.InnerException);
                     break;
             }
@@ -67,7 +65,7 @@ public static class DiscordSocketClientExtensions
         var serviceProvider = scope.ServiceProvider;
         await interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
         logger.Information(
-            "{NoOfModules} modules mapped - {Modules}", 
+            "{NoOfModules} modules mapped - {Modules}",
             interactionService.Modules.Count,
             string.Join(",", interactionService.Modules.Select(x => x.Name)));
     }

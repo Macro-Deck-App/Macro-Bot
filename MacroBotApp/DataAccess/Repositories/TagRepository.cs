@@ -10,9 +10,8 @@ namespace MacroBot.DataAccess.Repositories;
 
 public class TagRepository : ITagRepository
 {
-    private readonly ILogger _logger = Log.ForContext<TagRepository>();
-    
     private readonly MacroBotContext _dbContext;
+    private readonly ILogger _logger = Log.ForContext<TagRepository>();
     private readonly IMapper _mapper;
 
     public TagRepository(MacroBotContext dbContext, IMapper mapper)
@@ -71,6 +70,7 @@ public class TagRepository : ITagRepository
             await CreateTag(name, content, editor, guildId);
             return;
         }
+
         existingTag.Name = name;
         existingTag.Content = content;
         existingTag.Guild = guildId;
@@ -86,6 +86,7 @@ public class TagRepository : ITagRepository
             _logger.Warning("Cannot delete tag {TagName} - Tag not found", name);
             return;
         }
+
         _dbContext.TagEntities.Remove(existingTag);
         await _dbContext.SaveChangesAsync();
     }
@@ -93,10 +94,7 @@ public class TagRepository : ITagRepository
     public async Task<IEnumerable<Tag>> GetTagsForGuild(ulong guildId)
     {
         var guildTags = await _dbContext.TagEntities.Where(x => x.Guild == guildId).ToArrayAsync();
-        if (guildTags.Length == 0)
-        {
-            return Enumerable.Empty<Tag>();
-        }
+        if (guildTags.Length == 0) return Enumerable.Empty<Tag>();
         var guildTagsMapped = _mapper.Map<IEnumerable<TagEntity>, IEnumerable<Tag>>(guildTags);
         return guildTagsMapped;
     }
@@ -105,10 +103,7 @@ public class TagRepository : ITagRepository
     {
         var userTags = await _dbContext.TagEntities.Where(x => x.Guild.Equals(guildId) && x.Author.Equals(userId))
             .ToArrayAsync();
-        if (userTags.Length == 0)
-        {
-            return Enumerable.Empty<Tag>();
-        }
+        if (userTags.Length == 0) return Enumerable.Empty<Tag>();
         var userTagsMapped = _mapper.Map<IEnumerable<TagEntity>, IEnumerable<Tag>>(userTags);
         return userTagsMapped;
     }

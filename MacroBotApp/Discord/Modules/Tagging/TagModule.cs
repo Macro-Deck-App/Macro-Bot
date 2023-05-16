@@ -10,21 +10,21 @@ namespace MacroBot.Discord.Modules.Tagging;
 [UsedImplicitly]
 public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
 {
+    // Assignable Lists
+    public static List<UserTagAssignable> createTagAssignments = new();
+    public static List<UserTagAssignable> deleteTagAssignments = new();
+    public static List<UserTagAssignable> editTagAssignments = new();
     private readonly CommandsConfig _commandsConfig;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly TaggingUtils _taggingUtils;
 
-    public TaggingCommands(CommandsConfig commandsConfig, IServiceScopeFactory serviceScopeFactory, TaggingUtils taggingUtils)
+    public TaggingCommands(CommandsConfig commandsConfig, IServiceScopeFactory serviceScopeFactory,
+        TaggingUtils taggingUtils)
     {
         _commandsConfig = commandsConfig;
         _serviceScopeFactory = serviceScopeFactory;
         _taggingUtils = taggingUtils;
     }
-    
-    // Assignable Lists
-    public static List<UserTagAssignable> createTagAssignments = new();
-    public static List<UserTagAssignable> deleteTagAssignments = new();
-    public static List<UserTagAssignable> editTagAssignments = new();
 
     // Autocomplete Arguments
     [AutocompleteCommand("tag", "delete")]
@@ -60,7 +60,6 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         var requiredPermissions = _commandsConfig.Tagging.PermissionManageTags;
         if (!_taggingUtils.CheckPermissions(requiredPermissions, guildUser))
         {
-
             await RespondAsync(embed: _taggingUtils.buildPermissionError(requiredPermissions), ephemeral: true);
             return;
         }
@@ -76,10 +75,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
 
         // Handle Assignables
         var assignable = createTagAssignments.Find(x => x.guildId == Context.Guild.Id && x.userId == Context.User.Id);
-        if (assignable != null)
-        {
-            createTagAssignments.Remove(assignable);
-        }
+        if (assignable != null) createTagAssignments.Remove(assignable);
         createTagAssignments.Add(new UserTagAssignable(Context.Guild.Id, Context.User.Id, name));
 
         // Send Modal Prompt
@@ -88,14 +84,13 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
 
 
     [SlashCommand("delete", "Delete an existing tag")]
-    public async Task Delete([Summary("tag"), Autocomplete] string tagName)
+    public async Task Delete([Summary("tag")] [Autocomplete] string tagName)
     {
         // Handle Permissions
         var guildUser = Context.Guild.GetUser(Context.User.Id);
         var requiredPermissions = _commandsConfig.Tagging.PermissionManageTags;
         if (!_taggingUtils.CheckPermissions(requiredPermissions, guildUser))
         {
-
             await RespondAsync(embed: _taggingUtils.buildPermissionError(requiredPermissions), ephemeral: true);
             return;
         }
@@ -114,17 +109,14 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
 
         // Handle Assignables
         var assignable = deleteTagAssignments.Find(x => x.guildId == Context.Guild.Id && x.userId == Context.User.Id);
-        if (assignable != null)
-        {
-            deleteTagAssignments.Remove(assignable);
-        }
+        if (assignable != null) deleteTagAssignments.Remove(assignable);
         deleteTagAssignments.Add(new UserTagAssignable(Context.Guild.Id, Context.User.Id, tagName));
 
         // Send Confirm Prompt
-        var embed = new EmbedBuilder()
+        var embed = new EmbedBuilder
         {
             Title = "Confirm Tag Deletion",
-            Description = $"Do you really want to delete following tag?\n\n**{tag.Name}**\n{tag.Content}",
+            Description = $"Do you really want to delete following tag?\n\n**{tag.Name}**\n{tag.Content}"
         };
         embed.WithColor(new Color(255, 50, 50));
 
@@ -137,14 +129,13 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
 
 
     [SlashCommand("edit", "Delete an existing tag")]
-    public async Task Edit([Summary("tag"), Autocomplete] string tagName)
+    public async Task Edit([Summary("tag")] [Autocomplete] string tagName)
     {
         // Handle Permissions
         var guildUser = Context.Guild.GetUser(Context.User.Id);
         var requiredPermissions = _commandsConfig.Tagging.PermissionManageTags;
         if (!_taggingUtils.CheckPermissions(requiredPermissions, guildUser))
         {
-
             await RespondAsync(embed: _taggingUtils.buildPermissionError(requiredPermissions), ephemeral: true);
             return;
         }
@@ -163,20 +154,16 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
 
         // Handle Assignables
         var assignable = editTagAssignments.Find(x => x.guildId == Context.Guild.Id && x.userId == Context.User.Id);
-        if (assignable != null)
-        {
-            editTagAssignments.Remove(assignable);
-        }
+        if (assignable != null) editTagAssignments.Remove(assignable);
         editTagAssignments.Add(new UserTagAssignable(Context.Guild.Id, Context.User.Id, tagName));
-
-
+        
         // Send Modal Prompt
         await RespondWithModalAsync<TagEditModal>("tag_edit_modal");
     }
 
 
     [SlashCommand("view", "View a tag")]
-    public async Task View([Summary("tag"), Autocomplete] string tagName)
+    public async Task View([Summary("tag")] [Autocomplete] string tagName)
     {
         // Get Tag from Database
         await using var scope = _serviceScopeFactory.CreateAsyncScope();
@@ -191,14 +178,14 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         // Build Viewer embed
-        var embed = new EmbedBuilder()
+        var embed = new EmbedBuilder
         {
             Title = tagName,
-            Description = tag.Content,
+            Description = tag.Content
         };
 
-        var footerText = "";
-        var footerAvatarUrl = "";
+        var footerText = string.Empty;
+        var footerAvatarUrl = string.Empty;
 
         var author = Context.Guild.GetUser(tag.Author);
         if (author != null)
@@ -212,7 +199,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         footerText += " | Last Edited";
-        embed.WithTimestamp((DateTimeOffset)tag.LastEdited);
+        embed.WithTimestamp(tag.LastEdited);
 
         embed.WithFooter(footerText, footerAvatarUrl);
 
@@ -226,8 +213,8 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
     {
         // Get tags from database
         var tagList = new List<Tag>();
-        var desc = "";
-        var title = "";
+        var desc = string.Empty;
+        var title = string.Empty;
 
         // Check if user argument is given
         await using var scope = _serviceScopeFactory.CreateAsyncScope();
@@ -235,7 +222,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         if (user != null)
         {
             tagList.AddRange(await tagRepository.GetTagsFromUser(Context.Guild.Id, user.Id));
-            title = $"Tag list";
+            title = "Tag list";
             desc += $"Show tags by <@{user.Id}>:\n\n";
         }
         else
@@ -245,10 +232,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         // Check if any tags were found
-        if (tagList.Count == 0)
-        {
-            desc += "**No tags found!**";
-        }
+        if (tagList.Count == 0) desc += "**No tags found!**";
 
         // Build tag list
         foreach (var tag in tagList)
@@ -259,10 +243,10 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         // Build viwer embed
-        var embed = new EmbedBuilder()
+        var embed = new EmbedBuilder
         {
             Title = title,
-            Description = desc,
+            Description = desc
         };
 
         // Reply with viewer embed
@@ -271,7 +255,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
 
 
     [SlashCommand("raw", "View a tags raw content")]
-    public async Task ViewRaw([Summary("tag"), Autocomplete] string tagName)
+    public async Task ViewRaw([Summary("tag")] [Autocomplete] string tagName)
     {
         // Get Tag from Database
         await using var scope = _serviceScopeFactory.CreateAsyncScope();
@@ -286,13 +270,14 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         // Build viewer embed
-        var embed = new EmbedBuilder()
+        var embed = new EmbedBuilder
         {
             Title = tagName + " | Raw Content",
-            Description = tag.Content.Replace("<", "\\<").Replace("*", "\\*").Replace("_", "\\_").Replace("`", "\\`").Replace(":", "\\:"),
+            Description = tag.Content.Replace("<", "\\<").Replace("*", "\\*").Replace("_", "\\_").Replace("`", "\\`")
+                .Replace(":", "\\:")
         };
-        var footerText = "";
-        var footerAvatarUrl = "";
+        var footerText = string.Empty;
+        var footerAvatarUrl = string.Empty;
 
         var author = Context.Guild.GetUser(tag.Author);
         if (author != null)
@@ -306,7 +291,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         }
 
         footerText += " | Last Edited";
-        embed.WithTimestamp((DateTimeOffset)tag.LastEdited);
+        embed.WithTimestamp(tag.LastEdited);
 
         embed.WithFooter(footerText, footerAvatarUrl);
 

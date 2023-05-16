@@ -2,7 +2,8 @@
 
 public static class HostedServiceExtensions
 {
-    public static IServiceCollection AddInjectableHostedService<TService, TImplementation>(this IServiceCollection services)
+    public static IServiceCollection AddInjectableHostedService<TService, TImplementation>(
+        this IServiceCollection services)
         where TService : class
         where TImplementation : class, IHostedService, TService
     {
@@ -12,5 +13,4 @@ public static class HostedServiceExtensions
             .AddSingleton<TService>(provider => provider.GetRequiredService<TImplementation>());
         return services;
     }
-    
 }

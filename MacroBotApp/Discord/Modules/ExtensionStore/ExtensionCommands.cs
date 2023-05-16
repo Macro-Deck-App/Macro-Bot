@@ -16,8 +16,8 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
     private readonly ExtensionDetectionConfig _extDetectionConfig;
     private readonly IHttpClientFactory _httpClientFactory;
 
-    public ExtensionCommands(BotConfig botConfig, 
-        CommandsConfig commandsConfig, 
+    public ExtensionCommands(BotConfig botConfig,
+        CommandsConfig commandsConfig,
         ExtensionDetectionConfig extDetectionConfig,
         IHttpClientFactory httpClientFactory,
         DiscordSocketClient client)
@@ -31,11 +31,12 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("search", "Search plugins")]
     public async Task SearchPlugin([Summary(description: "Extension Name or Package ID")] string search)
     {
-        await DeferAsync(ephemeral: true);
-        var embed = await ExtensionMessageBuilder.BuildSearchExtensionAsync(_httpClientFactory, _extDetectionConfig, search);
+        await DeferAsync(true);
+        var embed = await ExtensionMessageBuilder.BuildSearchExtensionAsync(_httpClientFactory, _extDetectionConfig,
+            search);
         await FollowupAsync(embed: embed, ephemeral: true);
     }
-    
+
     // This is currently disabled due to Discord API limitations.
     // In the current Discord API version, you can't edit Ephemeral messages.
     /*
@@ -81,6 +82,3 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
     }
     */
 }
-
-
-

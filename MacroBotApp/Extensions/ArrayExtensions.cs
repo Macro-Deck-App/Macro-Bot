@@ -6,11 +6,8 @@ public static class ArrayExtensions
     {
         var array = enumerable as T[] ?? enumerable.ToArray();
         if (!string.IsNullOrEmpty(lastSeparator) && array.Length > 1)
-        {
             return string.Join(separator, array.Take(array.Length - 1)) + $"{lastSeparator}" + array.LastOrDefault();
-        }
 
         return string.Join(separator, array);
     }
-
 }

@@ -16,22 +16,21 @@ public class ExtensionMessageBuilder
     {
         var embed = new EmbedBuilder
         {
-            Title = $"Do you have problems with {((extensionsList.Count <= 1)? "this plugin or icon pack" : "these plugins or icon packs")}?",
+            Title =
+                $"Do you have problems with {(extensionsList.Count <= 1 ? "this plugin or icon pack" : "these plugins or icon packs")}?",
             Description = "Macro Bot detected on your thread name or thread first post a name of a plugin or icon pack."
         };
-        
+
         foreach (var ext in extensionsList)
-        {
             try
             {
-                var a = (ext.DSupportUserId is null) ? ext.Author : string.Format("<@{UserId}>", ext.DSupportUserId);
+                var a = ext.DSupportUserId is null ? ext.Author : string.Format("<@{UserId}>", ext.DSupportUserId);
                 embed.AddField(ext.Name, $"by {a}", true);
             }
             catch (Exception e)
             {
                 Logger.Error(e, "Can't add embed field");
             }
-        }
 
         return embed.Build();
     }
@@ -39,7 +38,7 @@ public class ExtensionMessageBuilder
     public static MessageComponent BuildProblemExtensionInteractionAsync(List<AllExtensions> extensionsList)
     {
         var component = new ComponentBuilder();
-        var selectMenu = new SelectMenuBuilder()
+        var selectMenu = new SelectMenuBuilder
         {
             CustomId = "ProblemExtensionInteraction",
             MaxValues = extensionsList.Count,
@@ -48,23 +47,21 @@ public class ExtensionMessageBuilder
         };
 
         foreach (var ext in extensionsList)
-        {
             try
             {
-                var a = (ext.DSupportUserId is null) ? ext.Author : string.Format("<@{UserId}>", ext.DSupportUserId);
+                var a = ext.DSupportUserId is null ? ext.Author : string.Format("<@{UserId}>", ext.DSupportUserId);
                 selectMenu.AddOption(ext.Name, ext.PackageId, $"by {a}");
             }
             catch (Exception e)
             {
                 Logger.Error(e, "Can't add component");
             }
-        }
 
         component.WithSelectMenu(selectMenu);
         component.WithButton("No, thanks.", "ProblemExtensionButtonNo", ButtonStyle.Secondary);
         return component.Build();
     }
-    
+
     public static async Task<Embed> BuildSearchExtensionAsync(IHttpClientFactory httpClientFactory,
         ExtensionDetectionConfig extDetectionConfig,
         string query)
@@ -84,15 +81,12 @@ public class ExtensionMessageBuilder
 
         if (extensions != null && extensions.TotalItemsCount > 0)
         {
-            if (extensions.Data == null)
-            {
-                return embed.Build();
-            }
+            if (extensions.Data == null) return embed.Build();
             foreach (var ext in extensions.Data)
             {
                 EmbedFieldBuilder field = new();
                 field.WithName($"[{ext.ExtensionType}] {ext.PackageId}");
-                field.WithValue(String.Format(
+                field.WithValue(string.Format(
                     "{0}\r\n" +
                     "by {1}",
                     ext.GithubRepository.IsNullOrWhiteSpace()
@@ -107,8 +101,8 @@ public class ExtensionMessageBuilder
         else
         {
             embed.WithDescription(
-                "We could not find it! You can try these:\r\n"+
-                " - Check the name! Maybe there is a typo?\r\n"+
+                "We could not find it! You can try these:\r\n" +
+                " - Check the name! Maybe there is a typo?\r\n" +
                 " - Tell one of the Macro Deck 2 dev team member."
             );
         }

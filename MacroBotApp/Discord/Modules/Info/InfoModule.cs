@@ -1,8 +1,11 @@
-﻿using Discord;
+﻿using System.Net.Sockets;
+using System.Reflection;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using System.Reflection;
 using JetBrains.Annotations;
+using MacroBot.Config;
+using MacroBot.Extensions;
 using MacroBot.Services;
 using Serilog;
 using ILogger = Serilog.ILogger;
@@ -13,8 +16,14 @@ namespace MacroBot.Discord.Modules.Info;
 [UsedImplicitly]
 public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
 {
+    private readonly BotConfig _botConfig;
     private readonly ILogger _logger = Log.ForContext<DiscordService>();
-    
+
+    public BotInfoModule(BotConfig botConfig)
+    {
+        _botConfig = botConfig;
+    }
+
     [SlashCommand("bot", "Show information about the bot")]
     public async Task Bot()
     {
@@ -24,14 +33,103 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
             Description = "Here you can find the information of this Discord Bot."
         };
         embed.WithThumbnailUrl(Context.Client.CurrentUser.GetAvatarUrl());
-        embed.AddField("Description", "This is the official Discord Bot for the Macro Deck discord server by <@!300244123569487873>.");
-        embed.AddField("Usage", "This bot functions using Discord's Slash Command feature, type `/` in chat in order to view a list of valid commands.");
+        embed.AddField("Description",
+            "This is the official Discord Bot for the Macro Deck discord server by <@!300244123569487873>.");
+        embed.AddField("Usage",
+            "This bot functions using Discord's Slash Command feature, type `/` in chat in order to view a list of valid commands.");
         embed.AddField("Version", $"`{Assembly.GetExecutingAssembly().GetName().Version}`", true);
         embed.AddField("API Latency", $"`{Context.Client.Latency} ms`", true);
-        embed.AddField("Written by", "<@!298215920709664768>\n<@!367398650076463118>\n<@!908002848967626842>\n<@!300244123569487873>", true);
+        embed.AddField("Written by",
+            "<@!298215920709664768>\n<@!367398650076463118>\n<@!908002848967626842>\n<@!300244123569487873>", true);
         embed.WithFooter(Context.Guild.Name + " | " + Context.Guild.Id, Context.Guild.IconUrl);
 
         await RespondAsync(embed: embed.Build(), ephemeral: true);
+    }
+
+    [SlashCommand("message", "Show information about a message")]
+    public async Task messageInfo(
+        [Summary(description: "Message URL")] string? messageUrl = null,
+        [Summary(description: "Message ID (use Developer mode!)")]
+        string? messageId = null,
+        [Summary(description: "Channel ID (use Developer Mode!)")]
+        string? channelId = null)
+    {
+        IMessage? msg = null;
+
+        try
+        {
+            if (messageUrl == null && messageId == null)
+            {
+                var embedBuilder = new EmbedBuilder
+                {
+                    Title = "Argument expected",
+                    Description = $"At least `messageUrl` or `messageId` should be defined!"
+                };
+                embedBuilder.WithColor(new Color(255, 50, 50));
+
+                await RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                return;
+            }
+
+            if (messageId is null && channelId is null)
+            {
+                var ids = messageUrl.Remove($"https://discord.com/channels/").Split("/")
+                    .Select(x => Convert.ToUInt64(x))
+                    .ToArray();
+                msg = await Context.Client.GetGuild(ids[0]).GetTextChannel(ids[1]).GetMessageAsync(ids[2]);
+            }
+            else if (messageUrl is null && channelId is null)
+                msg = await Context.Channel.GetMessageAsync(Convert.ToUInt64(messageId));
+            else if (messageUrl is null)
+                msg = await Context.Guild.GetTextChannel(Convert.ToUInt64(channelId))
+                    .GetMessageAsync(Convert.ToUInt64(messageId));
+
+            EmbedBuilder embed = new()
+            {
+                Title = $"Message {msg.Id}",
+            };
+            try
+            {
+                embed.AddField("Content", msg.Content);
+            } catch {}
+            try
+            {
+                embed.AddField("Author", msg.Author.Mention, true);
+            } catch {}
+            try
+            {
+                embed.AddField("Channel", $"<#{msg.Channel.Id}>", true);
+            } catch {}
+            try
+            {
+                embed.AddField("Attachments / Embeds", $"{msg.Attachments.Count} / {msg.Embeds.Count}", true);
+            } catch {}
+            try
+            {
+                embed.WithThumbnailUrl(msg.Author.GetAvatarUrl());
+            } catch {}
+
+            await RespondAsync(embed: embed.Build(),
+                components: new ComponentBuilder()
+                    .WithButton("Jump to message", style: ButtonStyle.Link, url: msg.GetJumpUrl())
+                    .Build(), ephemeral: true);
+        }
+        catch (FormatException e)
+        {
+            var embedBuilder = new EmbedBuilder
+            {
+                Title = "Argument not expected",
+                Description = $"`messageUrl` or `channelId` must be a number!"
+            };
+            embedBuilder.WithColor(new Color(255, 50, 50));
+
+            await RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+        }
+        catch (Exception e)
+        {
+            _logger.Error(e, "Cannot get message!");
+            await RespondAsync("An error occured while getting the message. Please try again later.", ephemeral: true);
+        }
     }
 
     [UserCommand("Show user information")]
@@ -41,8 +139,13 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("user", "Show information about a user")]
-    public async Task userInfo([Summary(description: "Shows information about the user")] SocketGuildUser user, bool asUser = false)
+    public async Task userInfo(
+        [Summary(description: "Shows information about the user")]
+        SocketGuildUser? user = null,
+        bool asUser = false)
     {
+        user ??= Context.Guild.GetUser(Context.User.Id);
+
         EmbedBuilder embed = new();
         if (user.IsBot != true || asUser)
         {
@@ -50,46 +153,42 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
             embed.Description = "Here you can find the information of " + $"<@!{user.Id}>" + ".";
             embed.WithThumbnailUrl(Context.Client.GetUser(user.Id).GetAvatarUrl());
             embed.AddField("Status", Context.Client.GetUser(user.Id).Status, true);
-            var acts = "";
+            var acts = string.Empty;
             try
-            {  
+            {
                 foreach (var activities in user.Activities)
-                {
                     if (activities is SpotifyGame spot)
-                    {
-                        acts += $"[Spotify] [**{spot.TrackTitle}**]({spot.TrackUrl}) {string.Join(", ", spot.Artists)} ({spot.Elapsed.Value.ToString(@"hh\:mm\:ss")} / {spot.Duration.Value.ToString(@"hh\:mm\:ss")})\r\n";
-                    }
+                        acts +=
+                            $"[Spotify] [**{spot.TrackTitle}**]({spot.TrackUrl}) {string.Join(", ", spot.Artists)} ({spot.Elapsed.Value.ToString(@"hh\:mm\:ss")} / {spot.Duration.Value.ToString(@"hh\:mm\:ss")})\r\n";
                     else if (activities is CustomStatusGame customStatus)
-                    {
-                        acts += $"[{customStatus.Name}] **{customStatus.Emote.Name} {customStatus.Details}**\r\n";
-                    }
+                        acts +=
+                            $"[{customStatus.Name}] **{customStatus.Emote.Name} {customStatus.Details} {customStatus.State}**\r\n";
                     else if (activities is RichGame richGame)
-                    {
-                        acts += $"[{richGame.Name}]{(!string.IsNullOrEmpty(richGame.Details)? $" **{richGame.Details}**" : " No details")}\r\n";
-                    }
+                        acts +=
+                            $"[{richGame.Name}]{(!string.IsNullOrEmpty(richGame.Details) ? $" **{richGame.Details}**" : " No details")}\r\n";
                     else
-                    {
-                        acts += $"[{activities.Type}] **{activities.Name}** {(!string.IsNullOrEmpty(activities.Details)? $" {activities.Details}" : " No details")}\r\n";
-                    }
-                }
+                        acts +=
+                            $"[{activities.Type}] **{activities.Name}** {(!string.IsNullOrEmpty(activities.Details) ? $" {activities.Details}" : " No details")}\r\n";
             }
             catch
             {
                 // ignored
             }
 
-            embed.AddField("Activities", (acts == "")? "None" : acts);
-            embed.AddField("Roles", string.Join(", ", Context.Guild.GetUser(user.Id).Roles.Select(r => r.Mention)), true);
+            embed.AddField("Activities", acts == string.Empty ? "None" : acts);
+            embed.AddField("Roles", string.Join(", ", Context.Guild.GetUser(user.Id).Roles.Select(r => r.Mention)),
+                true);
             embed.AddField("Creation Date", $"<t:{Context.Client.GetUser(user.Id).CreatedAt.ToUnixTimeSeconds()}>");
             embed.AddField("Join Date", $"<t:{Context.Guild.GetUser(user.Id).JoinedAt.Value.ToUnixTimeSeconds()}>");
             try
             {
-                embed.AddField("Active Clients", String.Join(", ", user.ActiveClients));
+                embed.AddField("Active Clients", string.Join(", ", user.ActiveClients));
             }
             catch
             {
                 // ignored
             }
+
             embed.WithFooter("ID: " + Context.Client.GetUser(user.Id).Id);
         }
         else
@@ -104,30 +203,17 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
         }
 
         if (user.Status == UserStatus.Online)
-        {
             embed.WithColor(Color.Green);
-        }
         else if (user.Status == UserStatus.Offline || user.Status == UserStatus.Invisible)
-        {
             embed.WithColor(Color.LightGrey);
-        }
         else if (user.Status == UserStatus.Idle)
-        {
             embed.WithColor(Color.Gold);
-        }
         else if (user.Status == UserStatus.DoNotDisturb)
-        {
             embed.WithColor(Color.Red);
-        }
         else
-        {
             embed.WithColor(Color.DarkOrange);
-        }
 
-        if (user.IsBot == true)
-        {
-            embed.WithColor(new Color(88, 101, 242));
-        }
+        if (user.IsBot) embed.WithColor(new Color(88, 101, 242));
 
         await RespondAsync(embed: embed.Build(), ephemeral: true);
     }
@@ -135,7 +221,7 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("guild", "Show information about the guild (same as /info server)")]
     public async Task GuildInfo()
     {
-        await DeferAsync(ephemeral:true);
+        await DeferAsync(true);
 
         try
         {
@@ -152,13 +238,13 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
             embed.AddField("Roles", Context.Guild.Roles.Count, true);
             embed.AddField("Default Channel", Context.Guild.DefaultChannel.Mention, true);
             embed.AddField("Description", Context.Guild.Description ?? "No description");
-            GuildFeature[] enumValues = Enum.GetValues(typeof(GuildFeature))
+            var enumValues = Enum.GetValues(typeof(GuildFeature))
                 .Cast<GuildFeature>()
                 .Where(f => Context.Guild.Features.Value.HasFlag(f))
                 .ToArray();
-            embed.AddField("Features", String.Join(",\r\n", enumValues.Select(e => e.ToString())));
+            embed.AddField("Features", string.Join(",\r\n", enumValues.Select(e => e.ToString())));
             embed.WithFooter($"ID: {Context.Guild.Id}");
-            
+
             await FollowupAsync(embed: embed.Build(), ephemeral: true);
         }
         catch (Exception e)
@@ -168,10 +254,15 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("server", "Show information about the server (same as /info guild)")]
-    public async Task serverInfo() => await GuildInfo();
+    public async Task serverInfo()
+    {
+        await GuildInfo();
+    }
 
     [SlashCommand("channel", "Show information about a specific text channel")]
-    public async Task channelInfo([Summary(description: "Show information of specified channel")] ITextChannel? channel = null)
+    public async Task channelInfo(
+        [Summary(description: "Show information of specified channel")]
+        ITextChannel? channel = null)
     {
         if (channel == null)
         {

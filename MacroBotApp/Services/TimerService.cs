@@ -9,18 +9,13 @@ namespace MacroBot.Services;
 public class TimerService : ITimerService, IHostedService
 {
     private readonly ILogger _logger = Log.ForContext<TimerService>();
-    
-    public event EventHandler? DailyTimerElapsed;
-    public event EventHandler? HourTimerElapsed;
-    public event EventHandler? MinuteTimerElapsed;
-    public event EventHandler? FiveMinuteTimerElapsed;
-
-
-    private DateTime _hourTimerLastElapsed = default;
-    private DateTime _dailyTimerLastElapsed = default;
 
     private readonly Timer _timer;
-    
+    private DateTime _dailyTimerLastElapsed;
+
+
+    private DateTime _hourTimerLastElapsed;
+
     public TimerService()
     {
         _timer = new Timer
@@ -42,6 +37,11 @@ public class TimerService : ITimerService, IHostedService
         return Task.CompletedTask;
     }
 
+    public event EventHandler? DailyTimerElapsed;
+    public event EventHandler? HourTimerElapsed;
+    public event EventHandler? MinuteTimerElapsed;
+    public event EventHandler? FiveMinuteTimerElapsed;
+
     private void TimerOnElapsed(object? sender, ElapsedEventArgs e)
     {
         _logger.Verbose("Minute timer elapsed");
@@ -52,6 +52,7 @@ public class TimerService : ITimerService, IHostedService
             HourTimerElapsed?.Invoke(this, EventArgs.Empty);
             _hourTimerLastElapsed = DateTime.Now;
         }
+
         if (DateTime.Now - _hourTimerLastElapsed >= TimeSpan.FromHours(1))
         {
             _logger.Verbose("Hour timer elapsed");
@@ -66,5 +67,4 @@ public class TimerService : ITimerService, IHostedService
             _dailyTimerLastElapsed = DateTime.Now;
         }
     }
-
 }

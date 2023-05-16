@@ -14,19 +14,12 @@ namespace MacroBot.Services;
 [UsedImplicitly]
 public class StatusCheckService : IStatusCheckService, IHostedService
 {
-    private readonly ILogger _logger = Log.ForContext<StatusCheckService>();
-
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly TimerService _timerService;
-    private readonly StatusCheckConfig _statusCheckConfig;
     private readonly DiscordSocketClient _discordSocketClient;
 
-    public event EventHandler<StatusCheckFinishedEventArgs>? StatusCheckFinished;
-    public event EventHandler? StatusOfItemChanged;
-    public event EventHandler? ItemStatusInCollectionChanged;
-
-    public IEnumerable<StatusCheckResult>? LastStatusCheckResults { get; private set; }
-    public DateTime LastStatusCheck { get; private set; }
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger _logger = Log.ForContext<StatusCheckService>();
+    private readonly StatusCheckConfig _statusCheckConfig;
+    private readonly TimerService _timerService;
     private bool _lastCheckDone = true;
 
     public StatusCheckService(IHttpClientFactory httpClientFactory,
@@ -53,11 +46,18 @@ public class StatusCheckService : IStatusCheckService, IHostedService
         return Task.CompletedTask;
     }
 
+    public event EventHandler<StatusCheckFinishedEventArgs>? StatusCheckFinished;
+    public event EventHandler? StatusOfItemChanged;
+    public event EventHandler? ItemStatusInCollectionChanged;
+
+    public IEnumerable<StatusCheckResult>? LastStatusCheckResults { get; private set; }
+    public DateTime LastStatusCheck { get; private set; }
+
     private async Task DiscordSocketClientOnReady()
     {
         await CheckAllAsync();
     }
-    
+
     private async void TimerServiceOnTimerElapsed(object? sender, EventArgs e)
     {
         await CheckAllAsync();
@@ -65,10 +65,7 @@ public class StatusCheckService : IStatusCheckService, IHostedService
 
     private async Task CheckAllAsync()
     {
-        if (!_lastCheckDone)
-        {
-            return;
-        }
+        if (!_lastCheckDone) return;
         _lastCheckDone = false;
         _logger.Verbose("Starting status check...");
         var results = new ConcurrentBag<StatusCheckResult>();
@@ -77,13 +74,14 @@ public class StatusCheckService : IStatusCheckService, IHostedService
         {
             MaxDegreeOfParallelism = 3
         };
-        await Parallel.ForEachAsync(_statusCheckConfig.StatusCheckItems, parallelOptions, async (statusCheckItem, token) =>
-        {
-            var lastResult = lastResults?.FirstOrDefault(x => x.Name.Equals(statusCheckItem.Name));
-            var result = await CheckAsync(statusCheckItem, lastResult);
-            
-            results.Add(result);
-        });
+        await Parallel.ForEachAsync(_statusCheckConfig.StatusCheckItems, parallelOptions,
+            async (statusCheckItem, token) =>
+            {
+                var lastResult = lastResults?.FirstOrDefault(x => x.Name.Equals(statusCheckItem.Name));
+                var result = await CheckAsync(statusCheckItem, lastResult);
+
+                results.Add(result);
+            });
 
         results = new ConcurrentBag<StatusCheckResult>(results.OrderByDescending(x => x.Name));
 
@@ -96,24 +94,22 @@ public class StatusCheckService : IStatusCheckService, IHostedService
         LastStatusCheckResults = results.ToArray();
         LastStatusCheck = DateTime.Now;
         StatusCheckFinished?.Invoke(
-            this, 
+            this,
             new StatusCheckFinishedEventArgs
             {
                 Results = LastStatusCheckResults
             });
-        if (results.Any(x => x.StateChanged))
-        {
-            ItemStatusInCollectionChanged?.Invoke(this, EventArgs.Empty);
-        }
+        if (results.Any(x => x.StateChanged)) ItemStatusInCollectionChanged?.Invoke(this, EventArgs.Empty);
 
         _lastCheckDone = true;
     }
 
-    private async Task<StatusCheckResult> CheckAsync(StatusCheckConfig.StatusCheckItem statusCheckItem, StatusCheckResult? lastResult)
+    private async Task<StatusCheckResult> CheckAsync(StatusCheckConfig.StatusCheckItem statusCheckItem,
+        StatusCheckResult? lastResult)
     {
         _logger.Verbose(
-            "Checking status of {Name} - {Url}...", 
-            statusCheckItem.Name, 
+            "Checking status of {Name} - {Url}...",
+            statusCheckItem.Name,
             statusCheckItem.Url);
         using var httpClient = _httpClientFactory.CreateClient();
         httpClient.Timeout = TimeSpan.FromSeconds(60);
@@ -129,16 +125,15 @@ public class StatusCheckService : IStatusCheckService, IHostedService
         {
             online = false;
         }
+
         var stateChanged = lastResult.HasValue && online != lastResult.Value.Online;
         var stateChangedAt = stateChanged ? DateTime.Now : lastResult?.StateChangedAt;
-        
+
         if (!statusCheckItem.StatusEndpoint)
-        {
             return new StatusCheckResult(statusCheckItem.Name,
                 request?.StatusCode == HttpStatusCode.OK,
                 request?.StatusCode ?? HttpStatusCode.NotFound,
                 stateChanged, stateChangedAt);
-        }
 
         try
         {

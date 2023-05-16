@@ -4,13 +4,13 @@ public class StatusCheckConfig : LoadableConfig<StatusCheckConfig>
 {
     public List<StatusCheckItem> StatusCheckItems { get; set; } = new()
     {
-        new StatusCheckItem()
+        new StatusCheckItem
         {
             Name = "Website",
             Url = "https://macro-deck.app"
         }
     };
-    
+
     public class StatusCheckItem
     {
         public string Name { get; set; }

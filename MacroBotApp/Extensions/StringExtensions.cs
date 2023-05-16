@@ -16,11 +16,16 @@ public static class StringExtensions
 
     public static string Remove(this string value, string toRemove)
     {
-        return value.Replace(toRemove, "");
+        return value.Replace(toRemove, string.Empty);
     }
-    
+
     public static bool Contains(this string source, string toCheck, StringComparison comp)
     {
         return source?.IndexOf(toCheck, comp) >= 0;
+    }
+
+    public static int ToInt32(this string source)
+    {
+        return Convert.ToInt32(source);
     }
 }

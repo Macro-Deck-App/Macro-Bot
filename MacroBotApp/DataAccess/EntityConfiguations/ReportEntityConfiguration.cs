@@ -1,20 +1,21 @@
-using MacroBot.DataAccess.Entities;
+﻿using MacroBot.DataAccess.Entities;
+using MacroBot.Discord.Modules.Reports;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MacroBot.DataAccess.EntityConfiguations;
 
-public class TagEntityConfiguration : IEntityTypeConfiguration<TagEntity>
+public class ReportEntityConfiguration : IEntityTypeConfiguration<ReportEntity>
 {
-    public void Configure(EntityTypeBuilder<TagEntity> builder)
+    public void Configure(EntityTypeBuilder<ReportEntity> builder)
     {
-        builder.ToTable("tags");
+        builder.ToTable("reports");
         builder.HasKey(e => e.Id);
         builder.Property(p => p.Id)
             .HasColumnName("id")
             .IsRequired();
-        builder.Property(p => p.Author)
-            .HasColumnName("author")
+        builder.Property(p => p.Reporter)
+            .HasColumnName("reporter")
             .IsRequired();
         builder.Property(p => p.Content)
             .HasColumnName("content")
@@ -22,11 +23,11 @@ public class TagEntityConfiguration : IEntityTypeConfiguration<TagEntity>
         builder.Property(p => p.Guild)
             .HasColumnName("guild")
             .IsRequired();
-        builder.Property(p => p.Name)
-            .HasColumnName("name")
+        builder.Property(p => p.User)
+            .HasColumnName("user")
             .IsRequired();
-        builder.Property(p => p.LastEdited)
-            .HasColumnName("last_edited")
+        builder.Property(p => p.Reported)
+            .HasColumnName("reported")
             .IsRequired()
             .HasColumnType("datetime2");
     }

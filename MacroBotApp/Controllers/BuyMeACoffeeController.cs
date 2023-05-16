@@ -20,18 +20,13 @@ public class BuyMeACoffeeController : ControllerBase
     }
 
     [HttpPost("donationcreated")]
-    public async Task<IActionResult> DonationCreated([FromQuery] BuyMeACoffeeDonationCreatedRequest donationCreatedRequest)
+    public async Task<IActionResult> DonationCreated(
+        [FromQuery] BuyMeACoffeeDonationCreatedRequest donationCreatedRequest)
     {
-        if (donationCreatedRequest.Data?.Succeeded is false)
-        {
-            return BadRequest();
-        }
+        if (donationCreatedRequest.Data?.Succeeded is false) return BadRequest();
         var webhook = _webhooksConfig.Webhooks.FirstOrDefault(x => x.Id.Equals("buymeacoffee"));
-        if (webhook == null)
-        {
-            return NotFound();
-        }
-        
+        if (webhook == null) return NotFound();
+
         var supporterName = donationCreatedRequest.Data?.SupporterName ?? "anonymous";
         var amount = donationCreatedRequest.Data?.Amount?.ToString("#0.00") ?? "hidden";
         var currency = donationCreatedRequest.Data?.Currency ?? string.Empty;
@@ -50,15 +45,15 @@ public class BuyMeACoffeeController : ControllerBase
                     B = 0
                 },
                 Title = "New donation",
-                Fields = new List<WebhookRequestEmbedField>()
+                Fields = new List<WebhookRequestEmbedField>
                 {
-                    new ()
+                    new()
                     {
                         Name = "Donator",
                         Value = supporterName,
                         Inline = true
                     },
-                    new ()
+                    new()
                     {
                         Name = "Amount",
                         Value = $"{amount} {currency}",
@@ -69,15 +64,13 @@ public class BuyMeACoffeeController : ControllerBase
         };
 
         if (!string.IsNullOrWhiteSpace(message))
-        {
             webHookRequest.Embed.Fields.Add(new WebhookRequestEmbedField
             {
                 Name = "Message",
                 Value = message,
                 Inline = false
             });
-        }
-        
+
         webHookRequest.Embed.Fields.Add(new WebhookRequestEmbedField
         {
             Name = "\nAlso want to donate to the project?",

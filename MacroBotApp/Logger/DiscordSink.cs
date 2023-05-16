@@ -9,8 +9,8 @@ namespace MacroBot.Logger;
 
 public class DiscordSink : ILogEventSink
 {
-    private readonly DiscordSocketClient? _discordSocketClient;
     private readonly BotConfig? _botConfig;
+    private readonly DiscordSocketClient? _discordSocketClient;
 
     public DiscordSink(IServiceProvider serviceProvider)
     {
@@ -20,10 +20,7 @@ public class DiscordSink : ILogEventSink
 
     public void Emit(LogEvent logEvent)
     {
-        if (_discordSocketClient is null || _botConfig is null || logEvent.Level < LogEventLevel.Error)
-        {
-            return;
-        }
+        if (_discordSocketClient is null || _botConfig is null || logEvent.Level < LogEventLevel.Error) return;
 
         var logChannel = _discordSocketClient.GetGuild(_botConfig.GuildId)
             ?.GetChannel(_botConfig.Channels.LogChannelId) as ITextChannel;
@@ -31,10 +28,7 @@ public class DiscordSink : ILogEventSink
         var errorChannel = _discordSocketClient.GetGuild(_botConfig.GuildId)
             ?.GetChannel(_botConfig.Channels.ErrorLogChannelId) as ITextChannel;
 
-        if (logChannel is null && errorChannel is null)
-        {
-            return;
-        }
+        if (logChannel is null && errorChannel is null) return;
 
         var adminRole = _discordSocketClient.GetGuild(_botConfig.GuildId).Roles?
             .FirstOrDefault(x => x.Id == _botConfig.Roles.AdministratorRoleId);
@@ -51,8 +45,9 @@ public class DiscordSink : ILogEventSink
             }
         };
 
-        embedBuilder.AddField("Time/Date (UTC)", $"{DateTime.UtcNow.ToLongTimeString()} {DateTime.UtcNow.ToShortDateString()}");
-        
+        embedBuilder.AddField("Time/Date (UTC)",
+            $"{DateTime.UtcNow.ToLongTimeString()} {DateTime.UtcNow.ToShortDateString()}");
+
         embedBuilder.AddField("Level", logEvent.Level.ToString());
 
         var message = logEvent.RenderMessage();
@@ -69,17 +64,12 @@ public class DiscordSink : ILogEventSink
         Task.Run(() => SendSafeAsync(logChannel, text, embedBuilder.Build()));
 
         if (logEvent.Level >= LogEventLevel.Warning)
-        {
-            Task.Run(() => SendSafeAsync(errorChannel, text, embedBuilder.Build()));   
-        }
+            Task.Run(() => SendSafeAsync(errorChannel, text, embedBuilder.Build()));
     }
 
     private static async Task SendSafeAsync(ITextChannel? channel, string? text, Embed? embed)
     {
-        if (channel is null)
-        {
-            return;
-        }
+        if (channel is null) return;
         try
         {
             await channel.SendMessageAsync(text, embed: embed);

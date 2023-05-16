@@ -9,15 +9,9 @@ public static class WebhookAuthenticationHelper
         var apiKey = $"Bearer {webhook.BearerAuthKey}";
         var authHeader = request.Headers.Authorization.FirstOrDefault();
 
-        if (string.IsNullOrEmpty(authHeader))
-        {
-            return AuthenticationResult.Unauthorized;
-        }
+        if (string.IsNullOrEmpty(authHeader)) return AuthenticationResult.Unauthorized;
 
-        if (!apiKey.Equals(authHeader, StringComparison.CurrentCulture))
-        {
-            return AuthenticationResult.Forbidden;
-        }
+        if (!apiKey.Equals(authHeader, StringComparison.CurrentCulture)) return AuthenticationResult.Forbidden;
 
         return AuthenticationResult.Authorized;
     }

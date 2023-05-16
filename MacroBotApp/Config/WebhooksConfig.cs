@@ -9,9 +9,7 @@ public class WebhooksConfig : LoadableConfig<WebhooksConfig>
         new WebhookItem
         {
             Id = "test",
-            BearerAuthKey = "",
+            BearerAuthKey = string.Empty
         }
     };
-    
-    
 }

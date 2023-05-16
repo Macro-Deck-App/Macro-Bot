@@ -10,10 +10,7 @@ public class LoadableConfig<T> where T : new()
         var logger = Log.ForContext<T>();
 
         ArgumentException.ThrowIfNullOrEmpty(path);
-        if (!File.Exists(path))
-        {
-            await WriteDefaultAsync(path);
-        }
+        if (!File.Exists(path)) await WriteDefaultAsync(path);
 
         try
         {
@@ -38,10 +35,7 @@ public class LoadableConfig<T> where T : new()
     private static async Task WriteDefaultAsync(string path)
     {
         var logger = Log.ForContext<T>();
-        if (File.Exists(path))
-        {
-            return;
-        }
+        if (File.Exists(path)) return;
 
         var config = new T();
         var options = new JsonSerializerOptions

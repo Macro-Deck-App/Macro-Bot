@@ -26,14 +26,14 @@ public static class AppExtensions
             {
                 Directory.CreateDirectory(path);
                 Log.Information(
-                    "Created directory {DirPath}", 
+                    "Created directory {DirPath}",
                     path);
             }
             catch (Exception ex)
-            {   
+            {
                 Log.Fatal(
-                    "Not able to create diretory {DirPath} - {Exception}", 
-                    path, 
+                    "Can't create directory {DirPath} - {Exception}",
+                    path,
                     ex);
             }
         }

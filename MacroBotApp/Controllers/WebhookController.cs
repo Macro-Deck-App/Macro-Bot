@@ -12,10 +12,10 @@ namespace MacroBot.Controllers;
 [Route("/webhook")]
 public class WebhookController : ControllerBase
 {
-    private readonly ILogger _logger = Log.ForContext<WebhookController>();
-    
-    private readonly WebhooksConfig _webhooksConfig;
     private readonly IDiscordService _discordService;
+    private readonly ILogger _logger = Log.ForContext<WebhookController>();
+
+    private readonly WebhooksConfig _webhooksConfig;
 
     public WebhookController(WebhooksConfig webhooksConfig,
         IDiscordService discordService)
@@ -23,16 +23,13 @@ public class WebhookController : ControllerBase
         _webhooksConfig = webhooksConfig;
         _discordService = discordService;
     }
-    
+
     [HttpPost("{webhookId}")]
-    public async Task<IActionResult> RunAsync(string webhookId, 
+    public async Task<IActionResult> RunAsync(string webhookId,
         [FromBody] WebhookRequest webhookRequest)
     {
         var webhook = _webhooksConfig.Webhooks.FirstOrDefault(x => x.Id.Equals(webhookId));
-        if (webhook is null)
-        {
-            return NotFound();
-        }
+        if (webhook is null) return NotFound();
 
         var authResult = Request.CheckAuthentication(webhook);
 
@@ -40,7 +37,7 @@ public class WebhookController : ControllerBase
         {
             case AuthenticationResult.Unauthorized:
                 return StatusCode(StatusCodes.Status401Unauthorized);
-            case AuthenticationResult.Forbidden: 
+            case AuthenticationResult.Forbidden:
                 return StatusCode(StatusCodes.Status403Forbidden);
             case AuthenticationResult.Authorized:
             default:
