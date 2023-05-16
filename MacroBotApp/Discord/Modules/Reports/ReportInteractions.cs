@@ -3,6 +3,7 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using JetBrains.Annotations;
+using MacroBot.Config;
 using MacroBot.DataAccess.Entities;
 using MacroBot.DataAccess.RepositoryInterfaces;
 using MacroBot.Extensions;
@@ -16,18 +17,20 @@ public class ReportingInteractions : InteractionModuleBase<SocketInteractionCont
     private readonly ILogger _logger = Log.ForContext<ReportingInteractions>();
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ReportUtils _reportUtils;
-    
-    public ReportingInteractions(IServiceScopeFactory serviceScopeFactory, ReportUtils reportUtils)
+    private readonly BotConfig _botConfig;
+
+    public ReportingInteractions(IServiceScopeFactory serviceScopeFactory, ReportUtils reportUtils, BotConfig botConfig)
     {
         _serviceScopeFactory = serviceScopeFactory;
         _reportUtils = reportUtils;
+        _botConfig = botConfig;
     }
 
     public async Task GenerateReportMessage(Report report)
     {
         try
         {
-            await Context.Guild.GetTextChannel(1066346648344727603).SendMessageAsync(
+            await Context.Guild.GetTextChannel(_botConfig.Channels.ReportsChannelId).SendMessageAsync(
                 embed: await ReportUtils.GenerateReportEmbed(report, Context.Guild),
                 components: await ReportUtils.GenerateReportComponent(report, Context.Guild)
             );
