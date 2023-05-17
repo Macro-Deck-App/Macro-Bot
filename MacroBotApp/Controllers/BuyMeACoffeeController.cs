@@ -1,3 +1,4 @@
+using MacroBot.Authentication;
 using MacroBot.Config;
 using MacroBot.Models.BuyMeACoffee;
 using MacroBot.Models.Webhook;
@@ -11,15 +12,16 @@ namespace MacroBot.Controllers;
 public class BuyMeACoffeeController : ControllerBase
 {
     private readonly IDiscordService _discordService;
-    private readonly WebhooksConfig _webhooksConfig;
+    private readonly BuyMeACoffeeConfig _buyMeACoffeeConfig;
 
-    public BuyMeACoffeeController(IDiscordService discordService, WebhooksConfig webhooksConfig)
+    public BuyMeACoffeeController(IDiscordService discordService, BuyMeACoffeeConfig buyMeACoffeeConfig)
     {
         _discordService = discordService;
-        _webhooksConfig = webhooksConfig;
+        _buyMeACoffeeConfig = buyMeACoffeeConfig;
     }
 
     [HttpPost("donationcreated")]
+<<<<<<< HEAD
     public async Task<IActionResult> DonationCreated(
         [FromQuery] BuyMeACoffeeDonationCreatedRequest donationCreatedRequest)
     {
@@ -29,10 +31,17 @@ public class BuyMeACoffeeController : ControllerBase
 
         var supporterName = donationCreatedRequest.Data?.SupporterName ?? "anonymous";
         var amount = donationCreatedRequest.Data?.Amount?.ToString("#0.00") ?? "hidden";
+=======
+    [BuyMeACoffeeWebhook]
+    public async Task<IActionResult> DonationCreated([FromBody] BuyMeACoffeeDonationCreatedRequest donationCreatedRequest)
+    {
+        var supporterName = donationCreatedRequest.Data?.SupporterName ?? "Anonymous";
+        var amount = donationCreatedRequest.Data?.Amount?.ToString("#0.00") ?? "Hidden";
+>>>>>>> 9eb4fad4dcae341cb92e06706d6e23ec748ddf0b
         var currency = donationCreatedRequest.Data?.Currency ?? string.Empty;
-        var message = donationCreatedRequest.Data?.NoteHidden == true
+        var message = donationCreatedRequest.Data?.NoteHidden == "true"
             ? donationCreatedRequest.Data?.SupportNote
-            : string.Empty;
+            : null;
 
         var webHookRequest = new WebhookRequest
         {
@@ -77,6 +86,12 @@ public class BuyMeACoffeeController : ControllerBase
             Value = "https://buymeacoffee.com/suchbyte",
             Inline = false
         });
+
+        var webhook = new WebhookItem
+        {
+            Id = "BuyMeACoffee",
+            ChannelId = _buyMeACoffeeConfig.ChannelId
+        };
 
         await _discordService.BroadcastWebhookAsync(webhook, webHookRequest);
         return Ok();

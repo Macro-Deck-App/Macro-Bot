@@ -14,6 +14,7 @@ public static class AppExtensions
         await macroBotContext.Database.MigrateAsync();
         Log.Information("Database migration finished");
     }
+<<<<<<< HEAD
 
     public static void CheckAndCreateDirectories(this IHost app)
     {
@@ -38,4 +39,6 @@ public static class AppExtensions
             }
         }
     }
+=======
+>>>>>>> 9eb4fad4dcae341cb92e06706d6e23ec748ddf0b
 }

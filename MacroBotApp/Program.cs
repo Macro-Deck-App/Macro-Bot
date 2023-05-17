@@ -1,15 +1,45 @@
 ﻿using MacroBot.Extensions;
-using MacroBot.Startup;
+using MacroBot.StartupConfig;
 using Serilog;
 
 namespace MacroBot;
 
 public static class Program
 {
+<<<<<<< HEAD
     public static async Task Main(string[] args)
     {
         AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
         Paths.EnsureDirectoriesCreated();
+=======
+	public static async Task Main(string[] args)
+	{
+		AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
+		Paths.EnsureDirectoriesCreated();
+		
+		var environment = Environment.GetEnvironmentVariable("ENVIRONMENT");
+		var port = 80;
+		if (string.IsNullOrWhiteSpace(environment))
+		{
+			port = 9000;
+		}
+		
+		var app = Host.CreateDefaultBuilder(args)
+			.ConfigureSerilog()
+			.ConfigureWebHostDefaults(hostBuilder =>
+			{
+				hostBuilder.UseStartup<Startup>();
+				hostBuilder.ConfigureKestrel(options =>
+				{
+					options.ListenAnyIP(port);
+					options.AllowSynchronousIO = true;
+				});
+			}).Build();
+
+		await app.MigrateDatabaseAsync();
+		await app.RunAsync();
+	}
+>>>>>>> 9eb4fad4dcae341cb92e06706d6e23ec748ddf0b
 
         var builder = WebApplication.CreateBuilder(args);
         await builder.Services.ConfigureServicesAsync();
