@@ -6,12 +6,6 @@ namespace MacroBot;
 
 public static class Program
 {
-<<<<<<< HEAD
-    public static async Task Main(string[] args)
-    {
-        AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
-        Paths.EnsureDirectoriesCreated();
-=======
 	public static async Task Main(string[] args)
 	{
 		AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
@@ -39,26 +33,8 @@ public static class Program
 		await app.MigrateDatabaseAsync();
 		await app.RunAsync();
 	}
->>>>>>> 9eb4fad4dcae341cb92e06706d6e23ec748ddf0b
 
-        var builder = WebApplication.CreateBuilder(args);
-        await builder.Services.ConfigureServicesAsync();
-        builder.ConfigureSerilog();
-        var app = builder.Build();
-
-        app.ConfigureSwagger();
-        app.UseCors(x => x
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .SetIsOriginAllowed(_ => true) // allow any origin
-                .AllowCredentials())
-            .UseCookiePolicy();
-        app.MapControllers();
-        await app.MigrateDatabaseAsync();
-        await app.RunAsync();
-    }
-
-    private static void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+	private static void CurrentDomainOnUnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
         Log.Fatal((Exception)e.ExceptionObject, "Unhandled exception");
     }

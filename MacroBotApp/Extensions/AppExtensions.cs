@@ -14,31 +14,4 @@ public static class AppExtensions
         await macroBotContext.Database.MigrateAsync();
         Log.Information("Database migration finished");
     }
-<<<<<<< HEAD
-
-    public static void CheckAndCreateDirectories(this IHost app)
-    {
-        CheckAndCreate(Paths.MainDirectory);
-
-        static void CheckAndCreate(string path)
-        {
-            if (Directory.Exists(path)) return;
-            try
-            {
-                Directory.CreateDirectory(path);
-                Log.Information(
-                    "Created directory {DirPath}",
-                    path);
-            }
-            catch (Exception ex)
-            {
-                Log.Fatal(
-                    "Can't create directory {DirPath} - {Exception}",
-                    path,
-                    ex);
-            }
-        }
-    }
-=======
->>>>>>> 9eb4fad4dcae341cb92e06706d6e23ec748ddf0b
 }

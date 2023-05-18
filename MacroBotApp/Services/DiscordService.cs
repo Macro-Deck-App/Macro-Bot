@@ -378,7 +378,7 @@ public class DiscordService : IDiscordService, IHostedService
                         $"The channel ${message.Channel} is only meant for images.\nHere is your text, so that you don't need to rewrite it into another channel:",
                         embed: embed.Build());
                     _logger.Information(
-                        "Message without image from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted! DM with their text was successfully sent",
+                        "Message without image from {AuthorUsername} in {ChannelName} was deleted! DM with their text was successfully sent",
                         message.Author.Username,
                         message.Author.Discriminator,
                         message.Channel.Name);
@@ -386,7 +386,7 @@ public class DiscordService : IDiscordService, IHostedService
                 catch (HttpException)
                 {
                     _logger.Information(
-                        "Message without image from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted! DM with their text was not sent",
+                        "Message without image from {AuthorUsername} in {ChannelName} was deleted! DM with their text was not sent",
                         message.Author.Username,
                         message.Author.Discriminator,
                         message.Channel.Name);
@@ -446,9 +446,8 @@ public class DiscordService : IDiscordService, IHostedService
     {
         var guild = _discordSocketClient.GetGuild(_botConfig.GuildId);
         if (guild?.GetChannel(_botConfig.Channels.MemberScreeningChannelId) is not ITextChannel channel) return;
-        _logger.Verbose("{User}#{Discriminator} {Action} the server",
+        _logger.Verbose("{User} {Action} the server",
             member.Username,
-            member.Discriminator,
             joined
                 ? "joined"
                 : "left");
@@ -461,7 +460,7 @@ public class DiscordService : IDiscordService, IHostedService
             Color = joined ? Color.Green : Color.Red,
             Description = $"Latest member count: **{usersCount}** ({botsCount} bots)",
             ThumbnailUrl = member.GetAvatarUrl(),
-            Title = $"__**{member.Username}#{member.Discriminator} {(joined ? "joined" : "left")} the server!**__"
+            Title = $"__**{member.Username} {(joined ? "joined" : "left")} the server!**__"
         };
         embed.WithCurrentTimestamp();
 
