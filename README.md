@@ -25,6 +25,9 @@
 - **Extension System:**  
   Shows Macro Deck 2 Plugins and Icon Packs in the Extension Store.
   
+- **Reports System:**
+  Users can now report members and messages, and admins can take actions on it!
+  
 ## Written by:
 - [@Develeon64](https://github.com/Develeon64)
 - [@Xenox003](https://github.com/Xenox003)
