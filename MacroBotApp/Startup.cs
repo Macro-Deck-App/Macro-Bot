@@ -83,6 +83,7 @@ public class Startup
             var statusCheckConfig = await StatusCheckConfig.LoadAsync(Paths.StatusCheckConfigPath);
             var webhooksConfig = await WebhooksConfig.LoadAsync(Paths.WebhooksPath);
             var extDetectionConfig = await ExtensionDetectionConfig.LoadAsync(Paths.ExtensionDetectionConfigPath);
+            var buyMeACoffeeConfig = await BuyMeACoffeeConfig.LoadAsync(Paths.BuyMeACoffeePath);
 
             services.AddSingleton(koFiConfig);
             services.AddSingleton(statusCheckConfig);
@@ -90,6 +91,7 @@ public class Startup
             services.AddSingleton(botConfig);
             services.AddSingleton(commandsConfig);
             services.AddSingleton(extDetectionConfig);
+            services.AddSingleton(buyMeACoffeeConfig);
         }).Wait();
     }
 }
