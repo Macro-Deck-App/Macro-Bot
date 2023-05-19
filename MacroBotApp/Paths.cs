@@ -7,7 +7,6 @@ public static class Paths
     public static readonly string CommandsConfigPath = Path.Combine(MainDirectory, "Commands.json");
     public static readonly string StatusCheckConfigPath = Path.Combine(MainDirectory, "StatusCheck.json");
     public static readonly string KoFiConfigPath = Path.Combine(MainDirectory, "KoFi.json");
-    public static readonly string BuyMeACoffeePath = Path.Combine(MainDirectory, "BuyMeACoffee.json");
     public static readonly string ExtensionDetectionConfigPath = Path.Combine(MainDirectory, "ExtensionDetection.json");
     public static readonly string DatabasePath = Path.Combine(MainDirectory, "Database.db");
 
