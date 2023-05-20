@@ -275,6 +275,11 @@ public class DiscordService : IDiscordService, IHostedService
 							await httpClient.GetFromJsonAsync<Extension>(
 								$"{_extDetectionConfig.AllExtensionsUrl}/{HttpUtility.UrlEncode(str)}");
 
+						if (extension == null)
+						{
+							continue;
+						}
+
 						var a = extension.DSupportUserId is null
 							? extension.Author
 							: string.Format("<@{UserId}>", extension.DSupportUserId);
@@ -379,12 +384,16 @@ public class DiscordService : IDiscordService, IHostedService
 
 			try
 			{
-				await user.SendMessageAsync(embed: new EmbedBuilder
+				if (message.Channel is IGuildChannel guildChannel)
 				{
-					Title = "Hey there!",
-					Description =
-						$"It looks like you mentioned someone, a role, or @everyone! It is not allowed on the {(message.Channel as IGuildChannel).Guild.Name} server."
-				}.AddField("Message", message.Content).Build());
+					await user.SendMessageAsync(embed: new EmbedBuilder
+					{
+						Title = "Hey there!",
+						Description =
+							$"It looks like you mentioned someone, a role, or @everyone! It is not allowed on the {guildChannel.Guild?.Name} server."
+					}.AddField("Message", message.Content).Build());
+				}
+				
 			}
 			catch (Exception e)
 			{
@@ -445,6 +454,11 @@ public class DiscordService : IDiscordService, IHostedService
 		request.Headers.Add("Authorization", "Basic " + svcCredentials);
 		var result = await httpClient.SendAsync(request);
 		var translated = JsonSerializer.Deserialize<Translated>(await result.Content.ReadAsStringAsync());
+
+		if (translated == null)
+		{
+			return;
+		}
 
 		if (translated.DetectedLanguage.Language != "en")
 		{

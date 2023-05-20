@@ -14,22 +14,24 @@ public class TaggingUtils
 		_serviceScopeFactory = serviceScopeFactory;
 	}
 
-	public async Task AutoCompleteTag(SocketInteractionContext Context)
+	public async Task AutoCompleteTag(SocketInteractionContext context)
 	{
-		var userInput = (Context.Interaction as SocketAutocompleteInteraction).Data.Current.Value.ToString();
+		if (context.Interaction is not SocketAutocompleteInteraction socketAutocompleteInteraction)
+		{
+			return;
+		}
+		
+		var userInput = socketAutocompleteInteraction.Data?.Current?.Value?.ToString() ?? string.Empty;
 
-		List<AutocompleteResult> resultList = new();
 		await using var scope = _serviceScopeFactory.CreateAsyncScope();
 		var tagRepository = scope.ServiceProvider.GetRequiredService<ITagRepository>();
-		foreach (var tag in await tagRepository.GetTagsForGuild(Context.Guild.Id))
-		{
-			resultList.Add(new AutocompleteResult(tag.Name, tag.Name));
-		}
+		List<AutocompleteResult> resultList = (from tag in await tagRepository.GetTagsForGuild(context.Guild.Id)
+			select new AutocompleteResult(tag.Name, tag.Name)).ToList();
 
 		var results = resultList.AsEnumerable()
 			.Where(x => x.Name.StartsWith(userInput, StringComparison.InvariantCultureIgnoreCase));
 
-		await ((SocketAutocompleteInteraction)Context.Interaction).RespondAsync(results.Take(25));
+		await socketAutocompleteInteraction.RespondAsync(results.Take(25));
 	}
 
 	public bool CheckPermissions(ulong[] permissions, SocketGuildUser user)

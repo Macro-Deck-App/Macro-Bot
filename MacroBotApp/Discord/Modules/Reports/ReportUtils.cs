@@ -14,22 +14,19 @@ public class ReportUtils
 		_serviceScopeFactory = serviceScopeFactory;
 	}
 
-	public async Task AutoCompleteReport(SocketInteractionContext Context)
+	public async Task AutoCompleteReport(SocketInteractionContext context)
 	{
-		var userInput = (Context.Interaction as SocketAutocompleteInteraction).Data.Current.Value.ToString();
+		var userInput = (context.Interaction as SocketAutocompleteInteraction)?.Data.Current.Value.ToString();
 
-		List<AutocompleteResult> resultList = new();
 		await using var scope = _serviceScopeFactory.CreateAsyncScope();
 		var reportRepository = scope.ServiceProvider.GetRequiredService<IReportRepository>();
-		foreach (var tag in await reportRepository.GetReportsForGuild(Context.Guild.Id))
-		{
-			resultList.Add(new AutocompleteResult($"{tag.User} reported by {tag.Reporter}", tag.Id));
-		}
+		List<AutocompleteResult> resultList = (from tag in await reportRepository.GetReportsForGuild(context.Guild.Id)
+			select new AutocompleteResult($"{tag.User} reported by {tag.Reporter}", tag.Id)).ToList();
 
 		var results = resultList.AsEnumerable()
 			.Where(x => x.Name.StartsWith(userInput, StringComparison.InvariantCultureIgnoreCase));
 
-		await ((SocketAutocompleteInteraction)Context.Interaction).RespondAsync(results.Take(25));
+		await ((SocketAutocompleteInteraction)context.Interaction).RespondAsync(results.Take(25));
 	}
 
 	public static async Task<Embed> GenerateReportEmbed(Report report, SocketGuild guild)

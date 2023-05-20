@@ -94,8 +94,11 @@ public class TaggingInteractions : InteractionModuleBase<SocketInteractionContex
 			var tagRepository = scope.ServiceProvider.GetRequiredService<ITagRepository>();
 			await tagRepository.DeleteTag(assignable.tagName);
 
-			await (Context.Interaction as SocketMessageComponent).Message.ModifyAsync(msg =>
-				msg.Components = new ComponentBuilder().Build());
+			if (Context.Interaction is SocketMessageComponent socketInteraction)
+			{
+				await socketInteraction.Message.ModifyAsync(msg => msg.Components = new ComponentBuilder().Build());
+			}
+			
 			await RespondAsync($"Tag `{assignable.tagName}` successfully deleted");
 
 			TaggingCommands.deleteTagAssignments.Remove(assignable);
@@ -103,7 +106,11 @@ public class TaggingInteractions : InteractionModuleBase<SocketInteractionContex
 		else
 		{
 			_logger.Error(
-				$"Could not find Tag name information for user {Context.User.Username} ({Context.User.Id}) in guild {Context.Guild.Name} ({Context.Guild.Id})!");
+				"Could not find Tag name information for user {UserUsername} ({UserId}) in guild {GuildName} ({GuildId})",
+				Context.User.Username,
+				Context.User.Id,
+				Context.Guild.Name,
+				Context.Guild.Id);
 			await RespondAsync(_taggingUtils.getTagInfoError(), ephemeral: true);
 		}
 	}
@@ -121,11 +128,18 @@ public class TaggingInteractions : InteractionModuleBase<SocketInteractionContex
 		else
 		{
 			_logger.Error(
-				$"Could not find Tag name information for user {Context.User.Username} ({Context.User.Id}) in guild {Context.Guild.Name} ({Context.Guild.Id})!");
+				"Could not find Tag name information for user {UserUsername} ({UserId}) in guild {GuildName} ({GuildId})",
+				Context.User.Username,
+				Context.User.Id,
+				Context.Guild.Name,
+				Context.Guild.Id);
 		}
 
-		await (Context.Interaction as SocketMessageComponent).Message.ModifyAsync(msg =>
-			msg.Components = new ComponentBuilder().Build());
+		if (Context.Interaction is SocketMessageComponent socketInteraction)
+		{
+			await socketInteraction.Message.ModifyAsync(msg => msg.Components = new ComponentBuilder().Build());
+		}
+		
 		await RespondAsync("Tag deletion cancelled!");
 	}
 }
