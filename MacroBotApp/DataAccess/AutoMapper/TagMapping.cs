@@ -6,8 +6,8 @@ namespace MacroBot.DataAccess.AutoMapper;
 
 public class TagMapping : Profile
 {
-    public TagMapping()
-    {
-        CreateMap<TagEntity, Tag>();
-    }
+	public TagMapping()
+	{
+		CreateMap<TagEntity, Tag>();
+	}
 }

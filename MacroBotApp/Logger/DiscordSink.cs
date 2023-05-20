@@ -9,74 +9,86 @@ namespace MacroBot.Logger;
 
 public class DiscordSink : ILogEventSink
 {
-    private readonly BotConfig? _botConfig;
-    private readonly DiscordSocketClient? _discordSocketClient;
+	private readonly BotConfig? _botConfig;
+	private readonly DiscordSocketClient? _discordSocketClient;
 
-    public DiscordSink(IServiceProvider serviceProvider)
-    {
-        _discordSocketClient = serviceProvider.GetService<DiscordSocketClient>();
-        _botConfig = serviceProvider.GetService<BotConfig>();
-    }
+	public DiscordSink(IServiceProvider serviceProvider)
+	{
+		_discordSocketClient = serviceProvider.GetService<DiscordSocketClient>();
+		_botConfig = serviceProvider.GetService<BotConfig>();
+	}
 
-    public void Emit(LogEvent logEvent)
-    {
-        if (_discordSocketClient is null || _botConfig is null || logEvent.Level < LogEventLevel.Error) return;
+	public void Emit(LogEvent logEvent)
+	{
+		if (_discordSocketClient is null || _botConfig is null || logEvent.Level < LogEventLevel.Error)
+		{
+			return;
+		}
 
-        var logChannel = _discordSocketClient.GetGuild(_botConfig.GuildId)
-            ?.GetChannel(_botConfig.Channels.LogChannelId) as ITextChannel;
+		var logChannel = _discordSocketClient.GetGuild(_botConfig.GuildId)
+			?.GetChannel(_botConfig.Channels.LogChannelId) as ITextChannel;
 
-        var errorChannel = _discordSocketClient.GetGuild(_botConfig.GuildId)
-            ?.GetChannel(_botConfig.Channels.ErrorLogChannelId) as ITextChannel;
+		var errorChannel = _discordSocketClient.GetGuild(_botConfig.GuildId)
+			?.GetChannel(_botConfig.Channels.ErrorLogChannelId) as ITextChannel;
 
-        if (logChannel is null && errorChannel is null) return;
+		if (logChannel is null && errorChannel is null)
+		{
+			return;
+		}
 
-        var adminRole = _discordSocketClient.GetGuild(_botConfig.GuildId).Roles?
-            .FirstOrDefault(x => x.Id == _botConfig.Roles.AdministratorRoleId);
+		var adminRole = _discordSocketClient.GetGuild(_botConfig.GuildId).Roles?
+			.FirstOrDefault(x => x.Id == _botConfig.Roles.AdministratorRoleId);
 
-        var embedBuilder = new EmbedBuilder
-        {
-            Color = logEvent.Level switch
-            {
-                LogEventLevel.Information => Color.Teal,
-                LogEventLevel.Warning => Color.Gold,
-                LogEventLevel.Error => Color.Red,
-                LogEventLevel.Fatal => Color.DarkRed,
-                _ => Color.LightGrey
-            }
-        };
+		var embedBuilder = new EmbedBuilder
+		{
+			Color = logEvent.Level switch
+			{
+				LogEventLevel.Information => Color.Teal,
+				LogEventLevel.Warning => Color.Gold,
+				LogEventLevel.Error => Color.Red,
+				LogEventLevel.Fatal => Color.DarkRed,
+				_ => Color.LightGrey
+			}
+		};
 
-        embedBuilder.AddField("Time/Date (UTC)",
-            $"{DateTime.UtcNow.ToLongTimeString()} {DateTime.UtcNow.ToShortDateString()}");
+		embedBuilder.AddField("Time/Date (UTC)",
+			$"{DateTime.UtcNow.ToLongTimeString()} {DateTime.UtcNow.ToShortDateString()}");
 
-        embedBuilder.AddField("Level", logEvent.Level.ToString());
+		embedBuilder.AddField("Level", logEvent.Level.ToString());
 
-        var message = logEvent.RenderMessage();
-        embedBuilder.AddField("Message", message.Truncate(1023));
+		var message = logEvent.RenderMessage();
+		embedBuilder.AddField("Message", message.Truncate(1023));
 
-        if (logEvent.Exception is not null)
-        {
-            embedBuilder.AddField("Exception", logEvent.Exception.Message.Truncate(1023));
-            embedBuilder.AddField("Stack Trace", logEvent.Exception.StackTrace.Truncate(1023));
-        }
+		if (logEvent.Exception is not null)
+		{
+			embedBuilder.AddField("Exception", logEvent.Exception.Message.Truncate(1023));
+			embedBuilder.AddField("Stack Trace", logEvent.Exception.StackTrace.Truncate(1023));
+		}
 
-        var text = adminRole is not null && logEvent.Level > LogEventLevel.Warning ? adminRole.Mention : null;
+		var text = adminRole is not null && logEvent.Level > LogEventLevel.Warning ? adminRole.Mention : null;
 
-        Task.Run(() => SendSafeAsync(logChannel, text, embedBuilder.Build()));
+		Task.Run(() => SendSafeAsync(logChannel, text, embedBuilder.Build()));
 
-        if (logEvent.Level >= LogEventLevel.Warning)
-            Task.Run(() => SendSafeAsync(errorChannel, text, embedBuilder.Build()));
-    }
+		if (logEvent.Level >= LogEventLevel.Warning)
+		{
+			Task.Run(() => SendSafeAsync(errorChannel, text, embedBuilder.Build()));
+		}
+	}
 
-    private static async Task SendSafeAsync(ITextChannel? channel, string? text, Embed? embed)
-    {
-        if (channel is null) return;
-        try
-        {
-            await channel.SendMessageAsync(text, embed: embed);
-        }
-        catch
-        {
-            // ignored
-        }
-    }
+	private static async Task SendSafeAsync(ITextChannel? channel, string? text, Embed? embed)
+	{
+		if (channel is null)
+		{
+			return;
+		}
+
+		try
+		{
+			await channel.SendMessageAsync(text, embed: embed);
+		}
+		catch
+		{
+			// ignored
+		}
+	}
 }

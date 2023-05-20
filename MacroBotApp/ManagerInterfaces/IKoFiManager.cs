@@ -4,5 +4,5 @@ namespace MacroBot.ManagerInterfaces;
 
 public interface IKoFiManager
 {
-    public Task HandleWebhook(KoFiWebhookRequest koFiWebhookRequest);
+	public Task HandleWebhook(KoFiWebhookRequest koFiWebhookRequest);
 }

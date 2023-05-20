@@ -4,9 +4,12 @@ namespace MacroBot.Models.Extensions;
 
 public class ExtensionResponse
 {
-    [JsonPropertyName("totalItemsCount")] public int TotalItemsCount { get; set; }
+	[JsonPropertyName("totalItemsCount")]
+	public int TotalItemsCount { get; set; }
 
-    [JsonPropertyName("data")] public List<AllExtensions>? Data { get; set; }
+	[JsonPropertyName("data")]
+	public List<AllExtensions>? Data { get; set; }
 
-    [JsonPropertyName("maxPages")] public int MaxPages { get; set; }
+	[JsonPropertyName("maxPages")]
+	public int MaxPages { get; set; }
 }

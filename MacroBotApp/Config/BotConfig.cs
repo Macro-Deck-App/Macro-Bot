@@ -2,27 +2,27 @@
 
 public class BotConfig : LoadableConfig<BotConfig>
 {
-    public string Token { get; set; }
-    public ulong GuildId { get; set; }
-    public RolesConfig Roles { get; set; } = new();
-    public ChannelsConfig Channels { get; set; } = new();
+	public string Token { get; set; }
+	public ulong GuildId { get; set; }
+	public RolesConfig Roles { get; set; } = new();
+	public ChannelsConfig Channels { get; set; } = new();
 
-    public class RolesConfig
-    {
-        public ulong ModeratorRoleId { get; set; }
-        public ulong AdministratorRoleId { get; set; }
-        public ulong DevTeamRoleId { get; set; }
-        public ulong CommunityDeveloperRoleId { get; set; }
-    }
+	public class RolesConfig
+	{
+		public ulong ModeratorRoleId { get; set; }
+		public ulong AdministratorRoleId { get; set; }
+		public ulong DevTeamRoleId { get; set; }
+		public ulong CommunityDeveloperRoleId { get; set; }
+	}
 
-    public class ChannelsConfig
-    {
-        public ulong LogChannelId { get; set; }
-        public ulong ErrorLogChannelId { get; set; }
-        public ulong MemberScreeningChannelId { get; set; }
-        public ulong PluginAnnouncementsChannelId { get; set; }
-        public ulong ReportsChannelId { get; set; }
-        public ulong StatusCheckChannelId { get; set; }
-        public ulong[] ImageOnlyChannels { get; set; }
-    }
+	public class ChannelsConfig
+	{
+		public ulong LogChannelId { get; set; }
+		public ulong ErrorLogChannelId { get; set; }
+		public ulong MemberScreeningChannelId { get; set; }
+		public ulong PluginAnnouncementsChannelId { get; set; }
+		public ulong ReportsChannelId { get; set; }
+		public ulong StatusCheckChannelId { get; set; }
+		public ulong[] ImageOnlyChannels { get; set; }
+	}
 }

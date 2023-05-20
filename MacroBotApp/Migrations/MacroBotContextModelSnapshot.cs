@@ -9,86 +9,86 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace MacroBot.Migrations
 {
-    [DbContext(typeof(MacroBotContext))]
-    partial class MacroBotContextModelSnapshot : ModelSnapshot
-    {
-        protected override void BuildModel(ModelBuilder modelBuilder)
-        {
+	[DbContext(typeof(MacroBotContext))]
+	partial class MacroBotContextModelSnapshot : ModelSnapshot
+	{
+		protected override void BuildModel(ModelBuilder modelBuilder)
+		{
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
+			modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
 
-            modelBuilder.Entity("MacroBot.DataAccess.Entities.ReportEntity", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("id");
+			modelBuilder.Entity("MacroBot.DataAccess.Entities.ReportEntity", b =>
+				{
+					b.Property<string>("Id")
+						.HasColumnType("TEXT")
+						.HasColumnName("id");
 
-                    b.Property<ulong?>("Channel")
-                        .HasColumnType("INTEGER");
+					b.Property<ulong?>("Channel")
+						.HasColumnType("INTEGER");
 
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("content");
+					b.Property<string>("Content")
+						.IsRequired()
+						.HasColumnType("TEXT")
+						.HasColumnName("content");
 
-                    b.Property<ulong>("Guild")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("guild");
+					b.Property<ulong>("Guild")
+						.HasColumnType("INTEGER")
+						.HasColumnName("guild");
 
-                    b.Property<ulong?>("Message")
-                        .HasColumnType("INTEGER");
+					b.Property<ulong?>("Message")
+						.HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("Reported")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("reported");
+					b.Property<DateTime>("Reported")
+						.HasColumnType("datetime2")
+						.HasColumnName("reported");
 
-                    b.Property<ulong>("Reporter")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("reporter");
+					b.Property<ulong>("Reporter")
+						.HasColumnType("INTEGER")
+						.HasColumnName("reporter");
 
-                    b.Property<ulong>("User")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("user");
+					b.Property<ulong>("User")
+						.HasColumnType("INTEGER")
+						.HasColumnName("user");
 
-                    b.HasKey("Id");
+					b.HasKey("Id");
 
-                    b.ToTable("reports", (string)null);
-                });
+					b.ToTable("reports", (string)null);
+				});
 
-            modelBuilder.Entity("MacroBot.DataAccess.Entities.TagEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("id");
+			modelBuilder.Entity("MacroBot.DataAccess.Entities.TagEntity", b =>
+				{
+					b.Property<int>("Id")
+						.ValueGeneratedOnAdd()
+						.HasColumnType("INTEGER")
+						.HasColumnName("id");
 
-                    b.Property<ulong>("Author")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("author");
+					b.Property<ulong>("Author")
+						.HasColumnType("INTEGER")
+						.HasColumnName("author");
 
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("content");
+					b.Property<string>("Content")
+						.IsRequired()
+						.HasColumnType("TEXT")
+						.HasColumnName("content");
 
-                    b.Property<ulong>("Guild")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("guild");
+					b.Property<ulong>("Guild")
+						.HasColumnType("INTEGER")
+						.HasColumnName("guild");
 
-                    b.Property<DateTime>("LastEdited")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("last_edited");
+					b.Property<DateTime>("LastEdited")
+						.HasColumnType("datetime2")
+						.HasColumnName("last_edited");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
-                        .HasColumnName("name");
+					b.Property<string>("Name")
+						.IsRequired()
+						.HasColumnType("TEXT")
+						.HasColumnName("name");
 
-                    b.HasKey("Id");
+					b.HasKey("Id");
 
-                    b.ToTable("tags", (string)null);
-                });
+					b.ToTable("tags", (string)null);
+				});
 #pragma warning restore 612, 618
-        }
-    }
+		}
+	}
 }

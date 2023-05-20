@@ -6,8 +6,8 @@ namespace MacroBot.DataAccess.AutoMapper;
 
 public class ReportMapping : Profile
 {
-    public ReportMapping()
-    {
-        CreateMap<ReportEntity, Report>();
-    }
+	public ReportMapping()
+	{
+		CreateMap<ReportEntity, Report>();
+	}
 }
