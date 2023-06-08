@@ -1,0 +1,13 @@
+﻿namespace MacroBot.Discord.Modules.Reports;
+
+public class Report
+{
+    public string Id { get; set; }
+    public ulong Reporter { get; set; }
+    public ulong Guild { get; set; }
+    public ulong User { get; set; }
+    public ulong? Channel { get; set; }
+    public ulong? Message { get; set; }
+    public string Content { get; set; }
+    public DateTime Reported { get; set; }
+}
