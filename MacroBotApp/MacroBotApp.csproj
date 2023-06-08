@@ -49,6 +49,29 @@
     <Content Include="..\.dockerignore">
       <Link>.dockerignore</Link>
     </Content>
+    <Content Remove="__testConfigs__\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="__testConfigs__\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="__testConfigs__\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="__testConfigs__\BotConfig.json" />
+    <_ContentIncludedByDefault Remove="__testConfigs__\BuyMeACoffee.json" />
+    <_ContentIncludedByDefault Remove="__testConfigs__\Commands.json" />
+    <_ContentIncludedByDefault Remove="__testConfigs__\ExtensionDetection.json" />
+    <_ContentIncludedByDefault Remove="__testConfigs__\KoFi.json" />
+    <_ContentIncludedByDefault Remove="__testConfigs__\StatusCheck.json" />
+    <_ContentIncludedByDefault Remove="__testConfigs__\Webhooks.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="__testConfigs__\" />
   </ItemGroup>
 
   <ProjectExtensions>

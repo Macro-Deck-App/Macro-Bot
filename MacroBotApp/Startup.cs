@@ -6,6 +6,7 @@ using MacroBot.DataAccess;
 using MacroBot.DataAccess.AutoMapper;
 using MacroBot.DataAccess.Repositories;
 using MacroBot.DataAccess.RepositoryInterfaces;
+using MacroBot.Discord.Modules.Reports;
 using MacroBot.Discord.Modules.Tagging;
 using MacroBot.Extensions;
 using MacroBot.Manager;
@@ -40,6 +41,8 @@ public class Startup
         services.AddAutoMapper(typeof(TagMapping));
         services.AddTransient<ITagRepository, TagRepository>();
         services.AddTransient<TaggingUtils>();
+        services.AddTransient<IReportRepository, ReportRepository>();
+        services.AddTransient<ReportUtils>();
         services.AddSingleton(discordSocketConfig);
         services.AddSingleton<DiscordSocketClient>();
         services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(), interactionServiceConfig));
