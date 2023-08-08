@@ -1,12 +1,12 @@
 using System.ComponentModel;
-using MacroBot.Config;
-using MacroBot.Enums;
-using MacroBot.ManagerInterfaces;
-using MacroBot.Models.KoFi;
-using MacroBot.Models.Webhook;
-using MacroBot.ServiceInterfaces;
+using MacroBot.Core.Config;
+using MacroBot.Core.Enums;
+using MacroBot.Core.ManagerInterfaces;
+using MacroBot.Core.Models.KoFi;
+using MacroBot.Core.Models.Webhook;
+using MacroBot.Core.ServiceInterfaces;
 
-namespace MacroBot.Manager;
+namespace MacroBot.Core.Manager;
 
 public class KoFiManager : IKoFiManager
 {

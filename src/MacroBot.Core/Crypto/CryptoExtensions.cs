@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace MacroBot.Crypto;
+namespace MacroBot.Core.Crypto;
 
 public static class CryptoExtensions
 {

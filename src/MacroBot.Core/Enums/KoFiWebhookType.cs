@@ -1,4 +1,4 @@
-namespace MacroBot.Enums;
+namespace MacroBot.Core.Enums;
 
 public enum KoFiWebhookType
 {

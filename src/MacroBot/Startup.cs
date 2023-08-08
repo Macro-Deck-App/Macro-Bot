@@ -9,8 +9,6 @@ using MacroBot.Core.DataAccess.Repositories;
 using MacroBot.Core.DataAccess.RepositoryInterfaces;
 using MacroBot.Core.Discord.Modules.Tagging;
 using MacroBot.Core.Extensions;
-using MacroBot.Manager;
-using MacroBot.ManagerInterfaces;
 using MacroBot.Core.Manager;
 using MacroBot.Core.ManagerInterfaces;
 using MacroBot.Core.ServiceInterfaces;

@@ -1,6 +1,6 @@
-using MacroBot.Models.KoFi;
+using MacroBot.Core.Models.KoFi;
 
-namespace MacroBot.ManagerInterfaces;
+namespace MacroBot.Core.ManagerInterfaces;
 
 public interface IKoFiManager
 {

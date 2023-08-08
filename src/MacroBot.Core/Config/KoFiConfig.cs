@@ -1,4 +1,4 @@
-namespace MacroBot.Config;
+namespace MacroBot.Core.Config;
 
 public class KoFiConfig : LoadableConfig<KoFiConfig>
 {

@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using MacroBot.Enums;
+using MacroBot.Core.Enums;
 
-namespace MacroBot.Models.KoFi;
+namespace MacroBot.Core.Models.KoFi;
 
 public class KoFiWebhookRequest
 {
