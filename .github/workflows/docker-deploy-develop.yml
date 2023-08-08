@@ -11,7 +11,7 @@ jobs:
     name: Build and test
   
   deploy:
-    name: Build and deploy Docker image
+    name: Deploy Docker image
     needs: [ci]
     runs-on: ubuntu-latest
     steps:

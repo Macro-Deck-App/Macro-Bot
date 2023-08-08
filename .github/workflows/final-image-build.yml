@@ -1,4 +1,4 @@
-name: Base Image Build
+name: Final Image Build
 
 on:
   workflow_call:
