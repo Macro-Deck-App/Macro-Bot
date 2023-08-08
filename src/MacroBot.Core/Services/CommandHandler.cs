@@ -41,11 +41,6 @@ public class CommandHandler
                 // create an execution context that matches the generic type parameter of your InteractionModuleBase<T> modules
                 var ctx = new SocketInteractionContext(_client, arg);
                 await _commands.ExecuteCommandAsync(ctx, _services);
-                _logger.Information(
-                    "{Interaction} executed by {User} -> {Data}", 
-                    ctx.Interaction.Type,
-                    ctx.User.Username,
-                    ctx.Interaction.Data);
             }
             catch (Exception ex)
             {
