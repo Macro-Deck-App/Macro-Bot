@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Updating the image on the server
-        uses: appleboy/ssh-action@v0.1.10
+        uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.DOCKER_HOST }}
           username: ${{ secrets.GITHUBWORKFLOWS_USER }}
