@@ -1,5 +1,6 @@
 ﻿using MacroBot.Core;
 using MacroBot.Core.Extensions;
+using MacroBot.Core.Runtime;
 using MacroBot.StartupConfig;
 using Serilog;
 
@@ -12,13 +13,6 @@ public static class Program
 		AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 		Paths.EnsureDirectoriesCreated();
 		
-		var environment = Environment.GetEnvironmentVariable("ENVIRONMENT");
-		var port = 80;
-		if (string.IsNullOrWhiteSpace(environment))
-		{
-			port = 9000;
-		}
-		
 		var app = Host.CreateDefaultBuilder(args)
 			.ConfigureSerilog()
 			.ConfigureWebHostDefaults(hostBuilder =>
@@ -26,7 +20,7 @@ public static class Program
 				hostBuilder.UseStartup<Startup>();
 				hostBuilder.ConfigureKestrel(options =>
 				{
-					options.ListenAnyIP(port);
+					options.ListenAnyIP(MacroBotEnvironment.HostingPort);
 					options.AllowSynchronousIO = true;
 				});
 			}).Build();
