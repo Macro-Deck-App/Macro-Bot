@@ -23,7 +23,7 @@ jobs:
           password: ${{ secrets.GITHUBWORKFLOWS_USER_PASSWORD }}
           port: ${{ secrets.DOCKER_HOST_PORT }}
           script: |
-            cd "scripts/MacroBot/"
+            cd "scripts/macro-bot/"
             ./update_develop.sh ${{ github.sha }}
 
       - uses: fjogeleit/http-request-action@v1
