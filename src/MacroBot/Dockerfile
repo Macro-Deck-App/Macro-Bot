@@ -1,5 +1,5 @@
 ﻿ARG BASE_IMAGE
-FROM mcr.microsoft.com/dotnet/aspnet:7.0.5-bullseye-slim-amd64 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:7.0.10-bullseye-slim-amd64 AS base
 WORKDIR /app
 
 FROM ${BASE_IMAGE} AS build
