@@ -4,8 +4,9 @@ on:
   workflow_call:
   push:
     branches:
-      - 'main'
-      - 'develop'
+      - '**'
+      - '!main'
+      - '!develop'
 
 jobs:
   base_image_build:
