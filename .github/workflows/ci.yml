@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  workflow_call:
+  pull_request:
+    branches:
+      - '**'
+  push:
+    branches:
+      - 'main'
+      - 'develop'
+
+jobs:
+  base_image_build:
+    name: Base image build
+    uses: ./.github/workflows/base-image-build.yml
+    if: ${{ github.event_name != 'push' || github.event.pull_request.head.sha != github.sha }}
+    secrets: inherit
+  final_image_build:
+    name: Final image build
+    uses: ./.github/workflows/final-image-build.yml
+    needs: [base_image_build]
+    if: ${{ github.event_name != 'push' || github.event.pull_request.head.sha != github.sha }}
+    secrets: inherit
+  unit_tests:
+    name: Unit Tests
+    uses: ./.github/workflows/unit-tests.yml
+    needs: [final_image_build, base_image_build]
+    if: ${{ github.event_name != 'push' || github.event.pull_request.head.sha != github.sha }}
+    secrets: inherit
+  integration_tests:
+    name: Integration Tests
+    uses: ./.github/workflows/integration-tests.yml
+    needs: [final_image_build, base_image_build]
+    if: ${{ github.event_name != 'push' || github.event.pull_request.head.sha != github.sha }}
+    secrets: inherit
