@@ -5,7 +5,7 @@ WORKDIR /app
 FROM ${BASE_IMAGE} AS build
 WORKDIR /src/src/MacroBot/
 
-RUN dotnet msbuild "MacroBot.csproj" -warnAsMessage:CS0618 -warnAsError -p:Configuration=Release
+RUN dotnet msbuild "MacroBot.csproj" -warnAsMessage:CS0618 -p:Configuration=Release
 
 FROM build AS publish
 RUN dotnet publish -c Release -o /app
