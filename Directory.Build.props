@@ -1,0 +1,12 @@
+<Project>
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <WarningsAsErrors>CS8602</WarningsAsErrors>
+        <Version>1.2.0</Version>
+    </PropertyGroup>
+
+</Project>
