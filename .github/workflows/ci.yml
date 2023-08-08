@@ -2,13 +2,10 @@ name: CI
 
 on:
   workflow_call:
-  pull_request:
-    branches:
-      - '**'
   push:
     branches:
-      - '**'
-      - '!develop'
+      - 'main'
+      - 'develop'
 
 jobs:
   base_image_build:
