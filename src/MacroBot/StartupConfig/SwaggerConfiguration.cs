@@ -1,3 +1,4 @@
+using MacroBot.Core.Runtime;
 using Microsoft.OpenApi.Models;
 
 namespace MacroBot.StartupConfig;
@@ -5,7 +6,7 @@ namespace MacroBot.StartupConfig;
 public static class SwaggerConfiguration
 {
 
-    public static IServiceCollection AddSwagger(this IServiceCollection services)
+    public static void AddSwagger(this IServiceCollection services)
     {
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(c =>
@@ -34,12 +35,15 @@ public static class SwaggerConfiguration
                 }
             });
         });
-
-        return services;
     }
     
     public static void ConfigureSwagger(this IApplicationBuilder app)
     {
+        if (MacroBotEnvironment.IsProduction)
+        {
+            return;
+        }
+        
         app.UseSwagger();
         app.UseSwaggerUI(c =>
         {

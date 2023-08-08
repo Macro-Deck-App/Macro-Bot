@@ -15,6 +15,15 @@ jobs:
     needs: [ci]
     runs-on: ubuntu-latest
     steps:
+      - uses: fjogeleit/http-request-action@v1
+        continue-on-error: true
+        with:
+          url: 'https://testbot.api.macro-deck.app/webhook/deploy'
+          method: 'POST'
+          bearerToken: ${{ secrets.TESTBOT_WEBHOOK_DEPLOY_KEY }}
+          customHeaders: '{"Content-Type": "application/json" }'
+          data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":0},"description":"MacroBot updating to ${{ github.sha }}.","fields":[{"name":"Branch","value":"Develop","inline":false},{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
+
       - name: Updating the image on the server
         uses: appleboy/ssh-action@v0.1.8
         with:
@@ -25,13 +34,3 @@ jobs:
           script: |
             cd "scripts/macro-bot/"
             ./update_develop.sh ${{ github.sha }}
-
-      - uses: fjogeleit/http-request-action@v1
-        continue-on-error: true
-        with:
-          url: 'https://testbot.api.macro-deck.app/webhook/deploy'
-          method: 'POST'
-          bearerToken: ${{ secrets.TESTBOT_WEBHOOK_DEPLOY_KEY }}
-          customHeaders: '{"Content-Type": "application/json" }'
-          data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":0},"description":"MacroBot is now on ${{ github.sha }}.","fields":[{"name":"Branch","value":"Develop","inline":false},{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
-    
