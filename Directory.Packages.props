@@ -28,7 +28,7 @@
         <PackageVersion Include="Swashbuckle.AspNetCore.Swagger" Version="6.5.0" />
         <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.5.0" />
         <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.5.0" />
-        <PackageVersion Include="System.Data.SQLite" Version="1.0.117" />
+        <PackageVersion Include="System.Data.SQLite" Version="1.0.118" />
         <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="7.0.5" />
         <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
         <PackageVersion Include="NUnit" Version="3.13.3" />
