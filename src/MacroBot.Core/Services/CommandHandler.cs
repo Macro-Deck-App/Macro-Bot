@@ -1,7 +1,7 @@
-using System.Reflection;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using MacroBot.Core.Discord.Modules.Info;
 using Serilog;
 using ILogger = Serilog.ILogger;
 
@@ -24,7 +24,7 @@ public class CommandHandler
         public async Task InitializeAsync()
         {
             // add the public modules that inherit InteractionModuleBase<T> to the InteractionService
-            await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
+            await _commands.AddModulesAsync(typeof(BotInfoModule).Assembly, _services);
 
             // process the InteractionCreated payloads to execute Interactions commands
             _client.InteractionCreated += HandleInteraction;
