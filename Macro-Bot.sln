@@ -3,7 +3,36 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32616.157
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MacroBotApp", "MacroBotApp\MacroBotApp.csproj", "{0F590001-5277-4DAC-A6ED-FC79646DCC9E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MacroBotApp", "src\MacroBot\MacroBot.csproj", "{0F590001-5277-4DAC-A6ED-FC79646DCC9E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E8C7409C-7E36-4ABE-AA6D-76920A531C65}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{8AABC701-C6FE-4F54-A35D-BC73683AEC8F}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\docker-deploy-develop.yml = .github\workflows\docker-deploy-develop.yml
+		.github\workflows\docker-deploy-production.yml = .github\workflows\docker-deploy-production.yml
+		.github\workflows\base-image-build.yml = .github\workflows\base-image-build.yml
+		.github\workflows\ci.yml = .github\workflows\ci.yml
+		.github\workflows\final-image-build.yml = .github\workflows\final-image-build.yml
+		.github\workflows\integration-tests.yml = .github\workflows\integration-tests.yml
+		.github\workflows\unit-tests.yml = .github\workflows\unit-tests.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "solution", "solution", "{5EA7CA8A-52D7-4D5D-BB18-FF6D9705DEB5}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		renovate.json = renovate.json
+		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
+		Dockerfile = Dockerfile
+		.dockerignore = .dockerignore
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MacroBot.Core", "src\MacroBot.Core\MacroBot.Core.csproj", "{E72E1B38-EF79-47A8-B685-C9DC34C588C2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D97D2D86-EC10-49A6-96BE-2F57C731D4AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MacroBot.Tests.UnitTests", "tests\MacroBot.Tests.UnitTests\MacroBot.Tests.UnitTests.csproj", "{5FF04086-BBE4-48B1-9217-C6F10486BE34}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,11 +44,24 @@ Global
 		{0F590001-5277-4DAC-A6ED-FC79646DCC9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F590001-5277-4DAC-A6ED-FC79646DCC9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F590001-5277-4DAC-A6ED-FC79646DCC9E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E72E1B38-EF79-47A8-B685-C9DC34C588C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E72E1B38-EF79-47A8-B685-C9DC34C588C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E72E1B38-EF79-47A8-B685-C9DC34C588C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E72E1B38-EF79-47A8-B685-C9DC34C588C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FF04086-BBE4-48B1-9217-C6F10486BE34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FF04086-BBE4-48B1-9217-C6F10486BE34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FF04086-BBE4-48B1-9217-C6F10486BE34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FF04086-BBE4-48B1-9217-C6F10486BE34}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6022EA78-8FCC-4A89-A4C3-225B03329FCE}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0F590001-5277-4DAC-A6ED-FC79646DCC9E} = {E8C7409C-7E36-4ABE-AA6D-76920A531C65}
+		{E72E1B38-EF79-47A8-B685-C9DC34C588C2} = {E8C7409C-7E36-4ABE-AA6D-76920A531C65}
+		{5FF04086-BBE4-48B1-9217-C6F10486BE34} = {D97D2D86-EC10-49A6-96BE-2F57C731D4AD}
 	EndGlobalSection
 EndGlobal

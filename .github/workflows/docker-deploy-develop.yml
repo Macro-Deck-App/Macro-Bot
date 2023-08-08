@@ -4,50 +4,33 @@ on:
   workflow_dispatch:
   push:
     branches: [ "develop" ]
-      
+
 jobs:
-  tests:
-    uses: ./.github/workflows/build.yml
+  ci:
+    uses: ./.github/workflows/ci.yml
     name: Build and test
+  
   deploy:
-    name: Build and deploy Docker image
-    needs: [tests]
+    name: Deploy Docker image
+    needs: [ci]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: fjogeleit/http-request-action@v1
-      continue-on-error: true
-      with:
-        url: 'https://testbot.api.macro-deck.app/webhook/deploy'
-        method: 'POST'
-        bearerToken:  ${{ secrets.TESTBOT_WEBHOOK_DEPLOY_KEY }}
-        customHeaders: '{"Content-Type": "application/json" }'
-        data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":1},"description":"Deployment started, building and pushing the image...","fields":[{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
-    - name: Build the Docker image
-      run: docker build . --file MacroBotApp/Dockerfile --tag suchbyte/macro-bot:dev_${{ github.sha }}
-    - name: Log into registry
-      uses: docker/login-action@40891eba8c2bcd1309b07ba8b11232f313e86779
-      with:
-        registry: docker.io
-        username: suchbyte
-        password: ${{ secrets.DOCKER_PASSWORD }}
-    - name: Push the Docker image
-      run: docker push suchbyte/macro-bot:dev_${{ github.sha }}
-    - uses: fjogeleit/http-request-action@v1
-      continue-on-error: true
-      with:
-        url: 'https://testbot.api.macro-deck.app/webhook/deploy'
-        method: 'POST'
-        bearerToken:  ${{ secrets.TESTBOT_WEBHOOK_DEPLOY_KEY }}
-        customHeaders: '{"Content-Type": "application/json" }'
-        data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":0},"description":"Push successful, updating the container now...","fields":[{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
-    - name: Updating the image on the server
-      uses: appleboy/ssh-action@v0.1.10
-      with:
-        host: ${{ secrets.DOCKER_HOST }}
-        username: ${{ secrets.GITHUBWORKFLOWS_USER }}
-        password: ${{ secrets.GITHUBWORKFLOWS_USER_PASSWORD }}
-        port: ${{ secrets.DOCKER_HOST_PORT }}
-        script: |
-          cd "scripts/Macro Bot/"
-          ./update_develop.sh dev_${{ github.sha }}
+      - uses: fjogeleit/http-request-action@v1
+        continue-on-error: true
+        with:
+          url: 'https://testbot.api.macro-deck.app/webhook/deploy'
+          method: 'POST'
+          bearerToken: ${{ secrets.TESTBOT_WEBHOOK_DEPLOY_KEY }}
+          customHeaders: '{"Content-Type": "application/json" }'
+          data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":0},"description":"MacroBot updating to ${{ github.sha }}.","fields":[{"name":"Branch","value":"Develop","inline":false},{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
+
+      - name: Updating the image on the server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DOCKER_HOST }}
+          username: ${{ secrets.GITHUBWORKFLOWS_USER }}
+          password: ${{ secrets.GITHUBWORKFLOWS_USER_PASSWORD }}
+          port: ${{ secrets.DOCKER_HOST_PORT }}
+          script: |
+            cd "scripts/macro-bot/"
+            ./update_develop.sh ${{ github.sha }}

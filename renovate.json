@@ -7,7 +7,15 @@
   "packageRules": [
     {
       "matchPackageNames": ["nuget"],
-      "stabilityDays": 14
+      "stabilityDays": 14,
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "matchPackageNames": ["nuget"],
+      "stabilityDays": 14,
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
     }
   ]
 }

@@ -1,0 +1,28 @@
+name: Final Image Build
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull the base image
+        run: docker pull ghcr.io/macro-deck-app/macro-bot-base:${{ github.sha }}
+
+      - name: Build the Docker image
+        run: docker build ./src/MacroBot --build-arg BASE_IMAGE=ghcr.io/macro-deck-app/macro-bot-base:${{ github.sha }} --file ./src/MacroBot/Dockerfile --tag ghcr.io/macro-deck-app/macro-bot:${{ github.sha }}
+
+      - name: Push Docker image
+        run: docker push ghcr.io/macro-deck-app/macro-bot:${{ github.sha }}
