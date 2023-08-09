@@ -8,9 +8,9 @@ using Serilog;
 
 namespace MacroBot.Core.Config;
 
-public partial class MacroBotConfig
+public static partial class MacroBotConfig
 {
-    private static readonly ILogger Logger = Log.ForContext(typeof(MacroBotConfig));
+    private static ILogger Logger => Log.ForContext(typeof(MacroBotConfig));
 
     private static IConfiguration? Configuration { get; set; }
 
@@ -151,10 +151,6 @@ public partial class MacroBotConfig
                 continue;
             }
             
-            Logger.Information(
-                "Updating config {CurrentConfigVersion} -> {ConfigVersion}",
-                CurrentConfigVersion,
-                latestConfigVersion);
             await UpdateConfig(ConfigPath, cancellationToken);
         } while (!cancellationToken.IsCancellationRequested);
     }

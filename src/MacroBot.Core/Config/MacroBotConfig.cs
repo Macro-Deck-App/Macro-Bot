@@ -3,7 +3,7 @@ using MacroBot.Core.Models.Webhook;
 
 namespace MacroBot.Core.Config;
 
-public partial class MacroBotConfig
+public static partial class MacroBotConfig
 {
     public static string BotToken => GetString("bot:token");
     public static ulong GuildId => GetUlong("bot:guild_id");
