@@ -30,9 +30,4 @@
         <PackageReference Include="System.Data.SQLite" />
     </ItemGroup>
 
-
-    <ItemGroup>
-      <Folder Include="Utils\" />
-    </ItemGroup>
-
 </Project>
