@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using JetBrains.Annotations;
 using MacroBot.Core.Config;
 using MacroBot.Core.Models.Status;
+using MacroBot.Core.Models.StatusCheck;
 using MacroBot.Core.ServiceInterfaces;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -19,7 +20,6 @@ public class StatusCheckService : IStatusCheckService, IHostedService
 
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly TimerService _timerService;
-    private readonly StatusCheckConfig _statusCheckConfig;
     private readonly DiscordSocketClient _discordSocketClient;
 
     public event EventHandler<StatusCheckFinishedEventArgs>? StatusCheckFinished;
@@ -32,12 +32,10 @@ public class StatusCheckService : IStatusCheckService, IHostedService
 
     public StatusCheckService(IHttpClientFactory httpClientFactory,
         TimerService timerService,
-        StatusCheckConfig statusCheckConfig,
         DiscordSocketClient discordSocketClient)
     {
         _httpClientFactory = httpClientFactory;
         _timerService = timerService;
-        _statusCheckConfig = statusCheckConfig;
         _discordSocketClient = discordSocketClient;
     }
 
@@ -78,7 +76,7 @@ public class StatusCheckService : IStatusCheckService, IHostedService
         {
             MaxDegreeOfParallelism = 3
         };
-        await Parallel.ForEachAsync(_statusCheckConfig.StatusCheckItems, parallelOptions, async (statusCheckItem, token) =>
+        await Parallel.ForEachAsync(MacroBotConfig.StatusCheckItems, parallelOptions, async (statusCheckItem, token) =>
         {
             var lastResult = lastResults?.FirstOrDefault(x => x.Name.Equals(statusCheckItem.Name));
             var result = await CheckAsync(statusCheckItem, lastResult);
@@ -110,7 +108,7 @@ public class StatusCheckService : IStatusCheckService, IHostedService
         _lastCheckDone = true;
     }
 
-    private async Task<StatusCheckResult> CheckAsync(StatusCheckConfig.StatusCheckItem statusCheckItem, StatusCheckResult? lastResult)
+    private async Task<StatusCheckResult> CheckAsync(StatusCheckItem statusCheckItem, StatusCheckResult? lastResult)
     {
         _logger.Verbose(
             "Checking status of {Name} - {Url}...", 

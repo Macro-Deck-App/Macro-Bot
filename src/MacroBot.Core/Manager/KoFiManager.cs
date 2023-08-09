@@ -10,12 +10,10 @@ namespace MacroBot.Core.Manager;
 
 public class KoFiManager : IKoFiManager
 {
-    private readonly KoFiConfig _koFiConfig;
     private readonly IDiscordService _discordService;
 
-    public KoFiManager(KoFiConfig koFiConfig, IDiscordService discordService)
+    public KoFiManager(IDiscordService discordService)
     {
-        _koFiConfig = koFiConfig;
         _discordService = discordService;
     }
 
@@ -44,7 +42,7 @@ public class KoFiManager : IKoFiManager
         var webhook = new WebhookItem
         {
             Id = "Ko-Fi",
-            ChannelId = _koFiConfig.ChannelId
+            ChannelId = MacroBotConfig.KoFiDonationChannelId
         };
 
         await _discordService.BroadcastWebhookAsync(webhook, webhookRequest);

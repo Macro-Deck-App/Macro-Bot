@@ -1,8 +1,8 @@
-﻿using System.Reflection;
-using Discord;
+﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using JetBrains.Annotations;
+using MacroBot.Core.Config;
 
 namespace MacroBot.Core.Discord.Modules.Info;
 
@@ -21,7 +21,7 @@ public class BotInfoModule : InteractionModuleBase<SocketInteractionContext>
         embed.WithThumbnailUrl(Context.Client.CurrentUser.GetAvatarUrl());
         embed.AddField("Description", "This is the official Discord Bot for the Macro Deck discord server by <@!300244123569487873>.");
         embed.AddField("Usage", "This bot functions using Discord's Slash Command feature, type `/` in chat in order to view a list of valid commands.");
-        embed.AddField("Version", $"`{Assembly.GetExecutingAssembly().GetName().Version}`", true);
+        embed.AddField("Config version", MacroBotConfig.CurrentConfigVersion, true);
         embed.AddField("API Latency", $"`{Context.Client.Latency} ms`", true);
         embed.AddField("Written by", "<@!298215920709664768>\n<@!367398650076463118>\n<@!908002848967626842>\n<@!300244123569487873>", true);
         embed.WithFooter(Context.Guild.Name + " | " + Context.Guild.Id, Context.Guild.IconUrl);

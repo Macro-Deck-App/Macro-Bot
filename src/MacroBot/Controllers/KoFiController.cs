@@ -11,13 +11,11 @@ namespace MacroBot.Controllers;
 [Route("/kofi")]
 public class KoFiController : ControllerBase
 {
-    private readonly KoFiConfig _koFiConfig;
     private readonly IKoFiManager _koFiManager;
 
-    public KoFiController(KoFiConfig koFiConfig,
+    public KoFiController(
         IKoFiManager koFiManager)
     {
-        _koFiConfig = koFiConfig;
         _koFiManager = koFiManager;
     }
 
@@ -37,7 +35,7 @@ public class KoFiController : ControllerBase
             return new UnauthorizedResult();
         }
 
-        if (!verificationToken.EqualsCryptographically(_koFiConfig.VerificationToken))
+        if (!verificationToken.EqualsCryptographically(MacroBotConfig.KoFiVerificationToken))
         {
             return new StatusCodeResult(StatusCodes.Status403Forbidden);
         }

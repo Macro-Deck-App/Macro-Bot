@@ -1,0 +1,49 @@
+{
+  "database": {
+    "connection_string": "User ID=macrobotmaster;Password=test;Database=macrobottest;Host=127.0.0.1;Port=5432"
+  },
+  "bot": {
+    "token": "MTA2NjUwMjIzNTc3NDc3OTQyMg.GqUpkV.fVLI_ExdIdOhbaWMnafXOrtPgjt-oD4LuBG0S8",
+    "guild_id": 963548230300348416
+  },
+  "roles": {
+    "moderator_role_id": 963570325939945565,
+    "administrator_role_id": 963570265344868413
+  },
+  "channels": {
+    "log_channel_id": 1065734198029201429,
+    "error_log_channel_id": 1066058666589044746,
+    "member_screening_channel_id": 1064476884932513862,
+    "image_only_channel_ids": [
+      970361261978177596,
+      998289359260368937,
+      998289378868736070
+    ]
+  },
+  "permissions": {
+    "manage_tags": [
+      998858490728693810
+    ]
+  },
+  "kofi": {
+    "verification_token": "",
+    "donation_channel_id": 0
+  },
+  "webhooks": [
+    {
+      "id": "bla",
+      "bearerAuthKey": "blablabla",
+      "channelId": 1065562972543520858
+    }
+  ],
+  "status_check": {
+    "channel_id": 1061618898715279521,
+    "items": [
+      {
+        "name": "Website",
+        "url": "https://macro-deck.app",
+        "statusEndpoint": false
+      }
+    ]
+  }
+}

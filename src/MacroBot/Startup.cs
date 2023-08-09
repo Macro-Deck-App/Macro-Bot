@@ -1,10 +1,7 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using MacroBot.Core;
-using MacroBot.Core.Config;
 using MacroBot.Core.DataAccess;
-using MacroBot.Core.DataAccess.AutoMapper;
 using MacroBot.Core.DataAccess.Repositories;
 using MacroBot.Core.DataAccess.RepositoryInterfaces;
 using MacroBot.Core.Discord.Modules.Tagging;
@@ -21,8 +18,6 @@ public class Startup
 {
     public void ConfigureServices(IServiceCollection services)
     {
-        LoadRegisterConfigs(services);
-		
         DiscordSocketConfig discordSocketConfig = new()
         {
             AlwaysDownloadUsers = true,
@@ -38,7 +33,7 @@ public class Startup
         };
         
         services.AddDbContext<MacroBotContext>();
-        services.AddAutoMapper(typeof(TagMapping));
+        services.AddAutoMapper(typeof(Startup).Assembly);
         services.AddTransient<ITagRepository, TagRepository>();
         services.AddTransient<TaggingUtils>();
         services.AddSingleton(discordSocketConfig);
@@ -68,23 +63,5 @@ public class Startup
             endpoints.MapControllers();
         });
         app.ConfigureSwagger();
-    }
-    
-    private static void LoadRegisterConfigs(IServiceCollection services)
-    {
-        Task.Run(async () =>
-        {
-            var koFiConfig = await KoFiConfig.LoadAsync(Paths.KoFiConfigPath);
-            var botConfig = await BotConfig.LoadAsync(Paths.BotConfigPath);
-            var commandsConfig = await CommandsConfig.LoadAsync(Paths.CommandsConfigPath);
-            var statusCheckConfig = await StatusCheckConfig.LoadAsync(Paths.StatusCheckConfigPath);
-            var webhooksConfig = await WebhooksConfig.LoadAsync(Paths.WebhooksPath);
-
-            services.AddSingleton(koFiConfig);
-            services.AddSingleton(statusCheckConfig);
-            services.AddSingleton(webhooksConfig);
-            services.AddSingleton(botConfig);
-            services.AddSingleton(commandsConfig);
-        }).Wait();
     }
 }

@@ -1,7 +1,7 @@
 using Serilog;
 using Serilog.Configuration;
 
-namespace MacroBot.Core.Logger;
+namespace MacroBot.Core.Logging;
 
 public static class CustomSinkExtensions
 {

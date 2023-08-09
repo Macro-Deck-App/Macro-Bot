@@ -1,4 +1,5 @@
-using MacroBot.Core.Logger;
+using MacroBot.Core.Logging;
+using MacroBot.Core.Runtime;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
@@ -10,11 +11,24 @@ public static class LoggingConfiguration
     public static IHostBuilder ConfigureSerilog(this IHostBuilder hostBuilder)
     {
         return hostBuilder.UseSerilog((_, services, configuration) =>
+        {
+            if (MacroBotEnvironment.IsStagingOrProduction)
+            {
+                configuration
+                    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+                    .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)
+                    .WriteTo.DiscordSink(services);
+            }
+            else
+            {
+                configuration
+                    .MinimumLevel.Verbose()
+                    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Verbose)
+                    .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Verbose);
+            }
+
             configuration
-                .MinimumLevel.Verbose()
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Debug)
-                .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Debug)
-                .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                .WriteTo.DiscordSink(services));
+                .WriteTo.Console(theme: AnsiConsoleTheme.Code);
+        });
     }
 }

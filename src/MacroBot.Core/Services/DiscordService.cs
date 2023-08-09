@@ -22,7 +22,6 @@ public class DiscordService : IDiscordService, IHostedService
 {
 	private readonly ILogger _logger = Log.ForContext<DiscordService>();
 	
-	private readonly BotConfig _botConfig;
 	private readonly DiscordSocketClient _discordSocketClient;
 	private readonly IServiceProvider _serviceProvider;
 	private readonly IStatusCheckService _statusCheckService;
@@ -36,14 +35,13 @@ public class DiscordService : IDiscordService, IHostedService
     private string prevplugin = "";
 	private List<string> plsinthisthread = new();
 
-    public DiscordService(BotConfig botConfig,
+    public DiscordService(
 	    DiscordSocketClient discordSocketClient,
 	    IServiceProvider serviceProvider,
 	    IStatusCheckService statusCheckService,
 	    InteractionService interactionService,
 	    IHttpClientFactory httpClientFactory)
     {
-	    _botConfig = botConfig;
 	    _discordSocketClient = discordSocketClient;
 	    _serviceProvider = serviceProvider;
 	    _statusCheckService = statusCheckService;
@@ -81,7 +79,7 @@ public class DiscordService : IDiscordService, IHostedService
 
     private async Task InitializeDiscord()
     {
-	    DiscordSocketClientExtensions.UseSerilog(_discordSocketClient);
+	    _discordSocketClient.UseSerilog();
 	    _discordSocketClient.Ready += Ready;
 	    _discordSocketClient.MessageReceived += MessageReceived;
 	    _discordSocketClient.UserJoined += UserJoined;
@@ -89,7 +87,7 @@ public class DiscordService : IDiscordService, IHostedService
 	    _discordSocketClient.ThreadCreated += async (thread) => await ThreadCreated(thread);
 
 	    await _serviceProvider.GetRequiredService<CommandHandler>().InitializeAsync();
-	    await _discordSocketClient.LoginAsync(TokenType.Bot, _botConfig.Token);
+	    await _discordSocketClient.LoginAsync(TokenType.Bot, MacroBotConfig.BotToken);
 	    await _discordSocketClient.StartAsync();
     }
 
@@ -214,8 +212,8 @@ public class DiscordService : IDiscordService, IHostedService
     {
 	    DiscordReady = true;
 	    await _interactionService.RegisterCommandsGloballyAsync();
-	    var guild = _discordSocketClient.GetGuild(_botConfig.GuildId);
-	    if (guild?.GetChannel(_botConfig.Channels.MemberScreeningChannelId) is ITextChannel channel)
+	    var guild = _discordSocketClient.GetGuild(MacroBotConfig.GuildId);
+	    if (guild?.GetChannel(MacroBotConfig.MemberScreeningChannelId) is ITextChannel channel)
 	    {
 		    var usersCount = GetUsersCount(guild);
 		    await UpdateMemberScreeningChannelName(channel, usersCount);
@@ -244,19 +242,19 @@ public class DiscordService : IDiscordService, IHostedService
 
 		var protectedChannels = new []
 		{
-			_botConfig.Channels.LogChannelId,
-			_botConfig.Channels.MemberScreeningChannelId,
-			_botConfig.Channels.StatusCheckChannelId
+			MacroBotConfig.LogChannelId,
+			MacroBotConfig.MemberScreeningChannelId,
+			MacroBotConfig.StatusCheckChannelId
 		};
 
-		if (Enumerable.Contains<ulong>(protectedChannels, message.Channel.Id))
+		if (protectedChannels.Contains(message.Channel.Id))
 		{
 			await message.DeleteAsync();
 			return;
 		}
 		
-		var messageByModerator = member.Roles.Contains(member.Guild.GetRole(_botConfig.Roles.ModeratorRoleId));
-		var imageChannels = _botConfig.Channels.ImageOnlyChannels;
+		var messageByModerator = member.Roles.Contains(member.Guild.GetRole(MacroBotConfig.ModeratorRoleId));
+		var imageChannels = MacroBotConfig.ImageOnlyChannelIds;
 
 		var anyMentionsOnMsg = message.MentionedUsers.Any(u => message.Content.Contains($"<@{u.Id}>"));
 
@@ -268,9 +266,8 @@ public class DiscordService : IDiscordService, IHostedService
 		{
 			await message.DeleteAsync();
 			_logger.Information(
-				"Message containing users/roles/everyone from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted. Message: {Message}",
+				"Message containing users/roles/everyone from {AuthorUsername} in {ChannelName} was deleted. Message: {Message}",
 				message.Author.Username,
-				message.Author.Discriminator,
 				message.Channel.Name,
 				message.CleanContent);
 			try
@@ -287,7 +284,7 @@ public class DiscordService : IDiscordService, IHostedService
 			}
 		}
 
-		if (Enumerable.Contains<ulong>(imageChannels, message.Channel.Id) && !DiscordMessageFilter.FilterForImageChannels(message))
+		if (imageChannels.Contains(message.Channel.Id) && !DiscordMessageFilter.FilterForImageChannels(message))
 		{
 			await message.DeleteAsync();
 
@@ -307,18 +304,16 @@ public class DiscordService : IDiscordService, IHostedService
 					$"The channel ${message.Channel} is only meant for images.\nHere is your text, so that you don't need to rewrite it into another channel:",
 					embed: embed.Build());
 				_logger.Information(
-					"Message without image from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted! DM with their text was successfully sent",
+					"Message without image from {AuthorUsername} in {ChannelName} was deleted! DM with their text was successfully sent",
 					message.Author.Username,
-					message.Author.Discriminator,
 					message.Channel.Name);
 
 			}
 			catch (HttpException)
 			{
 				_logger.Information(
-					"Message without image from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted! DM with their text was not sent",
+					"Message without image from {AuthorUsername} in {ChannelName} was deleted! DM with their text was not sent",
 					message.Author.Username,
-					message.Author.Discriminator,
 					message.Channel.Name);
 			}
 
@@ -327,14 +322,13 @@ public class DiscordService : IDiscordService, IHostedService
 
 	private async Task MemberMovement(IGuildUser member, bool joined)
 	{
-		var guild = _discordSocketClient.GetGuild(_botConfig.GuildId);
-		if (guild?.GetChannel(_botConfig.Channels.MemberScreeningChannelId) is not ITextChannel channel)
+		var guild = _discordSocketClient.GetGuild(MacroBotConfig.GuildId);
+		if (guild?.GetChannel(MacroBotConfig.MemberScreeningChannelId) is not ITextChannel channel)
 		{
 			return;
 		}
-		_logger.Verbose("{User}#{Discriminator} {Action} the server",
+		_logger.Verbose("{User} {Action} the server",
 			member.Username,
-			member.Discriminator,
 			joined
 				? "joined"
 				: "left");
@@ -347,7 +341,7 @@ public class DiscordService : IDiscordService, IHostedService
 			Color = joined ? Color.Green : Color.Red,
 			Description = $"Latest member count: **{usersCount}** ({botsCount} bots)",
 			ThumbnailUrl = member.GetAvatarUrl(),
-			Title = $"__**{member.Username}#{member.Discriminator} {(joined ? "joined" : "left")} the server!**__"
+			Title = $"__**{member.Username} {(joined ? "joined" : "left")} the server!**__"
 		};
 		embed.WithCurrentTimestamp();
 
@@ -378,14 +372,12 @@ public class DiscordService : IDiscordService, IHostedService
 
 	private int GetUsersCount(SocketGuild guild)
 	{
-		var userCount = guild.Users.ToArray().Length;
-		return userCount;
+		return guild.Users.ToArray().Length;
 	}
 
 	private int GetBotsCount(SocketGuild guild)
 	{
-		var botCount = guild.Users.Where(x => x.IsBot).ToArray().Length;
-		return botCount;
+		return guild.Users.Where(x => x.IsBot).ToArray().Length;
 	}
 
 	public async Task BroadcastWebhookAsync(WebhookItem webhook, WebhookRequest webhookRequest)
@@ -395,7 +387,7 @@ public class DiscordService : IDiscordService, IHostedService
 			return;
 		}
 		_logger.Verbose("Executing Webhook {WebhookId}", webhook.Id);
-		if (_discordSocketClient.GetGuild(_botConfig.GuildId)
+		if (_discordSocketClient.GetGuild(MacroBotConfig.GuildId)
 			    .GetChannel(webhook.ChannelId) is not ITextChannel channel)
 		{
 			_logger.Fatal("Cannot execute webhook {WebhookId} - Channel does not exist", webhook.ChannelId);
@@ -481,8 +473,8 @@ public class DiscordService : IDiscordService, IHostedService
 		}
 		var status = _statusCheckService.LastStatusCheckResults?.ToArray();
 
-		if (_discordSocketClient.GetGuild(_botConfig.GuildId)
-			    .GetChannel(_botConfig.Channels.StatusCheckChannelId) is not ITextChannel channel 
+		if (_discordSocketClient.GetGuild(MacroBotConfig.GuildId)
+			    .GetChannel(MacroBotConfig.StatusCheckChannelId) is not ITextChannel channel 
 		    || status is null)
 		{
 			return;
