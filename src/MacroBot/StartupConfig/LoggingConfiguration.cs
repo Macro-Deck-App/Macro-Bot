@@ -16,7 +16,8 @@ public static class LoggingConfiguration
             {
                 configuration
                     .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
-                    .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning);
+                    .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)
+                    .WriteTo.DiscordSink(services);
             }
             else
             {
@@ -25,9 +26,9 @@ public static class LoggingConfiguration
                     .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Verbose)
                     .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Verbose);
             }
+
             configuration
-                .WriteTo.Console(theme: AnsiConsoleTheme.Code)
-                .WriteTo.DiscordSink(services);
+                .WriteTo.Console(theme: AnsiConsoleTheme.Code);
         });
     }
 }

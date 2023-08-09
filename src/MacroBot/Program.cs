@@ -1,8 +1,7 @@
-﻿using MacroBot.Core;
-using MacroBot.Core.Config;
-using MacroBot.Core.Extensions;
+﻿using MacroBot.Core.Config;
 using MacroBot.Core.Runtime;
 using MacroBot.StartupConfig;
+using MacroBot.Utils;
 using Serilog;
 
 namespace MacroBot;
@@ -11,10 +10,12 @@ public static class Program
 {
 	public static async Task Main(string[] args)
 	{
+		AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 		AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
-		Paths.EnsureDirectoriesCreated();
 
 		await MacroBotConfig.Initialize();
+		
+		DatabaseMigrationTool.MigrateDatabase();
 		
 		var app = Host.CreateDefaultBuilder(args)
 			.ConfigureSerilog()
@@ -28,7 +29,6 @@ public static class Program
 				});
 			}).Build();
 
-		await app.MigrateDatabaseAsync();
 		await app.RunAsync();
 	}
 

@@ -2,7 +2,6 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using MacroBot.Core.DataAccess;
-using MacroBot.Core.DataAccess.AutoMapper;
 using MacroBot.Core.DataAccess.Repositories;
 using MacroBot.Core.DataAccess.RepositoryInterfaces;
 using MacroBot.Core.Discord.Modules.Tagging;
@@ -34,7 +33,7 @@ public class Startup
         };
         
         services.AddDbContext<MacroBotContext>();
-        services.AddAutoMapper(typeof(TagMapping));
+        services.AddAutoMapper(typeof(Startup).Assembly);
         services.AddTransient<ITagRepository, TagRepository>();
         services.AddTransient<TaggingUtils>();
         services.AddSingleton(discordSocketConfig);
