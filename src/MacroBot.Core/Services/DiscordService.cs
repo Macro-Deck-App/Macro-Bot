@@ -304,18 +304,16 @@ public class DiscordService : IDiscordService, IHostedService
 					$"The channel ${message.Channel} is only meant for images.\nHere is your text, so that you don't need to rewrite it into another channel:",
 					embed: embed.Build());
 				_logger.Information(
-					"Message without image from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted! DM with their text was successfully sent",
+					"Message without image from {AuthorUsername} in {ChannelName} was deleted! DM with their text was successfully sent",
 					message.Author.Username,
-					message.Author.Discriminator,
 					message.Channel.Name);
 
 			}
 			catch (HttpException)
 			{
 				_logger.Information(
-					"Message without image from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted! DM with their text was not sent",
+					"Message without image from {AuthorUsername} in {ChannelName} was deleted! DM with their text was not sent",
 					message.Author.Username,
-					message.Author.Discriminator,
 					message.Channel.Name);
 			}
 
