@@ -209,9 +209,17 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
         {
             footerText += $"by ${tag.Author}";
         }
-
-        footerText += " | Last Edited";
-        embed.WithTimestamp((DateTimeOffset)tag.LastEdited);
+        
+        if (tag.LastEdited.HasValue)
+        {
+            footerText += " | Edited";
+            embed.WithTimestamp(tag.LastEdited.Value);
+        }
+        else
+        {
+            footerText += " | Created";
+            embed.WithTimestamp(tag.Created);
+        }
 
         embed.WithFooter(footerText, footerAvatarUrl);
 
