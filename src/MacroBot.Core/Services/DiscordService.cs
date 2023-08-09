@@ -79,7 +79,7 @@ public class DiscordService : IDiscordService, IHostedService
 
     private async Task InitializeDiscord()
     {
-	    DiscordSocketClientExtensions.UseSerilog(_discordSocketClient);
+	    _discordSocketClient.UseSerilog();
 	    _discordSocketClient.Ready += Ready;
 	    _discordSocketClient.MessageReceived += MessageReceived;
 	    _discordSocketClient.UserJoined += UserJoined;
@@ -266,9 +266,8 @@ public class DiscordService : IDiscordService, IHostedService
 		{
 			await message.DeleteAsync();
 			_logger.Information(
-				"Message containing users/roles/everyone from {AuthorUsername}#{AuthorDiscriminator} in {ChannelName} was deleted. Message: {Message}",
+				"Message containing users/roles/everyone from {AuthorUsername} in {ChannelName} was deleted. Message: {Message}",
 				message.Author.Username,
-				message.Author.Discriminator,
 				message.Channel.Name,
 				message.CleanContent);
 			try
@@ -285,7 +284,7 @@ public class DiscordService : IDiscordService, IHostedService
 			}
 		}
 
-		if (Enumerable.Contains<ulong>(imageChannels, message.Channel.Id) && !DiscordMessageFilter.FilterForImageChannels(message))
+		if (imageChannels.Contains(message.Channel.Id) && !DiscordMessageFilter.FilterForImageChannels(message))
 		{
 			await message.DeleteAsync();
 
@@ -330,9 +329,8 @@ public class DiscordService : IDiscordService, IHostedService
 		{
 			return;
 		}
-		_logger.Verbose("{User}#{Discriminator} {Action} the server",
+		_logger.Verbose("{User} {Action} the server",
 			member.Username,
-			member.Discriminator,
 			joined
 				? "joined"
 				: "left");
@@ -345,7 +343,7 @@ public class DiscordService : IDiscordService, IHostedService
 			Color = joined ? Color.Green : Color.Red,
 			Description = $"Latest member count: **{usersCount}** ({botsCount} bots)",
 			ThumbnailUrl = member.GetAvatarUrl(),
-			Title = $"__**{member.Username}#{member.Discriminator} {(joined ? "joined" : "left")} the server!**__"
+			Title = $"__**{member.Username} {(joined ? "joined" : "left")} the server!**__"
 		};
 		embed.WithCurrentTimestamp();
 
@@ -376,14 +374,12 @@ public class DiscordService : IDiscordService, IHostedService
 
 	private int GetUsersCount(SocketGuild guild)
 	{
-		var userCount = guild.Users.ToArray().Length;
-		return userCount;
+		return guild.Users.ToArray().Length;
 	}
 
 	private int GetBotsCount(SocketGuild guild)
 	{
-		var botCount = guild.Users.Where(x => x.IsBot).ToArray().Length;
-		return botCount;
+		return guild.Users.Where(x => x.IsBot).ToArray().Length;
 	}
 
 	public async Task BroadcastWebhookAsync(WebhookItem webhook, WebhookRequest webhookRequest)
