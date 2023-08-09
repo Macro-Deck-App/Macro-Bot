@@ -39,6 +39,9 @@
     <Content Include="..\.dockerignore">
       <Link>.dockerignore</Link>
     </Content>
+    <Content Update="Config\config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -48,5 +51,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MacroBot.Core\MacroBot.Core.csproj" />
   </ItemGroup>
+
+
 
 </Project>

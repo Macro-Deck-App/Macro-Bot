@@ -1,4 +1,5 @@
 ﻿using MacroBot.Core;
+using MacroBot.Core.Config;
 using MacroBot.Core.Extensions;
 using MacroBot.Core.Runtime;
 using MacroBot.StartupConfig;
@@ -12,6 +13,8 @@ public static class Program
 	{
 		AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
 		Paths.EnsureDirectoriesCreated();
+
+		await MacroBotConfig.Initialize();
 		
 		var app = Host.CreateDefaultBuilder(args)
 			.ConfigureSerilog()

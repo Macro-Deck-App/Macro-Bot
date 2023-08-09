@@ -11,13 +11,11 @@ namespace MacroBot.Core.Discord.Modules.Tagging;
 [UsedImplicitly]
 public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
 {
-    private readonly CommandsConfig _commandsConfig;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly TaggingUtils _taggingUtils;
 
-    public TaggingCommands(CommandsConfig commandsConfig, IServiceScopeFactory serviceScopeFactory, TaggingUtils taggingUtils)
+    public TaggingCommands(IServiceScopeFactory serviceScopeFactory, TaggingUtils taggingUtils)
     {
-        _commandsConfig = commandsConfig;
         _serviceScopeFactory = serviceScopeFactory;
         _taggingUtils = taggingUtils;
     }
@@ -58,7 +56,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
     {
         // Handle Permissions
         var guildUser = Context.Guild.GetUser(Context.User.Id);
-        var requiredPermissions = _commandsConfig.Tagging.PermissionManageTags;
+        var requiredPermissions = MacroBotConfig.PermissionManageTags;
         if (!_taggingUtils.CheckPermissions(requiredPermissions, guildUser))
         {
 
@@ -93,7 +91,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
     {
         // Handle Permissions
         var guildUser = Context.Guild.GetUser(Context.User.Id);
-        var requiredPermissions = _commandsConfig.Tagging.PermissionManageTags;
+        var requiredPermissions = MacroBotConfig.PermissionManageTags;
         if (!_taggingUtils.CheckPermissions(requiredPermissions, guildUser))
         {
 
@@ -142,7 +140,7 @@ public class TaggingCommands : InteractionModuleBase<SocketInteractionContext>
     {
         // Handle Permissions
         var guildUser = Context.Guild.GetUser(Context.User.Id);
-        var requiredPermissions = _commandsConfig.Tagging.PermissionManageTags;
+        var requiredPermissions = MacroBotConfig.PermissionManageTags;
         if (!_taggingUtils.CheckPermissions(requiredPermissions, guildUser))
         {
 
