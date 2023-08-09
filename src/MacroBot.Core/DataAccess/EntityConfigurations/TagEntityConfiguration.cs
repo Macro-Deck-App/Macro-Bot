@@ -8,7 +8,7 @@ public class TagEntityConfiguration :  BaseCreatedUpdatedEntityConfig<TagEntity>
 {
     public TagEntityConfiguration()
     {
-        Table = "tag";
+        Table = "tags";
         ColumnPrefix = "t_";
     }
 
@@ -16,7 +16,7 @@ public class TagEntityConfiguration :  BaseCreatedUpdatedEntityConfig<TagEntity>
     {
         base.Configure(builder);
         
-        builder.ToTable("tags");
+        builder.ToTable(Table);
         
         builder.Property(p => p.Author)
             .HasColumnName(ColumnPrefix + "author")
