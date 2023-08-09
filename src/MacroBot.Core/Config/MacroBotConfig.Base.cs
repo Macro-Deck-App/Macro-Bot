@@ -16,7 +16,7 @@ public partial class MacroBotConfig
 
     private const string ConfigPath = "Config/config.json";
 
-    private static int _currentConfigVersion = -1;
+    public static int CurrentConfigVersion { get; private set; } = -1;
 
     public static async ValueTask Initialize()
     {
@@ -146,7 +146,7 @@ public partial class MacroBotConfig
         {
             await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
             var latestConfigVersion = await GetLatestConfigVersion();
-            if (latestConfigVersion != _currentConfigVersion)
+            if (latestConfigVersion != CurrentConfigVersion)
             {
                 await UpdateConfig(ConfigPath, cancellationToken);
             }
@@ -159,7 +159,7 @@ public partial class MacroBotConfig
         {
             var encodedConfig = await DownloadFromConfigService();
             var configJson = Base64Decode(encodedConfig.ConfigBase64 ?? string.Empty);
-            _currentConfigVersion = encodedConfig.Version;
+            CurrentConfigVersion = encodedConfig.Version;
 
             await File.WriteAllTextAsync(configPath, configJson, cancellationToken);
             Logger.Information("Config version {Version} downloaded from ConfigService", encodedConfig.Version);
