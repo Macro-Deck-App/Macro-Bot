@@ -14,13 +14,11 @@ public class WebhookController : ControllerBase
 {
     private readonly ILogger _logger = Log.ForContext<WebhookController>();
     
-    private readonly WebhooksConfig _webhooksConfig;
     private readonly IDiscordService _discordService;
 
-    public WebhookController(WebhooksConfig webhooksConfig,
+    public WebhookController(
         IDiscordService discordService)
     {
-        _webhooksConfig = webhooksConfig;
         _discordService = discordService;
     }
     
@@ -28,7 +26,7 @@ public class WebhookController : ControllerBase
     public async Task<IActionResult> RunAsync(string webhookId, 
         [FromBody] WebhookRequest webhookRequest)
     {
-        var webhook = _webhooksConfig.Webhooks.FirstOrDefault(x => x.Id.Equals(webhookId));
+        var webhook = MacroBotConfig.Webhooks.FirstOrDefault(x => x.Id.Equals(webhookId));
         if (webhook is null)
         {
             return NotFound();

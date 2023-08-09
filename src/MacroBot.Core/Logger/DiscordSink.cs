@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using MacroBot.Core.Config;
 using MacroBot.Core.Extensions;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 
@@ -11,34 +12,32 @@ namespace MacroBot.Core.Logger;
 public class DiscordSink : ILogEventSink
 {
     private readonly DiscordSocketClient? _discordSocketClient;
-    private readonly BotConfig? _botConfig;
 
     public DiscordSink(IServiceProvider serviceProvider)
     {
         _discordSocketClient = serviceProvider.GetService<DiscordSocketClient>();
-        _botConfig = serviceProvider.GetService<BotConfig>();
     }
 
     public void Emit(LogEvent logEvent)
     {
-        if (_discordSocketClient is null || _botConfig is null || logEvent.Level < LogEventLevel.Error)
+        if (_discordSocketClient is null || logEvent.Level < LogEventLevel.Information)
         {
             return;
         }
 
-        var logChannel = _discordSocketClient.GetGuild(_botConfig.GuildId)
-            ?.GetChannel(_botConfig.Channels.LogChannelId) as ITextChannel;
+        var logChannel = _discordSocketClient.GetGuild(MacroBotConfig.GuildId)
+            ?.GetChannel(MacroBotConfig.LogChannelId) as ITextChannel;
 
-        var errorChannel = _discordSocketClient.GetGuild(_botConfig.GuildId)
-            ?.GetChannel(_botConfig.Channels.ErrorLogChannelId) as ITextChannel;
+        var errorChannel = _discordSocketClient.GetGuild(MacroBotConfig.GuildId)
+            ?.GetChannel(MacroBotConfig.ErrorLogChannelId) as ITextChannel;
 
         if (logChannel is null && errorChannel is null)
         {
             return;
         }
 
-        var adminRole = _discordSocketClient.GetGuild(_botConfig.GuildId).Roles?
-            .FirstOrDefault(x => x.Id == _botConfig.Roles.AdministratorRoleId);
+        var adminRole = _discordSocketClient.GetGuild(MacroBotConfig.GuildId).Roles?
+            .FirstOrDefault(x => x.Id == MacroBotConfig.AdministratorRoleId);
 
         var embedBuilder = new EmbedBuilder
         {
@@ -67,11 +66,14 @@ public class DiscordSink : ILogEventSink
 
         var text = adminRole is not null && logEvent.Level > LogEventLevel.Warning ? adminRole.Mention : null;
 
-        Task.Run((Func<Task?>)(() => SendSafeAsync(logChannel, text, embedBuilder.Build())));
 
         if (logEvent.Level >= LogEventLevel.Warning)
         {
-            Task.Run((Func<Task?>)(() => SendSafeAsync(errorChannel, text, embedBuilder.Build())));   
+            Task.Run(async () => await SendSafeAsync(errorChannel, text, embedBuilder.Build()));   
+        }
+        else
+        {
+            Task.Run(async () => await SendSafeAsync(logChannel, text, embedBuilder.Build()));
         }
     }
 
@@ -85,9 +87,9 @@ public class DiscordSink : ILogEventSink
         {
             await channel.SendMessageAsync(text, embed: embed);
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
+            Log.Error(ex, "Failed to send log message to channel {ChannelId}", channel.Id);
         }
     }
 }

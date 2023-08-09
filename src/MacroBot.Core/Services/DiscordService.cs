@@ -22,7 +22,6 @@ public class DiscordService : IDiscordService, IHostedService
 {
 	private readonly ILogger _logger = Log.ForContext<DiscordService>();
 	
-	private readonly BotConfig _botConfig;
 	private readonly DiscordSocketClient _discordSocketClient;
 	private readonly IServiceProvider _serviceProvider;
 	private readonly IStatusCheckService _statusCheckService;
@@ -36,14 +35,13 @@ public class DiscordService : IDiscordService, IHostedService
     private string prevplugin = "";
 	private List<string> plsinthisthread = new();
 
-    public DiscordService(BotConfig botConfig,
+    public DiscordService(
 	    DiscordSocketClient discordSocketClient,
 	    IServiceProvider serviceProvider,
 	    IStatusCheckService statusCheckService,
 	    InteractionService interactionService,
 	    IHttpClientFactory httpClientFactory)
     {
-	    _botConfig = botConfig;
 	    _discordSocketClient = discordSocketClient;
 	    _serviceProvider = serviceProvider;
 	    _statusCheckService = statusCheckService;
@@ -89,7 +87,7 @@ public class DiscordService : IDiscordService, IHostedService
 	    _discordSocketClient.ThreadCreated += async (thread) => await ThreadCreated(thread);
 
 	    await _serviceProvider.GetRequiredService<CommandHandler>().InitializeAsync();
-	    await _discordSocketClient.LoginAsync(TokenType.Bot, _botConfig.Token);
+	    await _discordSocketClient.LoginAsync(TokenType.Bot, MacroBotConfig.BotToken);
 	    await _discordSocketClient.StartAsync();
     }
 
@@ -214,8 +212,8 @@ public class DiscordService : IDiscordService, IHostedService
     {
 	    DiscordReady = true;
 	    await _interactionService.RegisterCommandsGloballyAsync();
-	    var guild = _discordSocketClient.GetGuild(_botConfig.GuildId);
-	    if (guild?.GetChannel(_botConfig.Channels.MemberScreeningChannelId) is ITextChannel channel)
+	    var guild = _discordSocketClient.GetGuild(MacroBotConfig.GuildId);
+	    if (guild?.GetChannel(MacroBotConfig.MemberScreeningChannelId) is ITextChannel channel)
 	    {
 		    var usersCount = GetUsersCount(guild);
 		    await UpdateMemberScreeningChannelName(channel, usersCount);
@@ -244,19 +242,19 @@ public class DiscordService : IDiscordService, IHostedService
 
 		var protectedChannels = new []
 		{
-			_botConfig.Channels.LogChannelId,
-			_botConfig.Channels.MemberScreeningChannelId,
-			_botConfig.Channels.StatusCheckChannelId
+			MacroBotConfig.LogChannelId,
+			MacroBotConfig.MemberScreeningChannelId,
+			MacroBotConfig.StatusCheckChannelId
 		};
 
-		if (Enumerable.Contains<ulong>(protectedChannels, message.Channel.Id))
+		if (protectedChannels.Contains(message.Channel.Id))
 		{
 			await message.DeleteAsync();
 			return;
 		}
 		
-		var messageByModerator = member.Roles.Contains(member.Guild.GetRole(_botConfig.Roles.ModeratorRoleId));
-		var imageChannels = _botConfig.Channels.ImageOnlyChannels;
+		var messageByModerator = member.Roles.Contains(member.Guild.GetRole(MacroBotConfig.ModeratorRoleId));
+		var imageChannels = MacroBotConfig.ImageOnlyChannelIds;
 
 		var anyMentionsOnMsg = message.MentionedUsers.Any(u => message.Content.Contains($"<@{u.Id}>"));
 
@@ -327,8 +325,8 @@ public class DiscordService : IDiscordService, IHostedService
 
 	private async Task MemberMovement(IGuildUser member, bool joined)
 	{
-		var guild = _discordSocketClient.GetGuild(_botConfig.GuildId);
-		if (guild?.GetChannel(_botConfig.Channels.MemberScreeningChannelId) is not ITextChannel channel)
+		var guild = _discordSocketClient.GetGuild(MacroBotConfig.GuildId);
+		if (guild?.GetChannel(MacroBotConfig.MemberScreeningChannelId) is not ITextChannel channel)
 		{
 			return;
 		}
@@ -395,7 +393,7 @@ public class DiscordService : IDiscordService, IHostedService
 			return;
 		}
 		_logger.Verbose("Executing Webhook {WebhookId}", webhook.Id);
-		if (_discordSocketClient.GetGuild(_botConfig.GuildId)
+		if (_discordSocketClient.GetGuild(MacroBotConfig.GuildId)
 			    .GetChannel(webhook.ChannelId) is not ITextChannel channel)
 		{
 			_logger.Fatal("Cannot execute webhook {WebhookId} - Channel does not exist", webhook.ChannelId);
@@ -481,8 +479,8 @@ public class DiscordService : IDiscordService, IHostedService
 		}
 		var status = _statusCheckService.LastStatusCheckResults?.ToArray();
 
-		if (_discordSocketClient.GetGuild(_botConfig.GuildId)
-			    .GetChannel(_botConfig.Channels.StatusCheckChannelId) is not ITextChannel channel 
+		if (_discordSocketClient.GetGuild(MacroBotConfig.GuildId)
+			    .GetChannel(MacroBotConfig.StatusCheckChannelId) is not ITextChannel channel 
 		    || status is null)
 		{
 			return;
