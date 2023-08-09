@@ -1,4 +1,4 @@
-using MacroBot.Core.Logger;
+using MacroBot.Core.Logging;
 using MacroBot.Core.Runtime;
 using Serilog;
 using Serilog.Events;

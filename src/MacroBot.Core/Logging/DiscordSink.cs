@@ -7,7 +7,7 @@ using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace MacroBot.Core.Logger;
+namespace MacroBot.Core.Logging;
 
 public class DiscordSink : ILogEventSink
 {
@@ -25,20 +25,12 @@ public class DiscordSink : ILogEventSink
             return;
         }
 
-        var logChannel = _discordSocketClient.GetGuild(MacroBotConfig.GuildId)
-            ?.GetChannel(MacroBotConfig.LogChannelId) as ITextChannel;
-
-        var errorChannel = _discordSocketClient.GetGuild(MacroBotConfig.GuildId)
-            ?.GetChannel(MacroBotConfig.ErrorLogChannelId) as ITextChannel;
-
-        if (logChannel is null && errorChannel is null)
+        var guild = _discordSocketClient.GetGuild(MacroBotConfig.GuildId);
+        if (guild is null)
         {
             return;
         }
-
-        var adminRole = _discordSocketClient.GetGuild(MacroBotConfig.GuildId).Roles?
-            .FirstOrDefault(x => x.Id == MacroBotConfig.AdministratorRoleId);
-
+        
         var embedBuilder = new EmbedBuilder
         {
             Color = logEvent.Level switch
@@ -56,23 +48,34 @@ public class DiscordSink : ILogEventSink
         embedBuilder.AddField("Level", logEvent.Level.ToString());
 
         var message = logEvent.RenderMessage();
-        embedBuilder.AddField("Message", StringExtensions.Truncate(message, 1023));
+        embedBuilder.AddField("Message", message.Truncate(1023));
 
         if (logEvent.Exception is not null)
         {
-            embedBuilder.AddField("Exception", StringExtensions.Truncate(logEvent.Exception.Message, 1023));
-            embedBuilder.AddField("Stack Trace", StringExtensions.Truncate(logEvent.Exception.StackTrace, 1023));
+            embedBuilder.AddField("Exception", logEvent.Exception.Message.Truncate(1023));
+            embedBuilder.AddField("Stack Trace", logEvent.Exception.StackTrace.Truncate(1023));
         }
 
+        var adminRole = guild.Roles?.FirstOrDefault(x => x.Id == MacroBotConfig.AdministratorRoleId);
         var text = adminRole is not null && logEvent.Level > LogEventLevel.Warning ? adminRole.Mention : null;
 
 
         if (logEvent.Level >= LogEventLevel.Warning)
         {
+            if (_discordSocketClient.GetGuild(MacroBotConfig.GuildId)
+                    ?.GetChannel(MacroBotConfig.ErrorLogChannelId) is not ITextChannel errorChannel)
+            {
+                return;
+            }
             Task.Run(async () => await SendSafeAsync(errorChannel, text, embedBuilder.Build()));   
         }
         else
         {
+            if (_discordSocketClient.GetGuild(MacroBotConfig.GuildId)
+                    ?.GetChannel(MacroBotConfig.LogChannelId) is not ITextChannel logChannel)
+            {
+                return;
+            }
             Task.Run(async () => await SendSafeAsync(logChannel, text, embedBuilder.Build()));
         }
     }

@@ -146,10 +146,16 @@ public partial class MacroBotConfig
         {
             await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
             var latestConfigVersion = await GetLatestConfigVersion();
-            if (latestConfigVersion != CurrentConfigVersion)
+            if (latestConfigVersion == CurrentConfigVersion)
             {
-                await UpdateConfig(ConfigPath, cancellationToken);
+                continue;
             }
+            
+            Logger.Information(
+                "Updating config {CurrentConfigVersion} -> {ConfigVersion}",
+                CurrentConfigVersion,
+                latestConfigVersion);
+            await UpdateConfig(ConfigPath, cancellationToken);
         } while (!cancellationToken.IsCancellationRequested);
     }
 
