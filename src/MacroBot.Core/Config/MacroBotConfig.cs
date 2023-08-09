@@ -5,6 +5,8 @@ namespace MacroBot.Core.Config;
 
 public static partial class MacroBotConfig
 {
+    public static string DatabaseConnectionString => GetString("database:connection_string");
+    
     public static string BotToken => GetString("bot:token");
     public static ulong GuildId => GetUlong("bot:guild_id");
     

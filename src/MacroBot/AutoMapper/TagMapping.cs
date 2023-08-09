@@ -2,12 +2,13 @@ using AutoMapper;
 using MacroBot.Core.DataAccess.Entities;
 using MacroBot.Core.Discord.Modules.Tagging;
 
-namespace MacroBot.Core.DataAccess.AutoMapper;
+namespace MacroBot.AutoMapper;
 
 public class TagMapping : Profile
 {
     public TagMapping()
     {
-        CreateMap<TagEntity, Tag>();
+        CreateMap<TagEntity, Tag>()
+            .ForMember(dest => dest.LastEdited, opt => opt.MapFrom(x => x.UpdatedTimestamp));
     }
 }
