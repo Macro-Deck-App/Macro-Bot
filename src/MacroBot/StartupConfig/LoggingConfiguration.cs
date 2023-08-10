@@ -2,6 +2,7 @@ using MacroBot.Core.Logging;
 using MacroBot.Core.Runtime;
 using Serilog;
 using Serilog.Events;
+using Serilog.Filters;
 using Serilog.Sinks.SystemConsole.Themes;
 
 namespace MacroBot.StartupConfig;
@@ -17,7 +18,10 @@ public static class LoggingConfiguration
                 configuration
                     .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
                     .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)
-                    .WriteTo.DiscordSink(services);
+                    .WriteTo.Logger(lc =>
+                        lc.Filter.ByIncludingOnly(Matching.FromSource("MacroBot")).WriteTo.DiscordSink(services))
+                    .WriteTo.Logger(lc =>
+                        lc.Filter.ByIncludingOnly(e => e.Level >= LogEventLevel.Warning).WriteTo.DiscordSink(services));
             }
             else
             {
