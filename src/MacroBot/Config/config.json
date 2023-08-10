@@ -3,7 +3,7 @@
     "connection_string": "User ID=macrobotmaster;Password=test;Database=macrobottest;Host=127.0.0.1;Port=5432"
   },
   "bot": {
-    "token": "MTA2NjUwMjIzNTc3NDc3OTQyMg.GqUpkV.fVLI_ExdIdOhbaWMnafXOrtPgjt-oD4LuBG0S8",
+    "token": "",
     "guild_id": 963548230300348416
   },
   "roles": {
