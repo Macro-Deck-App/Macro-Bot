@@ -16,8 +16,8 @@ public static class LoggingConfiguration
             if (MacroBotEnvironment.IsStagingOrProduction)
             {
                 configuration
-                    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
-                    .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)
+                    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Information)
+                    .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Information)
                     .WriteTo.Logger(lc =>
                         lc.Filter.ByIncludingOnly(Matching.FromSource("MacroBot")).WriteTo.DiscordSink(services))
                     .WriteTo.Logger(lc =>
