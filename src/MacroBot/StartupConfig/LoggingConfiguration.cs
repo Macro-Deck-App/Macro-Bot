@@ -21,6 +21,9 @@ public static class LoggingConfiguration
                     .WriteTo.Logger(lc =>
                         lc.Filter.ByIncludingOnly(Matching.FromSource("MacroBot")).WriteTo.DiscordSink(services))
                     .WriteTo.Logger(lc =>
+                        lc.Filter.ByIncludingOnly(e => e.Level >= LogEventLevel.Warning).WriteTo.Logger(lc =>
+                        lc.Filter.ByIncludingOnly(Matching.FromSource("MacroBot")).WriteTo.DiscordSink(services))
+                    .WriteTo.Logger(lc =>
                         lc.Filter.ByIncludingOnly(e => e.Level >= LogEventLevel.Warning).WriteTo.DiscordSink(services));
             }
             else
