@@ -11,20 +11,10 @@ jobs:
   
   deploy:
     name: Build and deploy Docker image
+    environment: production
     needs: [ci]
     runs-on: ubuntu-latest
     steps:
-      - name: Updating the image on the server
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.DOCKER_HOST }}
-          username: ${{ secrets.GITHUBWORKFLOWS_USER }}
-          password: ${{ secrets.GITHUBWORKFLOWS_USER_PASSWORD }}
-          port: ${{ secrets.DOCKER_HOST_PORT }}
-          script: |
-            cd "scripts/macro-bot/"
-            ./update_production.sh ${{ github.sha }}
-
       - uses: fjogeleit/http-request-action@v1
         continue-on-error: true
         with:
@@ -32,4 +22,14 @@ jobs:
           method: 'POST'
           bearerToken: ${{ secrets.BOT_WEBHOOK_DEPLOY_KEY }}
           customHeaders: '{"Content-Type": "application/json" }'
-          data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":0},"description":"MacroBot is now on ${{ github.sha }}.","fields":[{"name":"Branch","value":"Develop","inline":false},{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
+          data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":0},"description":"MacroBot is updating to ${{ github.sha }}.","fields":[{"name":"Branch","value":"Develop","inline":false},{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
+          
+      - name: Updating the image on the server
+        uses: Macro-Deck-App/Actions/deploy@main
+        with:
+          host: ${{ secrets.LIVE_DEPLOY_HOST }}
+          user: ${{ secrets.LIVE_DEPLOY_USER }}
+          key: ${{ secrets.LIVE_DEPLOY_KEY }}
+          known-hosts: ${{ secrets.LIVE_DEPLOY_KNOWN_HOSTS }}
+          sha: ${{ github.sha }}
+          service: macro-bot

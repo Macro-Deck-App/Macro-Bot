@@ -12,6 +12,7 @@ jobs:
   
   deploy:
     name: Deploy Docker image
+    environment: staging
     needs: [ci]
     runs-on: ubuntu-latest
     steps:
@@ -22,14 +23,14 @@ jobs:
           method: 'POST'
           bearerToken: ${{ secrets.TESTBOT_WEBHOOK_DEPLOY_KEY }}
           customHeaders: '{"Content-Type": "application/json" }'
-          data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":0},"description":"MacroBot updating to ${{ github.sha }}.","fields":[{"name":"Branch","value":"Develop","inline":false},{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
+          data: '{"toEveryone":false,"embed":{"color":{"r":0,"g":1,"b":0},"description":"MacroBot is updating to ${{ github.sha }}.","fields":[{"name":"Branch","value":"Develop","inline":false},{"name":"SHA","value":"${{ github.sha }}","inline":false}]}}'
 
       - name: Updating the image on the server
-        uses: appleboy/ssh-action@v1.0.0
+        uses: Macro-Deck-App/Actions/deploy@main
         with:
-          host: ${{ secrets.TEST_SSH_HOST }}
-          username: ${{ secrets.GITHUBWORKFLOWS_USER }}
-          key: ${{ secrets.TEST_SSH_PRIVATE_KEY }}
-          script: |
-            cd "scripts/macro-bot/"
-            ./update_develop.sh ${{ github.sha }}
+          host: ${{ secrets.TEST_DEPLOY_HOST }}
+          user: ${{ secrets.TEST_DEPLOY_USER }}
+          key: ${{ secrets.TEST_DEPLOY_KEY }}
+          known-hosts: ${{ secrets.TEST_DEPLOY_KNOWN_HOSTS }}
+          sha: ${{ github.sha }}
+          service: macro-bot
