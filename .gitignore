@@ -376,5 +376,7 @@ MigrationBackup/
 FodyWeavers.xsd
 .vscode/launch.json
 .vscode/tasks.json
+
+# Macro-Bot config files
 src/MacroBot/Config/
 src/MacroBot/Config/config.json
