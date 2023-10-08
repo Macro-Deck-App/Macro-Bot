@@ -1,4 +1,7 @@
+using System.Data.Common;
+using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using JetBrains.Annotations;
 
 namespace MacroBot.Core.Discord.Modules.ExtensionStore;
@@ -9,22 +12,15 @@ namespace MacroBot.Core.Discord.Modules.ExtensionStore;
 [UsedImplicitly]
 public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
 {
-    
-    /*
-    private readonly BotConfig _botConfig;
-    private readonly CommandsConfig _commandsConfig;
     private readonly IHttpClientFactory _httpClientFactory;
     
     
-    private List<List<EmbedFieldBuilder>> _allPluginFields = new();
+    private static List<Embed> _allPluginEmbeds { get; set; }
 
-    public ExtensionCommands(BotConfig botConfig, 
-        CommandsConfig commandsConfig, 
-        IHttpClientFactory httpClientFactory)
+    public ExtensionCommands(IHttpClientFactory httpClientFactory, DiscordSocketClient client)
     {
-        _botConfig = botConfig;
-        _commandsConfig = commandsConfig;
         _httpClientFactory = httpClientFactory;
+        client.ButtonExecuted += ClientOnButtonExecuted;
     }
 
     [SlashCommand("get", "Get a plugin")]
@@ -35,33 +31,41 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
     }
     
     [SlashCommand("browse", "Get all plugins")]
-    public async Task GetPlugins() {
+    public async Task GetPlugins([Summary(description: "Include plugins?")] bool includePlugins = true, [Summary(description: "Include icon packs?")] bool includeIconPacks = true) {
         await DeferAsync(ephemeral: true);
-        var embed = await ExtensionMessageBuilder.BuildAllExtensionsAsync(_httpClientFactory);
-        await FollowupAsync(embed: embed, ephemeral: true);
+        var embeds = await ExtensionMessageBuilder.BuildAllExtensionsAsync(_httpClientFactory, includePlugins, includeIconPacks);
+        _allPluginEmbeds = embeds;
+        var component = new ComponentBuilder()
+            .WithButton("<", "exst-left", ButtonStyle.Success, disabled: true)
+            .WithButton($"1 / {embeds.Count}", "exst-plc", ButtonStyle.Secondary, disabled: true)
+            .WithButton(">", "exst-right", ButtonStyle.Success);
+        await FollowupAsync(embed: embeds[0], components: component.Build(), ephemeral: true);
     }
 
     private async Task ClientOnButtonExecuted(SocketMessageComponent msg)
     {
-        await PlBtnExecuted(msg, Context.User);
+        try {
+            await PlBtnExecuted(msg, msg.User);
+        } catch {}
     }
     
     private async Task PlBtnExecuted(SocketMessageComponent smc, IPresence user) {
-        if (smc.User != user)
+        var id = smc.Data.CustomId;
+
+        if (smc.User != user || id is not "exst-left" or "exst-right")
         {
             return;
         }
 
-        var content = smc.Message.CleanContent;
-        var id = smc.Data.CustomId;
+        var content = smc.Message.Embeds.ToArray()[0].Footer!.Value.Text.Replace("Page ", "");
         var i = 0;
 
         switch (id)
         {
-            case "plugin-list-page-back":
+            case "exst-left":
                 i = Convert.ToInt32(content) - 1;
                 break;
-            case "plugin-list-page-forward":
+            case "exst-right":
                 i = Convert.ToInt32(content) + 1;
                 break;
             default:
@@ -70,23 +74,18 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
 
         await smc.DeferAsync(ephemeral: true);
 
-        var embed = new EmbedBuilder()
-            .WithTitle("Macro Deck Extensions")
-            .WithDescription("This is the list of Macro Deck Extensions.")
-            .WithFields(_allPluginFields[i - 1]);
+        var embed = _allPluginEmbeds[i - 1].ToEmbedBuilder();
 
         var builder = new ComponentBuilder()
-            .WithButton("<", "plugin-list-page-back", ButtonStyle.Success, disabled: (i is 1))
-            .WithButton($"{i} / {_allPluginFields.Count}", "page", ButtonStyle.Secondary, disabled: true)
-            .WithButton(">", "plugin-list-page-forward", ButtonStyle.Success, disabled: (i == _allPluginFields.Count));
+            .WithButton("<", "exst-left", ButtonStyle.Success, disabled: (i is 1))
+            .WithButton($"{i} / {_allPluginEmbeds.Count}", "exst-plc", ButtonStyle.Secondary, disabled: true)
+            .WithButton(">", "exst-right", ButtonStyle.Success, disabled: (i == _allPluginEmbeds.Count));
 
-        await smc.Message.ModifyAsync(msg => {
-            msg.Content = $"{i}";
+        await smc.ModifyOriginalResponseAsync(msg => {
             msg.Embed = embed.Build();
             msg.Components = builder.Build();
         });
     }
-    */
 }
 
 
