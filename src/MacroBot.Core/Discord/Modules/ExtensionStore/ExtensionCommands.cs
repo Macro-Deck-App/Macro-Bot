@@ -52,39 +52,41 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
     private async Task PlBtnExecuted(SocketMessageComponent smc, IPresence user) {
         var id = smc.Data.CustomId;
 
-        if (smc.User != user || id is not "exst-left" or "exst-right")
+        if (smc.User != user)
         {
             return;
         }
 
-        var content = smc.Message.Embeds.ToArray()[0].Footer!.Value.Text.Replace("Page ", "");
-        var i = 0;
+        try {
+            var content = smc.Message.Embeds.ToArray()[0].Footer!.Value.Text.Replace("Page ", "");
+            var i = 0;
 
-        switch (id)
-        {
-            case "exst-left":
-                i = Convert.ToInt32(content) - 1;
-                break;
-            case "exst-right":
-                i = Convert.ToInt32(content) + 1;
-                break;
-            default:
-                return;
-        }
+            switch (id)
+            {
+                case "exst-left":
+                    i = Convert.ToInt32(content) - 1;
+                    break;
+                case "exst-right":
+                    i = Convert.ToInt32(content) + 1;
+                    break;
+                default:
+                    return;
+            }
 
-        await smc.DeferAsync(ephemeral: true);
+            await smc.DeferAsync(ephemeral: true);
 
-        var embed = _allPluginEmbeds[i - 1].ToEmbedBuilder();
+            var embed = _allPluginEmbeds[i - 1].ToEmbedBuilder();
 
-        var builder = new ComponentBuilder()
-            .WithButton("<", "exst-left", ButtonStyle.Success, disabled: (i is 1))
-            .WithButton($"{i} / {_allPluginEmbeds.Count}", "exst-plc", ButtonStyle.Secondary, disabled: true)
-            .WithButton(">", "exst-right", ButtonStyle.Success, disabled: (i == _allPluginEmbeds.Count));
+            var builder = new ComponentBuilder()
+                .WithButton("<", "exst-left", ButtonStyle.Success, disabled: (i is 1))
+                .WithButton($"{i} / {_allPluginEmbeds.Count}", "exst-plc", ButtonStyle.Secondary, disabled: true)
+                .WithButton(">", "exst-right", ButtonStyle.Success, disabled: (i == _allPluginEmbeds.Count));
 
-        await smc.ModifyOriginalResponseAsync(msg => {
-            msg.Embed = embed.Build();
-            msg.Components = builder.Build();
-        });
+            await smc.ModifyOriginalResponseAsync(msg => {
+                msg.Embed = embed.Build();
+                msg.Components = builder.Build();
+            });
+        } catch {}
     }
 }
 
