@@ -377,3 +377,4 @@ FodyWeavers.xsd
 .vscode/launch.json
 .vscode/tasks.json
 src/MacroBot/Config/
+src/MacroBot/Config/config.json
