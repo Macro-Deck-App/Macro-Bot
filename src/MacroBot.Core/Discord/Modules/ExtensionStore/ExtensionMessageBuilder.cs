@@ -46,7 +46,6 @@ public class ExtensionMessageBuilder
         List<Embed> embedList = new List<Embed>();
 
         foreach (EmbedFieldBuilder[] flds in fields.Chunk(24)) {
-            Console.WriteLine(String.Join(", ", flds.Select(x => x.Name)));
             embed.WithFields(flds);
             embedList.Add(embed.Build());
             embed = new EmbedBuilder()
