@@ -109,18 +109,18 @@ public class DiscordService : IDiscordService, IHostedService
 
     private async Task DiscordSocketClientOnButtonExecuted(SocketMessageComponent component)
     {
-	    if (component.Data.CustomId.StartsWith("extd-")) {
+		if (component.Data.CustomId.StartsWith("extd-no")) {
+			await component.Message.DeleteAsync();
+			var msg = await component.Channel.SendMessageAsync("Got it. Thank you for the clarification.");
+			await Task.Delay(5000);
+			await msg.DeleteAsync();
+			await (component.Channel as SocketThreadChannel)!.LeaveAsync();
+	    } else if (component.Data.CustomId.StartsWith("extd-")) {
 			var httpClient = _httpClientFactory.CreateClient();
 			var pl = await httpClient.GetExtensionAsync(component.Data.CustomId.Remove("extd-"));
 			await component.Message.DeleteAsync();
 			var channel = (component.Channel as IThreadChannel)!;
 			await channel.ModifyAsync(x => x.Name = $"{channel.Name} (Extension Problem: {pl!.Name})");
-			await (component.Channel as SocketThreadChannel)!.LeaveAsync();
-		} else if (component.Data.CustomId.StartsWith("extd-no")) {
-			await component.Message.DeleteAsync();
-			var msg = await component.Channel.SendMessageAsync("Got it. Thank you for the clarification.");
-			await Task.Delay(5000);
-			await msg.DeleteAsync();
 			await (component.Channel as SocketThreadChannel)!.LeaveAsync();
 		}
     }
