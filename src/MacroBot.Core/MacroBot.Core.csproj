@@ -1,23 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
-    <ItemGroup>
-        <PackageReference Include="AutoMapper" />
-        <PackageReference Include="Discord.Net" />
-        <PackageReference Include="JetBrains.Annotations" />
-        <PackageReference Include="Microsoft.AspNetCore.Http" />
-        <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" />
-        <PackageReference Include="Microsoft.AspNetCore.Http.Features" />
-        <PackageReference Include="Microsoft.AspNetCore.WebUtilities" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-        <PackageReference Include="Microsoft.Extensions.Hosting" />
-        <PackageReference Include="Microsoft.Extensions.Http" />
-        <PackageReference Include="Newtonsoft.Json" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
-        <PackageReference Include="Octokit" />
-        <PackageReference Include="Serilog" />
-        <PackageReference Include="Serilog.Extensions.Hosting" />
-        <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
-    </ItemGroup>
-    
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" />
+    <PackageReference Include="Discord.Net" />
+    <PackageReference Include="JetBrains.Annotations" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Features" />
+    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="NCalcSync" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Octokit" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Hosting" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+  </ItemGroup>
 </Project>

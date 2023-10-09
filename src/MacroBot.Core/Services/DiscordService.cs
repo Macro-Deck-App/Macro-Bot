@@ -4,6 +4,9 @@ using Discord.Net;
 using Discord.WebSocket;
 using JetBrains.Annotations;
 using MacroBot.Core.Config;
+using MacroBot.Core.DataAccess.Entities;
+using MacroBot.Core.DataAccess.Repositories;
+using MacroBot.Core.DataAccess.RepositoryInterfaces;
 using MacroBot.Core.Discord;
 using MacroBot.Core.Discord.Modules.OldExtensionStore;
 using MacroBot.Core.Extensions;
@@ -11,6 +14,7 @@ using MacroBot.Core.Models.Webhook;
 using MacroBot.Core.ServiceInterfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NCalc;
 using Serilog;
 using EmbedBuilderExtensions = MacroBot.Core.Extensions.EmbedBuilderExtensions;
 using ILogger = Serilog.ILogger;
@@ -27,6 +31,7 @@ public class DiscordService : IDiscordService, IHostedService
 	private readonly IStatusCheckService _statusCheckService;
 	private readonly InteractionService _interactionService;
 	private readonly IHttpClientFactory _httpClientFactory;
+	private readonly IServiceScopeFactory _serviceScopeFactory;
 
 	public bool DiscordReady { get; private set; }
 
@@ -40,13 +45,15 @@ public class DiscordService : IDiscordService, IHostedService
 	    IServiceProvider serviceProvider,
 	    IStatusCheckService statusCheckService,
 	    InteractionService interactionService,
-	    IHttpClientFactory httpClientFactory)
+	    IHttpClientFactory httpClientFactory,
+		IServiceScopeFactory serviceScopeFactory)
     {
 	    _discordSocketClient = discordSocketClient;
 	    _serviceProvider = serviceProvider;
 	    _statusCheckService = statusCheckService;
 	    _interactionService = interactionService;
 	    _httpClientFactory = httpClientFactory;
+		_serviceScopeFactory = serviceScopeFactory;
     }
     
     public Task StopAsync(CancellationToken cancellationToken)
@@ -284,6 +291,36 @@ public class DiscordService : IDiscordService, IHostedService
 			}
 		}
 
+		if (message.Channel.Id == MacroBotConfig.CountingChannelId) {
+			await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        	var countingRepository = scope.ServiceProvider.GetRequiredService<ICountingRepository>();
+
+			try {
+				var expr = new Expression(message.CleanContent)
+				.Evaluate();
+
+				if (expr is IConvertible conv)
+				{
+					var cnt = await countingRepository.GetCurrentCount();
+					var e = conv.ToInt64(null) == cnt!.CurrentCount + 1;
+					if (e) {
+						if (!(cnt.CurrentAuthor == message.Author.Id)) {
+							await message.AddReactionAsync(conv.ToInt64(null) >= cnt.HighScore? new Emoji("☑️") : new Emoji("✅"));
+
+							await countingRepository.SetCount(conv.ToInt64(null), message.Author.Id);
+							return;
+						}
+						await CountingRuined(message as IUserMessage, conv.ToInt64(null), cnt, string.Format("You can't count more than once.", cnt.CurrentCount++, conv.ToInt64(null)));
+						return;
+					}
+
+					await CountingRuined(message as IUserMessage, conv.ToInt64(null), cnt, string.Format("{0} is not {1}.", conv.ToInt64(null), cnt.CurrentCount + 1));
+				}
+			} catch { 
+				// It is ignored.
+			}
+		}
+
 		if (imageChannels.Contains(message.Channel.Id) && !DiscordMessageFilter.FilterForImageChannels(message))
 		{
 			await message.DeleteAsync();
@@ -318,6 +355,29 @@ public class DiscordService : IDiscordService, IHostedService
 			}
 
 		}
+	}
+
+	private async Task CountingRuined(IUserMessage message, long count, CountingEntity currentCount, string reason) {
+		await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var countingRepository = scope.ServiceProvider.GetRequiredService<ICountingRepository>();
+
+		await message.AddReactionAsync(new Emoji("❌"));
+
+		EmbedBuilder embedBuilder = new() {
+			Title = "Someone ruined it! Start again at 1!",
+			Description = reason
+		};
+
+		embedBuilder.AddField("Ruined by", message.Author.Mention, true);
+		embedBuilder.AddField("Original Message", message.Content, true);
+
+		await countingRepository.SetCount(0, 0);
+		if (currentCount.CurrentCount >= currentCount.HighScore) {
+			await countingRepository.SetCountHighScore(currentCount.CurrentCount);
+			embedBuilder.AddField("New High Score!", currentCount.CurrentCount, true);
+		}
+
+		await message.ReplyAsync(embed: embedBuilder.Build());
 	}
 
 	private async Task MemberMovement(IGuildUser member, bool joined)
