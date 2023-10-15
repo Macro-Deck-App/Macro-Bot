@@ -1,4 +1,3 @@
-using System.Data.Common;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -24,16 +23,24 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
     }
 
     [SlashCommand("get", "Get a plugin")]
-    public async Task GetPlugin([Summary(description: "Extension Name or Package ID")] string search) {
+    public async Task GetPlugin([Summary(description: "Extension Name or Package ID")] string search)
+    {
         await DeferAsync(ephemeral: true);
         var embed = await ExtensionMessageBuilder.BuildSearchExtensionAsync(_httpClientFactory, search);
         await FollowupAsync(embed: embed, ephemeral: true);
     }
     
     [SlashCommand("browse", "Get all plugins")]
-    public async Task GetPlugins([Summary(description: "Include plugins?")] bool includePlugins = true, [Summary(description: "Include icon packs?")] bool includeIconPacks = true) {
+    public async Task GetPlugins(
+        [Summary(description: "Include plugins?")]
+        bool includePlugins = true,
+        [Summary(description: "Include icon packs?")]
+        bool includeIconPacks = true)
+    {
         await DeferAsync(ephemeral: true);
-        var embeds = await ExtensionMessageBuilder.BuildAllExtensionsAsync(_httpClientFactory, includePlugins, includeIconPacks);
+        var embeds = await ExtensionMessageBuilder.BuildAllExtensionsAsync(_httpClientFactory,
+            includePlugins,
+            includeIconPacks);
         _allPluginEmbeds = embeds;
         var component = new ComponentBuilder()
             .WithButton("<", "exst-left", ButtonStyle.Success, disabled: true)
@@ -44,12 +51,18 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
 
     private async Task ClientOnButtonExecuted(SocketMessageComponent msg)
     {
-        try {
+        try
+        {
             await PlBtnExecuted(msg, msg.User);
-        } catch {}
+        }
+        catch
+        {
+            // ignored
+        }
     }
     
-    private async Task PlBtnExecuted(SocketMessageComponent smc, IPresence user) {
+    private async Task PlBtnExecuted(SocketMessageComponent smc, IPresence user)
+    {
         var id = smc.Data.CustomId;
 
         if (smc.User != user)
@@ -57,7 +70,8 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        try {
+        try
+        {
             var content = smc.Message.Embeds.ToArray()[0].Footer!.Value.Text.Replace("Page ", "");
             var i = 0;
 
@@ -82,11 +96,16 @@ public class ExtensionCommands : InteractionModuleBase<SocketInteractionContext>
                 .WithButton($"{i} / {_allPluginEmbeds.Count}", "exst-plc", ButtonStyle.Secondary, disabled: true)
                 .WithButton(">", "exst-right", ButtonStyle.Success, disabled: (i == _allPluginEmbeds.Count));
 
-            await smc.ModifyOriginalResponseAsync(msg => {
+            await smc.ModifyOriginalResponseAsync(msg =>
+            {
                 msg.Embed = embed.Build();
                 msg.Components = builder.Build();
             });
-        } catch {}
+        }
+        catch
+        {
+            // ignored
+        }
     }
 }
 

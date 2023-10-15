@@ -2,6 +2,7 @@
   "database": {
     "connection_string": "User ID=macrobotmaster;Password=test;Database=macrobottest;Host=127.0.0.1;Port=5432"
   },
+  "extension_store_api_url": "https://extensionstore.api.macro-deck.app/rest/v2",
   "bot": {
     "token": "",
     "guild_id": 963548230300348416

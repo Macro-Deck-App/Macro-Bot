@@ -9,7 +9,6 @@ using MacroBot.Core.Discord.Modules.ExtensionStore;
 using MacroBot.Core.Extensions;
 using MacroBot.Core.Models.Webhook;
 using MacroBot.Core.ServiceInterfaces;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -93,12 +92,15 @@ public class DiscordService : IDiscordService, IHostedService
 
 	private async Task ThreadCreated(SocketThreadChannel thread)
 	{
-		var msg = await thread.GetMessagesAsync(3).FlattenAsync();
-		var lastMsg = msg.Last();
+		var messagesResult = await thread.GetMessagesAsync(3).FlattenAsync();
+		var messages = messagesResult.ToList();
+		var lastMsg = messages.Last();
 
         var extensions = await ExtensionMessageBuilder.BuildExtensionDetectionAsync(_httpClientFactory, thread.Name, lastMsg.Content);
 
-		if (extensions.Embeds is null || msg.First().Author.Id == _discordSocketClient.CurrentUser.Id || prevthreadid == thread.Id)
+		if (extensions?.Embeds is null
+		    || messages.First().Author.Id == _discordSocketClient.CurrentUser.Id
+		    || prevthreadid == thread.Id)
 		{
 			return;
 		}
@@ -109,13 +111,16 @@ public class DiscordService : IDiscordService, IHostedService
 
     private async Task DiscordSocketClientOnButtonExecuted(SocketMessageComponent component)
     {
-		if (component.Data.CustomId.StartsWith("extd-no")) {
+		if (component.Data.CustomId.StartsWith("extd-no"))
+		{
 			await component.Message.DeleteAsync();
 			var msg = await component.Channel.SendMessageAsync("Got it. Thank you for the clarification.");
 			await Task.Delay(5000);
 			await msg.DeleteAsync();
 			await (component.Channel as SocketThreadChannel)!.LeaveAsync();
-	    } else if (component.Data.CustomId.StartsWith("extd-")) {
+	    }
+		else if (component.Data.CustomId.StartsWith("extd-"))
+		{
 			var httpClient = _httpClientFactory.CreateClient();
 			var pl = await httpClient.GetExtensionAsync(component.Data.CustomId.Remove("extd-"));
 			await component.Message.DeleteAsync();
@@ -125,31 +130,39 @@ public class DiscordService : IDiscordService, IHostedService
 		}
     }
 
-	private async Task DiscordSocketClientOnSelectMenuExecuted(SocketMessageComponent component) {
-		if (component.Data.CustomId.StartsWith("extd-selmenu")) {
+	private async Task DiscordSocketClientOnSelectMenuExecuted(SocketMessageComponent component)
+	{
+		if (component.Data.CustomId.StartsWith("extd-selmenu"))
+		{
 			if (component.Data.Values.Count > 1)
 			{
 				await component.DeferAsync();
 				var httpClient = _httpClientFactory.CreateClient();
 				List<EmbedFieldBuilder> embedFieldBuilders = new();
 				var channel = (component.Channel as IThreadChannel)!;
-				foreach (var val in component.Data.Values) {
+				foreach (var val in component.Data.Values)
+				{
 					var pl = await httpClient.GetExtensionAsync(val.Remove("extd-"));
-					embedFieldBuilders.Add(new EmbedFieldBuilder() {
+					embedFieldBuilders.Add(new EmbedFieldBuilder
+					{
 						Name = pl!.Name,
 						Value = $"by **{pl.Author}**",
 						IsInline = true
 					});
 				}
 				await channel.ModifyAsync(x => x.Name = $"{channel.Name} ({component.Data.Values.Count()} extensions)");
-				await component.Message.ModifyAsync(x => {
-					x.Embed = new EmbedBuilder() {
+				await component.Message.ModifyAsync(x =>
+				{
+					x.Embed = new EmbedBuilder
+					{
 						Title = "This user has a problem on these extensions"
 					}.WithFields(embedFieldBuilders).Build();
 					x.Components = null;
 				});
 				await (component.Channel as SocketThreadChannel)!.LeaveAsync();
-			} else {
+			}
+			else
+			{
 				var httpClient = _httpClientFactory.CreateClient();
 				var pl = await httpClient.GetExtensionAsync(component.Data.Values.ToList()[0].Remove("extd-"));
 				await component.Message.DeleteAsync();
@@ -444,5 +457,4 @@ public class DiscordService : IDiscordService, IHostedService
 			_logger.Error(ex, "Cannot send status update");
 		}
 	}
-	
 }

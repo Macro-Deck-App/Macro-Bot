@@ -9,7 +9,8 @@ public static class StringExtensions
             : value;
     }
 
-    public static string Remove(this string source, string value) {
-        return source.Replace(value, "");
+    public static string Remove(this string source, string value)
+    {
+        return source.Replace(value, string.Empty);
     }
 }
