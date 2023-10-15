@@ -16,6 +16,7 @@ public static partial class MacroBotConfig
     public static ulong AdministratorRoleId => GetUlong("roles:moderator_role_id");
 
     public static ulong LogChannelId => GetUlong("channels:log_channel_id");
+    public static ulong CountingChannelId => GetUlong("channels:counting_channel_id");
     public static ulong ErrorLogChannelId => GetUlong("channels:error_log_channel_id");
     public static ulong MemberScreeningChannelId => GetUlong("channels:member_screening_channel_id");
     public static ulong[] ImageOnlyChannelIds => GetUlongArray("channels:image_only_channel_ids");

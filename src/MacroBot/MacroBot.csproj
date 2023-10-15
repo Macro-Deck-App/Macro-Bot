@@ -1,30 +1,27 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-
+<Project Sdk="Microsoft.NET.Sdk.Web">
   <ItemGroup>
-    <None Remove="Config\commands.json" />
-    <None Remove="Config\global.json" />
+    <None Remove="Config\commands.json"/>
+    <None Remove="Config\global.json"/>
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="AutoMapper" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" />
-    <PackageReference Include="Evolve" />
-    <PackageReference Include="JetBrains.Annotations" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" />
-    <PackageReference Include="Microsoft.Extensions.Http" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
-    <PackageReference Include="Octokit" />
-    <PackageReference Include="Serilog" />
-    <PackageReference Include="Serilog.Extensions.Hosting" />
-    <PackageReference Include="Serilog.Sinks.Console" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+    <PackageReference Include="AutoMapper"/>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection"/>
+    <PackageReference Include="Evolve"/>
+    <PackageReference Include="JetBrains.Annotations"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+    <PackageReference Include="Microsoft.Extensions.Hosting"/>
+    <PackageReference Include="Microsoft.Extensions.Http"/>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+    <PackageReference Include="Octokit"/>
+    <PackageReference Include="Serilog"/>
+    <PackageReference Include="Serilog.Extensions.Hosting"/>
+    <PackageReference Include="Serilog.Sinks.Console"/>
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations"/>
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger"/>
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen"/>
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI"/>
   </ItemGroup>
-
   <ItemGroup>
     <Content Include="..\.dockerignore">
       <Link>.dockerignore</Link>
@@ -33,17 +30,13 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
   <ItemGroup>
-    <ProjectReference Include="..\MacroBot.Core\MacroBot.Core.csproj" />
+    <ProjectReference Include="..\MacroBot.Core\MacroBot.Core.csproj"/>
   </ItemGroup>
-
   <ItemGroup>
-    <ProjectReference Include="..\MacroBot.Core\MacroBot.Core.csproj" />
+    <ProjectReference Include="..\MacroBot.Core\MacroBot.Core.csproj"/>
   </ItemGroup>
-  
   <ItemGroup>
-    <Content Include="Migrations\*.sql" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always" />
+    <Content Include="Migrations\*.sql" CopyToPublishDirectory="Always" CopyToOutputDirectory="Always"/>
   </ItemGroup>
-
 </Project>
