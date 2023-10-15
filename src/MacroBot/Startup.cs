@@ -35,6 +35,7 @@ public class Startup
         services.AddDbContext<MacroBotContext>();
         services.AddAutoMapper(typeof(Startup).Assembly);
         services.AddTransient<ITagRepository, TagRepository>();
+        services.AddTransient<ICountingRepository, CountingRepository>();
         services.AddTransient<TaggingUtils>();
         services.AddSingleton(discordSocketConfig);
         services.AddSingleton<DiscordSocketClient>();

@@ -8,4 +8,9 @@ public static class StringExtensions
             ? value[..maxLength] + truncationSuffix
             : value;
     }
+
+    public static string Remove(this string source, string value)
+    {
+        return source.Replace(value, string.Empty);
+    }
 }
