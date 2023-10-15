@@ -262,7 +262,7 @@ public class DiscordService : IDiscordService, IHostedService
 
 			try
 			{
-				var expr = new Expression(message.CleanContent)
+				var expr = new Expression(message.Content)
 				.Evaluate();
 
 				if (expr is IConvertible conv)
