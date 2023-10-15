@@ -5,7 +5,7 @@ using Discord.WebSocket;
 using JetBrains.Annotations;
 using MacroBot.Core.Config;
 using MacroBot.Core.Discord;
-using MacroBot.Core.Discord.Modules.OldExtensionStore;
+using MacroBot.Core.Discord.Modules.ExtensionStore;
 using MacroBot.Core.Extensions;
 using MacroBot.Core.Models.Webhook;
 using MacroBot.Core.ServiceInterfaces;
@@ -30,10 +30,7 @@ public class DiscordService : IDiscordService, IHostedService
 
 	public bool DiscordReady { get; private set; }
 
-	private string prevthread = "";
-    private ulong? prevplauserid = 0;
-    private string prevplugin = "";
-	private List<string> plsinthisthread = new();
+	private ulong prevthreadid = 0;
 
     public DiscordService(
 	    DiscordSocketClient discordSocketClient,
@@ -85,6 +82,8 @@ public class DiscordService : IDiscordService, IHostedService
 	    _discordSocketClient.UserJoined += UserJoined;
 	    _discordSocketClient.UserLeft += UserLeft;
 	    _discordSocketClient.ThreadCreated += async (thread) => await ThreadCreated(thread);
+		_discordSocketClient.ButtonExecuted += DiscordSocketClientOnButtonExecuted;
+		_discordSocketClient.SelectMenuExecuted += DiscordSocketClientOnSelectMenuExecuted;
 
 	    await _serviceProvider.GetRequiredService<CommandHandler>().InitializeAsync();
 	    await _discordSocketClient.LoginAsync(TokenType.Bot, MacroBotConfig.BotToken);
@@ -93,120 +92,86 @@ public class DiscordService : IDiscordService, IHostedService
 
 	private async Task ThreadCreated(SocketThreadChannel thread)
 	{
-		plsinthisthread = new();
-		var msg = await thread.GetMessagesAsync(2).FlattenAsync();
-		var lastMsg = msg.Last();
-		PluginUtils pluginUtils = new PluginUtils();
-        var extensions = await pluginUtils.GetPluginsAsync();
+		var messagesResult = await thread.GetMessagesAsync(3).FlattenAsync();
+		var messages = messagesResult.ToList();
+		var lastMsg = messages.Last();
 
-		if (extensions is null)
+        var extensions = await ExtensionMessageBuilder.BuildExtensionDetectionAsync(_httpClientFactory, thread.Name, lastMsg.Content);
+
+		if (extensions?.Embeds is null
+		    || messages.First().Author.Id == _discordSocketClient.CurrentUser.Id
+		    || prevthreadid == thread.Id)
 		{
 			return;
 		}
 		
-		foreach (var extension in extensions)
-		{
-			if (lastMsg.CleanContent.IndexOf(extension.Name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
-			    lastMsg.CleanContent.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0 &&
-			    thread.Name.IndexOf(extension.Name.Replace(" Plugin", ""), StringComparison.OrdinalIgnoreCase) < 0 &&
-			    thread.Name.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0) continue;
-
-			if ((prevthread == thread.Name && prevplugin == extension.PackageId) || (plsinthisthread.Contains(extension.PackageId))) return;
-			if (extension.Type.IndexOf("plugin", StringComparison.OrdinalIgnoreCase) < 0) continue;
-
-			plsinthisthread.Add(extension.PackageId);
-			
-			var embed = new EmbedBuilder
-			{
-				Title = $"Do you have a problem with a plugin?",
-				Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
-			};
-
-			embed.AddField("Name", $"{extension.Name} ({extension.PackageId})", true);
-			embed.AddField("Author", extension.Author, true);
-			prevthread = thread.Name;
-			prevplugin = extension.PackageId!;
-
-			var components = new ComponentBuilder()
-				.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
-				.WithButton("No", "plugin-problem-no", ButtonStyle.Danger);
-
-			_discordSocketClient.ButtonExecuted -= DiscordSocketClientOnButtonExecuted;
-			_discordSocketClient.ButtonExecuted += DiscordSocketClientOnButtonExecuted;
-
-			await thread.SendMessageAsync(embed: embed.Build(), components: components.Build());
-		}
+		await thread.SendMessageAsync(embed: extensions.Embeds, components: extensions.Component);
+		prevthreadid = thread.Id;
 	}
-
-	/*
-    private async Task ThreadCreated(SocketThreadChannel thread) {
-		var msg = await thread.GetMessagesAsync(2).FlattenAsync();
-		var lastMsg = msg.Last();
-		using var httpClient = _httpClientFactory.CreateClient();
-		var extensions = await httpClient.GetFromJsonAsync<List<Extension>>("https://extensionstore.api.macro-deck.app/Extensions");
-
-		if (extensions is null)
-		{
-			return;
-		}
-		
-		foreach (var extension in extensions) {
-			if (_prevThread == thread.Name)
-			{
-				return;
-			}
-
-			if (lastMsg.CleanContent.IndexOf(extension.Name, StringComparison.OrdinalIgnoreCase) < 0 &&
-			    lastMsg.CleanContent.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0 &&
-			    thread.Name.IndexOf(extension.Name, StringComparison.OrdinalIgnoreCase) < 0 &&
-			    thread.Name.IndexOf(extension.PackageId, StringComparison.OrdinalIgnoreCase) < 0) continue;
-			
-			var embed = new EmbedBuilder {
-				Title = $"Do you have a problem with a plugin?",
-				Description = $"Macro Bot detects a plugin name on your post.\r\nIf your problem is this plugin, click Yes. Otherwise, click No."
-			};
-
-			embed.AddField("Name", $"{extension.Name} ({extension.PackageId})", true);
-			embed.AddField("Author", extension.DSupportUserId is not null? $"<@{extension.DSupportUserId}>" : extension.Author, true);
-			_prevThread = thread.Name;
-			_prevPlaUserId = extension.DSupportUserId is not null ? ulong.Parse(extension.DSupportUserId) : null;
-			_prevPlugin = extension.PackageId!;
-
-			var components = new ComponentBuilder()
-				.WithButton("Yes", "plugin-problem-yes", ButtonStyle.Success)
-				.WithButton("No", "plugin-problem-no", ButtonStyle.Danger);
-
-			_discordSocketClient.ButtonExecuted -= DiscordSocketClientOnButtonExecuted;
-			_discordSocketClient.ButtonExecuted += DiscordSocketClientOnButtonExecuted;
-
-			await thread.SendMessageAsync(embed: embed.Build(), components: components.Build());
-		}
-	}
-	*/
 
     private async Task DiscordSocketClientOnButtonExecuted(SocketMessageComponent component)
     {
-	    switch (component.Data.CustomId)
-	    {
-		    case "plugin-problem-yes":
-			    await component.Message.DeleteAsync();
-			   // await component.Channel.SendMessageAsync($"{component.User.Mention} has a problem on your plugin."); // <@{prevplauserid}>, 
-			    await (component.Channel as SocketThreadChannel)!.ModifyAsync(msg => msg.Name = @$"{component.Channel.Name} (Plugin Problem - {prevplugin})");
-			    await (component.Channel as SocketThreadChannel)!.LeaveAsync();
-				plsinthisthread = new();
-			    break;
-		    case "plugin-problem-no":
-			    await component.Message.DeleteAsync();
-			    var msg = await component.Channel.SendMessageAsync("Got it. Thank you for the clarification.");
-			    await Task.Delay(5000);
-			    await msg.DeleteAsync();
-			    await (component.Channel as SocketThreadChannel)!.LeaveAsync();
-				plsinthisthread = new();
-			    break;
-		    default:
-			    return;
+		if (component.Data.CustomId.StartsWith("extd-no"))
+		{
+			await component.Message.DeleteAsync();
+			var msg = await component.Channel.SendMessageAsync("Got it. Thank you for the clarification.");
+			await Task.Delay(5000);
+			await msg.DeleteAsync();
+			await (component.Channel as SocketThreadChannel)!.LeaveAsync();
 	    }
+		else if (component.Data.CustomId.StartsWith("extd-"))
+		{
+			var httpClient = _httpClientFactory.CreateClient();
+			var pl = await httpClient.GetExtensionAsync(component.Data.CustomId.Remove("extd-"));
+			await component.Message.DeleteAsync();
+			var channel = (component.Channel as IThreadChannel)!;
+			await channel.ModifyAsync(x => x.Name = $"{channel.Name} (Extension Problem: {pl!.Name})");
+			await (component.Channel as SocketThreadChannel)!.LeaveAsync();
+		}
     }
+
+	private async Task DiscordSocketClientOnSelectMenuExecuted(SocketMessageComponent component)
+	{
+		if (component.Data.CustomId.StartsWith("extd-selmenu"))
+		{
+			if (component.Data.Values.Count > 1)
+			{
+				await component.DeferAsync();
+				var httpClient = _httpClientFactory.CreateClient();
+				List<EmbedFieldBuilder> embedFieldBuilders = new();
+				var channel = (component.Channel as IThreadChannel)!;
+				foreach (var val in component.Data.Values)
+				{
+					var pl = await httpClient.GetExtensionAsync(val.Remove("extd-"));
+					embedFieldBuilders.Add(new EmbedFieldBuilder
+					{
+						Name = pl!.Name,
+						Value = $"by **{pl.Author}**",
+						IsInline = true
+					});
+				}
+				await channel.ModifyAsync(x => x.Name = $"{channel.Name} ({component.Data.Values.Count()} extensions)");
+				await component.Message.ModifyAsync(x =>
+				{
+					x.Embed = new EmbedBuilder
+					{
+						Title = "This user has a problem on these extensions"
+					}.WithFields(embedFieldBuilders).Build();
+					x.Components = null;
+				});
+				await (component.Channel as SocketThreadChannel)!.LeaveAsync();
+			}
+			else
+			{
+				var httpClient = _httpClientFactory.CreateClient();
+				var pl = await httpClient.GetExtensionAsync(component.Data.Values.ToList()[0].Remove("extd-"));
+				await component.Message.DeleteAsync();
+				var channel = (component.Channel as IThreadChannel)!;
+				await channel.ModifyAsync(x => x.Name = $"{channel.Name} (Extension Problem: {pl!.Name})");
+				await (component.Channel as SocketThreadChannel)!.LeaveAsync();
+			}
+		}
+	}
     
     private async Task Ready ()
     {
@@ -492,5 +457,4 @@ public class DiscordService : IDiscordService, IHostedService
 			_logger.Error(ex, "Cannot send status update");
 		}
 	}
-	
 }
