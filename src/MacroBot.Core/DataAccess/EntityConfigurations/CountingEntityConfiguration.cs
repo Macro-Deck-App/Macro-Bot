@@ -4,8 +4,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MacroBot.Core.DataAccess.EntityConfigurations;
 
-public class CountingEntityConfiguration :  BaseCreatedUpdatedEntityConfig<CountingEntity> {
-    public CountingEntityConfiguration() {
+public class CountingEntityConfiguration :  BaseCreatedUpdatedEntityConfig<CountingEntity>
+{
+    public CountingEntityConfiguration()
+    {
         Table = "counting";
         ColumnPrefix = "cnt_";
     }

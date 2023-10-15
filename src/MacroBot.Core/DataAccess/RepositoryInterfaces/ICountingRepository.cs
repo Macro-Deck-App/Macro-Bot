@@ -1,5 +1,4 @@
 using MacroBot.Core.DataAccess.Entities;
-using MacroBot.Core.Discord.Modules.Tagging;
 
 namespace MacroBot.Core.DataAccess.RepositoryInterfaces;
 

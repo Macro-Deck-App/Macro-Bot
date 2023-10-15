@@ -5,7 +5,6 @@ using Discord.WebSocket;
 using JetBrains.Annotations;
 using MacroBot.Core.Config;
 using MacroBot.Core.DataAccess.Entities;
-using MacroBot.Core.DataAccess.Repositories;
 using MacroBot.Core.DataAccess.RepositoryInterfaces;
 using MacroBot.Core.Discord;
 using MacroBot.Core.Discord.Modules.OldExtensionStore;
@@ -291,11 +290,13 @@ public class DiscordService : IDiscordService, IHostedService
 			}
 		}
 
-		if (message.Channel.Id == MacroBotConfig.CountingChannelId) {
+		if (message.Channel.Id == MacroBotConfig.CountingChannelId)
+		{
 			await using var scope = _serviceScopeFactory.CreateAsyncScope();
         	var countingRepository = scope.ServiceProvider.GetRequiredService<ICountingRepository>();
 
-			try {
+			try
+			{
 				var expr = new Expression(message.CleanContent)
 				.Evaluate();
 
@@ -303,8 +304,10 @@ public class DiscordService : IDiscordService, IHostedService
 				{
 					var cnt = await countingRepository.GetCurrentCount();
 					var e = conv.ToInt64(null) == cnt!.CurrentCount + 1;
-					if (e) {
-						if (!(cnt.CurrentAuthor == message.Author.Id)) {
+					if (e)
+					{
+						if (cnt.CurrentAuthor != message.Author.Id)
+						{
 							await message.AddReactionAsync(conv.ToInt64(null) >= cnt.HighScore? new Emoji("☑️") : new Emoji("✅"));
 
 							await countingRepository.SetCount(conv.ToInt64(null), message.Author.Id);
@@ -316,7 +319,9 @@ public class DiscordService : IDiscordService, IHostedService
 
 					await CountingRuined(message as IUserMessage, conv.ToInt64(null), cnt, string.Format("{0} is not {1}.", conv.ToInt64(null), cnt.CurrentCount + 1));
 				}
-			} catch { 
+			}
+			catch
+			{ 
 				// It is ignored.
 			}
 		}
@@ -357,13 +362,15 @@ public class DiscordService : IDiscordService, IHostedService
 		}
 	}
 
-	private async Task CountingRuined(IUserMessage message, long count, CountingEntity currentCount, string reason) {
+	private async Task CountingRuined(IUserMessage message, long count, CountingEntity currentCount, string reason)
+	{
 		await using var scope = _serviceScopeFactory.CreateAsyncScope();
         var countingRepository = scope.ServiceProvider.GetRequiredService<ICountingRepository>();
 
 		await message.AddReactionAsync(new Emoji("❌"));
 
-		EmbedBuilder embedBuilder = new() {
+		EmbedBuilder embedBuilder = new()
+		{
 			Title = "Someone ruined it! Start again at 1!",
 			Description = reason
 		};
@@ -372,7 +379,8 @@ public class DiscordService : IDiscordService, IHostedService
 		embedBuilder.AddField("Original Message", message.Content, true);
 
 		await countingRepository.SetCount(0, 0);
-		if (currentCount.CurrentCount >= currentCount.HighScore) {
+		if (currentCount.CurrentCount >= currentCount.HighScore)
+		{
 			await countingRepository.SetCountHighScore(currentCount.CurrentCount);
 			embedBuilder.AddField("New High Score!", currentCount.CurrentCount, true);
 		}
