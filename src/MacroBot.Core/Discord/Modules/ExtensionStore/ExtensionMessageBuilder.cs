@@ -121,7 +121,7 @@ public class ExtensionMessageBuilder
         {
             var extensions =
                 await httpClient.GetFromJsonAsync<ExtensionsResponse>(
-                    $"{MacroBotConfig.ExtensionStoreApiUrl}/extensions?pageSize=100?ShowIconPacks=false");
+                    $"{MacroBotConfig.ExtensionStoreApiUrl}/extensions?pageSize=100&ShowIconPacks=false");
 
             if (extensions != null)
             {
