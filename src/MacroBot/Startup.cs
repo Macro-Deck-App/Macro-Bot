@@ -8,6 +8,7 @@ using MacroBot.Core.Discord.Modules.Tagging;
 using MacroBot.Core.Extensions;
 using MacroBot.Core.Manager;
 using MacroBot.Core.ManagerInterfaces;
+using MacroBot.Core.Metrics;
 using MacroBot.Core.ServiceInterfaces;
 using MacroBot.Core.Services;
 using MacroBot.StartupConfig;
@@ -33,7 +34,7 @@ public class Startup
         };
         
         services.AddDbContext<MacroBotContext>();
-        services.AddAutoMapper(typeof(Startup).Assembly);
+        services.AddAutoMapper(GetType());
         services.AddTransient<ITagRepository, TagRepository>();
         services.AddTransient<ICountingRepository, CountingRepository>();
         services.AddTransient<TaggingUtils>();
@@ -44,10 +45,12 @@ public class Startup
         services.AddInjectableHostedService<IDiscordService, DiscordService>();
         services.AddInjectableHostedService<IStatusCheckService, StatusCheckService>();
         services.AddInjectableHostedService<ITimerService, TimerService>();
+        services.AddSingleton<UsersMetrics>();
         services.AddScoped<IKoFiManager, KoFiManager>();
         services.AddHttpClient();
         services.AddSwagger();
         services.AddControllers();
+        services.AddMetricsConfiguration();
     }
     
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -61,6 +64,7 @@ public class Startup
         app.UseRouting();
         app.UseEndpoints(endpoints =>
         {
+            endpoints.MapPrometheusScrapingEndpoint();
             endpoints.MapControllers();
         });
         app.ConfigureSwagger();

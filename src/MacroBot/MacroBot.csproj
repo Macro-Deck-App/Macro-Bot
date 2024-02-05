@@ -5,7 +5,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AutoMapper"/>
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection"/>
     <PackageReference Include="Evolve"/>
     <PackageReference Include="JetBrains.Annotations"/>
     <PackageReference Include="Microsoft.EntityFrameworkCore"/>
@@ -14,9 +13,11 @@
     <PackageReference Include="Microsoft.Extensions.Http"/>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
     <PackageReference Include="Octokit"/>
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     <PackageReference Include="Serilog"/>
     <PackageReference Include="Serilog.Extensions.Hosting"/>
     <PackageReference Include="Serilog.Sinks.Console"/>
+    <PackageReference Include="SharpAbp.Abp.OpenTelemetry.Exporter.Prometheus.AspNetCore" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations"/>
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger"/>
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen"/>

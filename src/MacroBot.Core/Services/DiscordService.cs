@@ -9,6 +9,7 @@ using MacroBot.Core.DataAccess.RepositoryInterfaces;
 using MacroBot.Core.Discord;
 using MacroBot.Core.Discord.Modules.ExtensionStore;
 using MacroBot.Core.Extensions;
+using MacroBot.Core.Metrics;
 using MacroBot.Core.Models.Webhook;
 using MacroBot.Core.ServiceInterfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,7 @@ public class DiscordService : IDiscordService, IHostedService
 	private readonly InteractionService _interactionService;
 	private readonly IHttpClientFactory _httpClientFactory;
 	private readonly IServiceScopeFactory _serviceScopeFactory;
+	private readonly UsersMetrics _usersMetrics;
 
 	public bool DiscordReady { get; private set; }
 
@@ -42,7 +44,8 @@ public class DiscordService : IDiscordService, IHostedService
 	    IStatusCheckService statusCheckService,
 	    InteractionService interactionService,
 	    IHttpClientFactory httpClientFactory,
-		IServiceScopeFactory serviceScopeFactory)
+		IServiceScopeFactory serviceScopeFactory,
+	    UsersMetrics usersMetrics)
     {
 	    _discordSocketClient = discordSocketClient;
 	    _serviceProvider = serviceProvider;
@@ -50,6 +53,7 @@ public class DiscordService : IDiscordService, IHostedService
 	    _interactionService = interactionService;
 	    _httpClientFactory = httpClientFactory;
 		_serviceScopeFactory = serviceScopeFactory;
+		_usersMetrics = usersMetrics;
     }
     
     public Task StopAsync(CancellationToken cancellationToken)
@@ -193,6 +197,7 @@ public class DiscordService : IDiscordService, IHostedService
 
 	private async Task UserJoined (SocketGuildUser member)
 	{
+		_usersMetrics.UserJoined();
 		await MemberMovement(member, true);
 	}
 
@@ -200,6 +205,7 @@ public class DiscordService : IDiscordService, IHostedService
 	{
 		if (user is SocketGuildUser guildUser)
 		{
+			_usersMetrics.UserLeft();
 			await MemberMovement(guildUser, false);
 		}
 	}
