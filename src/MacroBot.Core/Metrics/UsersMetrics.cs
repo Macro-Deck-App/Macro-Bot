@@ -9,7 +9,7 @@ public class UsersMetrics
     public UsersMetrics(IMeterFactory meterFactory)
     {
         var meter = meterFactory.Create("MacroBot");
-        _usersCounter = meter.CreateCounter<int>("macrobot.users");
+        _usersCounter = meter.CreateCounter<int>("macrobot-users");
     }
 
     public void UserJoined()
