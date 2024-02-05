@@ -187,12 +187,6 @@ public class DiscordService : IDiscordService, IHostedService
     {
 	    DiscordReady = true;
 	    await _interactionService.RegisterCommandsGloballyAsync();
-	    var guild = _discordSocketClient.GetGuild(MacroBotConfig.GuildId);
-	    if (guild?.GetChannel(MacroBotConfig.MemberScreeningChannelId) is ITextChannel channel)
-	    {
-		    var usersCount = GetUsersCount(guild);
-		    await UpdateMemberScreeningChannelName(channel, usersCount);
-	    }
     }
 
 	private async Task UserJoined (SocketGuildUser member)
@@ -231,16 +225,21 @@ public class DiscordService : IDiscordService, IHostedService
 		}
 		
 		var messageByModerator = member.Roles.Contains(member.Guild.GetRole(MacroBotConfig.ModeratorRoleId));
-		var imageChannels = MacroBotConfig.ImageOnlyChannelIds;
 
 		var anyMentionsOnMsg = message.MentionedUsers.Any(u => message.Content.Contains($"<@{u.Id}>"));
 
-		if ((message.MentionedEveryone 
-		     || message.MentionedRoles.Count > 0
-		     || (message.MentionedUsers.Count > 0 && (anyMentionsOnMsg || message.Type != MessageType.Reply))
-		    && !(messageByModerator || member.GetPermissions(message.Channel as IGuildChannel).ManageMessages)
-			&& !(message.MentionedUsers.Count == 1 && message.Content.Contains($"<@{message.Author.Id}>"))))
+		if (message.MentionedEveryone
+		    || message.MentionedRoles.Count > 0
+		    || message.MentionedUsers.Count > 0
+		    || anyMentionsOnMsg)
 		{
+			if (message.Type == MessageType.Reply
+			    || messageByModerator
+			    || member.GetPermissions(message.Channel as IGuildChannel).ManageMessages)
+			{
+				return;
+			}
+			
 			await message.DeleteAsync();
 			_logger.Information(
 				"Message containing users/roles/everyone from {AuthorUsername} in {ChannelName} was deleted. Message: {Message}",
@@ -297,7 +296,8 @@ public class DiscordService : IDiscordService, IHostedService
 			}
 		}
 
-		if (imageChannels.Contains(message.Channel.Id) && !DiscordMessageFilter.FilterForImageChannels(message))
+		if (MacroBotConfig.ImageOnlyChannelIds.Contains(message.Channel.Id)
+		    && !DiscordMessageFilter.FilterForImageChannels(message))
 		{
 			await message.DeleteAsync();
 
@@ -374,7 +374,6 @@ public class DiscordService : IDiscordService, IHostedService
 
 		var usersCount = GetUsersCount(guild);
 		var botsCount = GetBotsCount(guild);
-		await UpdateMemberScreeningChannelName(channel, usersCount);
 		EmbedBuilder embed = new()
 		{
 			Color = joined ? Color.Green : Color.Red,
@@ -393,20 +392,6 @@ public class DiscordService : IDiscordService, IHostedService
 		embed.AddField("__Joined__", $"<t:{member.JoinedAt?.ToUnixTimeSeconds()}:R>", true);
 		embed.AddField("__Created__", $"<t:{member.CreatedAt.ToUnixTimeSeconds()}:R>", true);
 		await channel.SendMessageAsync(embed: embed.Build());
-	}
-
-	private async Task UpdateMemberScreeningChannelName (ITextChannel channel, int userCount)
-	{
-		// Temporarily disabled because of a rate limit
-		return;
-		if (channel is not SocketGuildChannel socketGuildChannel)
-		{
-			return;
-		}
-		await socketGuildChannel.ModifyAsync(properties =>
-		{
-			properties.Name = $"{userCount}_users";
-		});
 	}
 
 	private int GetUsersCount(SocketGuild guild)
