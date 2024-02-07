@@ -3,7 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="AutoMapper" Version="13.0.0" />
+    <PackageVersion Include="AutoMapper" Version="13.0.1" />
     <PackageVersion Include="Discord.Net" Version="3.13.0" />
     <PackageVersion Include="Evolve" Version="3.2.0" />
     <PackageVersion Include="JetBrains.Annotations" Version="2023.3.0" />
